@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from 'react'
 import {
   format,
   startOfMonth,
@@ -11,378 +11,217 @@ import {
   isToday,
   addMonths,
   subMonths,
-  isWeekend,
-  isFuture,
-} from 'date-fns';
+} from 'date-fns'
 import {
   ChevronLeft,
   ChevronRight,
-  Clock,
-  CheckCircle2,
-  AlertTriangle,
-  XCircle,
-  Calendar as CalendarIcon,
   X,
-  Info,
-} from 'lucide-react';
-import { getDayTypeDisplay, getWorkingHoursDisplay } from '../../assets/assets';
+} from 'lucide-react'
+import { getWorkingHoursDisplay } from '../../assets/assets'
+import { formatTime } from '../../utils/formatters'
 
 const AttendanceCalendar = ({ history = [] }) => {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [selectedDayRecord, setSelectedDayRecord] = useState(null);
+  const [currentMonth, setCurrentMonth] = useState(new Date())
+  const [selectedDayRecord, setSelectedDayRecord] = useState(null)
 
-  const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
-  const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
-  const goToToday = () => setCurrentMonth(new Date());
+  const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1))
+  const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1))
+  const goToToday = () => setCurrentMonth(new Date())
 
-  const monthStart = startOfMonth(currentMonth);
-  const monthEnd = endOfMonth(monthStart);
-  const startDate = startOfWeek(monthStart, { weekStartsOn: 1 }); // Monday start
-  const endDate = endOfWeek(monthEnd, { weekStartsOn: 1 });
+  const monthStart = startOfMonth(currentMonth)
+  const monthEnd = endOfMonth(monthStart)
+  const startDate = startOfWeek(monthStart, { weekStartsOn: 1 }) // Monday
+  const endDate = endOfWeek(monthEnd, { weekStartsOn: 1 })
 
-  const days = eachDayOfInterval({ start: startDate, end: endDate });
+  const days = eachDayOfInterval({ start: startDate, end: endDate })
 
-  // Filter history for current month metrics
-  const monthRecords = history.filter((r) => isSameMonth(new Date(r.date), currentMonth));
-  const presentCount = monthRecords.filter((r) => r.status === 'PRESENT' || r.status === 'LATE').length;
-  const lateCount = monthRecords.filter((r) => r.status === 'LATE').length;
-  const absentCount = monthRecords.filter((r) => r.status === 'ABSENT').length;
-  const totalHours = monthRecords.reduce((acc, r) => acc + (r.workingHours || 0), 0);
-  const avgHours = presentCount > 0 ? (totalHours / presentCount).toFixed(1) : 0;
+  // Current month aggregates
+  const monthRecords = history.filter((r) => isSameMonth(new Date(r.date), currentMonth))
+  const presentCount = monthRecords.filter((r) => r.status === 'PRESENT' || r.status === 'LATE').length
+  const lateCount = monthRecords.filter((r) => r.status === 'LATE').length
+  const absentCount = monthRecords.filter((r) => r.status === 'ABSENT').length
 
-  const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
   return (
-    <div className="surface-card overflow-hidden shadow-sm animate-fade-in mb-8">
-      {/* Calendar Header with Navigation & Quick Metrics */}
-      <div className="p-5 sm:p-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl">
-            <CalendarIcon className="w-5 h-5" />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-              {format(currentMonth, 'MMMM yyyy')}
-            </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Monthly attendance distribution & hours heatmap
-            </p>
+    <div className="card overflow-hidden mb-6">
+      {/* Calendar Header with Controls & 3 Status Legend */}
+      <div className="p-4 sm:p-5 border-b border-[#E4E4E7] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold text-[#18181B]">
+            {format(currentMonth, 'MMMM yyyy')}
+          </h2>
+          <div className="flex items-center gap-4 text-xs text-[#71717A] mt-1">
+            <span className="flex items-center gap-1.5">
+              <span className="size-1.5 rounded-full bg-[#16A34A]" />
+              Present ({presentCount})
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="size-1.5 rounded-full bg-[#D97706]" />
+              Late ({lateCount})
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="size-1.5 rounded-full bg-[#DC2626]" />
+              Absent ({absentCount})
+            </span>
           </div>
         </div>
 
-        {/* Quick Month Navigation */}
+        {/* Month Navigation */}
         <div className="flex items-center gap-2">
           <button
             onClick={goToToday}
-            className="px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
+            className="btn-secondary h-8 px-2.5 text-xs"
           >
             Today
           </button>
-          <div className="flex items-center bg-slate-100 rounded-lg p-0.5">
+          <div className="flex items-center border border-[#E4E4E7] rounded-[6px] overflow-hidden">
             <button
               onClick={prevMonth}
-              className="p-1.5 text-slate-600 hover:text-slate-900 rounded-md hover:bg-white transition-colors cursor-pointer"
-              title="Previous Month"
+              className="p-1.5 hover:bg-[#F4F4F5] text-[#71717A] hover:text-[#18181B] transition-colors"
+              aria-label="Previous month"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="size-4" />
             </button>
+            <div className="w-px h-4 bg-[#E4E4E7]" />
             <button
               onClick={nextMonth}
-              className="p-1.5 text-slate-600 hover:text-slate-900 rounded-md hover:bg-white transition-colors cursor-pointer"
-              title="Next Month"
+              className="p-1.5 hover:bg-[#F4F4F5] text-[#71717A] hover:text-[#18181B] transition-colors"
+              aria-label="Next month"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="size-4" />
             </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Monthly Summary Statistics Bar */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4 p-4 sm:px-6 bg-slate-50/70 border-b border-slate-100 text-xs">
-        <div className="flex items-center gap-2.5 p-2 bg-white rounded-lg border border-slate-200/60 shadow-2xs">
-          <div className="size-2.5 rounded-full bg-emerald-500 ring-2 ring-emerald-100" />
-          <div>
-            <span className="text-slate-400 text-[11px] block">Present</span>
-            <span className="font-bold text-slate-800 text-sm">{presentCount} Days</span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2.5 p-2 bg-white rounded-lg border border-slate-200/60 shadow-2xs">
-          <div className="size-2.5 rounded-full bg-amber-500 ring-2 ring-amber-100" />
-          <div>
-            <span className="text-slate-400 text-[11px] block">Late Arrivals</span>
-            <span className="font-bold text-slate-800 text-sm">{lateCount} Days</span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2.5 p-2 bg-white rounded-lg border border-slate-200/60 shadow-2xs">
-          <div className="size-2.5 rounded-full bg-rose-500 ring-2 ring-rose-100" />
-          <div>
-            <span className="text-slate-400 text-[11px] block">Absent</span>
-            <span className="font-bold text-slate-800 text-sm">{absentCount} Days</span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2.5 p-2 bg-white rounded-lg border border-slate-200/60 shadow-2xs">
-          <div className="size-2.5 rounded-full bg-indigo-500 ring-2 ring-indigo-100" />
-          <div>
-            <span className="text-slate-400 text-[11px] block">Avg. Work / Day</span>
-            <span className="font-bold text-slate-800 text-sm">{avgHours} Hrs</span>
           </div>
         </div>
       </div>
 
       {/* Weekday Column Headers */}
-      <div className="grid grid-cols-7 border-b border-slate-200 text-center text-xs font-semibold text-slate-500 uppercase tracking-wider py-2.5 bg-slate-50/50">
-        {weekdays.map((day, idx) => (
-          <div key={day} className={idx >= 5 ? 'text-slate-400' : ''}>
-            {day}
-          </div>
+      <div className="grid grid-cols-7 border-b border-[#E4E4E7] text-center text-xs font-medium text-[#71717A] py-2 bg-[#FAFAFA]">
+        {weekdays.map((day) => (
+          <div key={day}>{day}</div>
         ))}
       </div>
 
-      {/* Calendar Heatmap Grid */}
-      <div className="grid grid-cols-7 gap-px bg-slate-200">
-        {days.map((day, index) => {
-          const isCurrMonth = isSameMonth(day, currentMonth);
-          const isCurrDay = isToday(day);
-          const isWeekendDay = isWeekend(day);
-          const isFutureDay = isFuture(day) && !isCurrDay;
+      {/* Calendar Grid: Neutral cells with small colored dots */}
+      <div className="grid grid-cols-7 gap-px bg-[#E4E4E7]">
+        {days.map((day) => {
+          const isCurrMonth = isSameMonth(day, currentMonth)
+          const isCurrDay = isToday(day)
+          const record = history.find((r) => isSameDay(new Date(r.date), day))
 
-          // Find attendance record for this day
-          const record = history.find((r) => isSameDay(new Date(r.date), day));
-          const dayTypeInfo = record ? getDayTypeDisplay(record) : null;
-          const workingHrsText = record ? getWorkingHoursDisplay(record) : null;
-
-          // Heatmap cell background styling
-          let cellBg = 'bg-white hover:bg-slate-50/80';
-          let borderAccent = 'border-transparent';
-          let statusColor = 'text-slate-400';
-
-          if (!isCurrMonth) {
-            cellBg = 'bg-slate-50/60 text-slate-300';
-          } else if (record) {
-            if (record.status === 'PRESENT') {
-              if (record.workingHours >= 8) {
-                cellBg = 'bg-emerald-50 hover:bg-emerald-100/70 border-emerald-200';
-                statusColor = 'text-emerald-700';
-              } else {
-                cellBg = 'bg-teal-50 hover:bg-teal-100/70 border-teal-200';
-                statusColor = 'text-teal-700';
-              }
-            } else if (record.status === 'LATE') {
-              cellBg = 'bg-amber-50 hover:bg-amber-100/70 border-amber-200';
-              statusColor = 'text-amber-700';
-            } else if (record.status === 'ABSENT') {
-              cellBg = 'bg-rose-50 hover:bg-rose-100/70 border-rose-200';
-              statusColor = 'text-rose-700';
-            }
-          } else if (isWeekendDay) {
-            cellBg = 'bg-slate-50/80 text-slate-400';
-          } else if (!isFutureDay) {
-            // Past weekday with no log
-            cellBg = 'bg-white hover:bg-slate-50';
+          let dotColor = null
+          if (record) {
+            if (record.status === 'PRESENT') dotColor = 'bg-[#16A34A]'
+            else if (record.status === 'LATE') dotColor = 'bg-[#D97706]'
+            else if (record.status === 'ABSENT') dotColor = 'bg-[#DC2626]'
           }
 
           return (
-            <div
+            <button
+              type="button"
               key={day.toISOString()}
               onClick={() => record && setSelectedDayRecord({ day, record })}
-              className={`min-h-[92px] sm:min-h-[110px] p-2 sm:p-2.5 transition-all duration-150 flex flex-col justify-between relative group ${
-                record ? 'cursor-pointer' : 'cursor-default'
-              } ${cellBg} ${isCurrDay ? 'ring-2 ring-indigo-500 ring-inset z-10' : ''}`}
+              className={`min-h-[72px] sm:min-h-[80px] p-2 text-left bg-white transition-colors relative flex flex-col justify-between cursor-pointer ${
+                !isCurrMonth ? 'bg-[#FAFAFA] text-[#A1A1AA]' : 'hover:bg-[#F4F4F5]'
+              }`}
             >
-              {/* Day Top Bar: Date Number + Indicators */}
+              {/* Day Number (minimum 12px) */}
               <div className="flex items-center justify-between">
                 <span
-                  className={`text-xs sm:text-sm font-semibold rounded-md size-6 flex items-center justify-center ${
+                  className={`text-xs tabular-nums font-medium ${
                     isCurrDay
-                      ? 'bg-indigo-600 text-white shadow-xs'
+                      ? 'size-5 rounded-full bg-[#2563EB] text-white flex items-center justify-center'
                       : isCurrMonth
-                      ? 'text-slate-800'
-                      : 'text-slate-300'
+                      ? 'text-[#18181B]'
+                      : 'text-[#A1A1AA]'
                   }`}
                 >
                   {format(day, 'd')}
                 </span>
 
-                {/* Status Dot / Indicator */}
-                {record && (
-                  <span
-                    className={`size-2 rounded-full ${
-                      record.status === 'PRESENT'
-                        ? 'bg-emerald-500'
-                        : record.status === 'LATE'
-                        ? 'bg-amber-500'
-                        : 'bg-rose-500'
-                    }`}
-                    title={record.status}
-                  />
+                {/* 3 Status Colored Dot */}
+                {dotColor && (
+                  <span className={`size-1.5 rounded-full ${dotColor}`} />
                 )}
               </div>
 
-              {/* Day Body: Attendance Hours & Badges */}
-              <div className="mt-1 space-y-1">
-                {record ? (
-                  <>
-                    <div className="flex items-center gap-1 text-[10px] sm:text-[11px] font-bold text-slate-800">
-                      <Clock className="w-2.5 h-2.5 text-slate-400" />
-                      <span className="truncate">{workingHrsText}</span>
-                    </div>
-
-                    <div className="hidden sm:flex items-center justify-between gap-1">
-                      <span
-                        className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
-                          record.status === 'PRESENT'
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : record.status === 'LATE'
-                            ? 'bg-amber-100 text-amber-800'
-                            : 'bg-rose-100 text-rose-800'
-                        }`}
-                      >
-                        {record.status}
-                      </span>
-
-                      {record.checkIn && (
-                        <span className="text-[10px] text-slate-500 font-mono">
-                          {format(new Date(record.checkIn), 'hh:mm a')}
-                        </span>
-                      )}
-                    </div>
-                  </>
-                ) : isWeekendDay && isCurrMonth ? (
-                  <span className="text-[10px] text-slate-400 italic hidden sm:inline">
-                    Weekend
+              {/* Working Hours Text (minimum 12px) */}
+              <div className="mt-auto">
+                {record?.workingHours != null && record.workingHours > 0 ? (
+                  <span className="text-xs text-[#71717A] tabular-nums truncate block">
+                    {record.workingHours}h
                   </span>
-                ) : !isFutureDay && isCurrMonth ? (
-                  <span className="text-[10px] text-slate-300 hidden sm:inline">
-                    No log
+                ) : record?.checkIn && !record?.checkOut ? (
+                  <span className="text-xs text-[#2563EB] truncate block font-medium">
+                    In shift
                   </span>
                 ) : null}
               </div>
-            </div>
-          );
+            </button>
+          )
         })}
       </div>
 
-      {/* Heatmap Legend Footer */}
-      <div className="p-4 sm:px-6 bg-slate-50/50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600">
-        <div className="flex flex-wrap items-center gap-4">
-          <span className="font-semibold text-slate-700 flex items-center gap-1">
-            <Info className="w-3.5 h-3.5 text-slate-400" /> Heatmap Intensity:
-          </span>
-
-          <div className="flex items-center gap-1.5">
-            <span className="size-3.5 rounded bg-emerald-100 border border-emerald-300" />
-            <span className="text-[11px] text-slate-600">Present (8h+)</span>
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            <span className="size-3.5 rounded bg-teal-100 border border-teal-300" />
-            <span className="text-[11px] text-slate-600">Partial (&lt;8h)</span>
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            <span className="size-3.5 rounded bg-amber-100 border border-amber-300" />
-            <span className="text-[11px] text-slate-600">Late Arrival</span>
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            <span className="size-3.5 rounded bg-rose-100 border border-rose-300" />
-            <span className="text-[11px] text-slate-600">Absent</span>
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            <span className="size-3.5 rounded bg-slate-200" />
-            <span className="text-[11px] text-slate-400">Weekend / Off</span>
-          </div>
-        </div>
-
-        <p className="text-[11px] text-slate-400">
-          Click any active day to view detailed check-in timestamps
-        </p>
-      </div>
-
-      {/* Day Details Modal */}
+      {/* Detail Modal for Selected Day */}
       {selectedDayRecord && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 border border-slate-200 relative">
-            <button
-              onClick={() => setSelectedDayRecord(null)}
-              className="absolute top-4 right-4 p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl">
-                <CalendarIcon className="w-5 h-5" />
-              </div>
+        <div
+          className="fixed inset-0 bg-black/20 flex items-center justify-center p-4 z-50"
+          onClick={() => setSelectedDayRecord(null)}
+        >
+          <div
+            className="card p-5 max-w-sm w-full shadow-[0_4px_12px_rgba(0,0,0,0.05)] space-y-3"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-2 border-b border-[#E4E4E7]">
               <div>
-                <h3 className="font-bold text-slate-900">
-                  {format(selectedDayRecord.day, 'EEEE, MMM dd, yyyy')}
+                <h3 className="text-sm font-semibold text-[#18181B]">
+                  {format(selectedDayRecord.day, 'EEEE, dd MMM yyyy')}
                 </h3>
-                <span
-                  className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full inline-block mt-0.5 ${
-                    selectedDayRecord.record.status === 'PRESENT'
-                      ? 'bg-emerald-100 text-emerald-800'
-                      : selectedDayRecord.record.status === 'LATE'
-                      ? 'bg-amber-100 text-amber-800'
-                      : 'bg-rose-100 text-rose-800'
-                  }`}
-                >
-                  {selectedDayRecord.record.status}
-                </span>
+                <p className="text-xs text-[#71717A] capitalize">
+                  Status: {selectedDayRecord.record.status?.toLowerCase() || 'unspecified'}
+                </p>
               </div>
+              <button
+                onClick={() => setSelectedDayRecord(null)}
+                className="p-1 text-[#71717A] hover:text-[#18181B] rounded-[4px]"
+                aria-label="Close"
+              >
+                <X className="size-4" />
+              </button>
             </div>
 
-            <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-100 text-xs">
-              <div className="flex justify-between items-center">
-                <span className="text-slate-500">Check In Time:</span>
-                <span className="font-semibold text-slate-800 font-mono">
-                  {selectedDayRecord.record.checkIn
-                    ? format(new Date(selectedDayRecord.record.checkIn), 'hh:mm:ss a')
-                    : '—'}
+            <div className="space-y-2 text-xs">
+              <div className="flex justify-between py-1 border-b border-[#E4E4E7]">
+                <span className="text-[#71717A]">Check in</span>
+                <span className="font-medium text-[#18181B] font-mono tabular-nums">
+                  {selectedDayRecord.record.checkIn ? formatTime(selectedDayRecord.record.checkIn) : '—'}
                 </span>
               </div>
-
-              <div className="flex justify-between items-center">
-                <span className="text-slate-500">Check Out Time:</span>
-                <span className="font-semibold text-slate-800 font-mono">
-                  {selectedDayRecord.record.checkOut
-                    ? format(new Date(selectedDayRecord.record.checkOut), 'hh:mm:ss a')
-                    : 'In Progress'}
+              <div className="flex justify-between py-1 border-b border-[#E4E4E7]">
+                <span className="text-[#71717A]">Check out</span>
+                <span className="font-medium text-[#18181B] font-mono tabular-nums">
+                  {selectedDayRecord.record.checkOut ? formatTime(selectedDayRecord.record.checkOut) : '—'}
                 </span>
               </div>
-
-              <div className="flex justify-between items-center pt-2 border-t border-slate-200">
-                <span className="text-slate-500">Total Working Hours:</span>
-                <span className="font-bold text-indigo-600 text-sm">
+              <div className="flex justify-between py-1">
+                <span className="text-[#71717A]">Total duration</span>
+                <span className="font-medium text-[#18181B] tabular-nums">
                   {getWorkingHoursDisplay(selectedDayRecord.record)}
                 </span>
               </div>
-
-              <div className="flex justify-between items-center">
-                <span className="text-slate-500">Day Classification:</span>
-                <span className="font-medium text-slate-700">
-                  {getDayTypeDisplay(selectedDayRecord.record).label}
-                </span>
-              </div>
             </div>
 
-            <div className="mt-5">
-              <button
-                onClick={() => setSelectedDayRecord(null)}
-                className="w-full btn-secondary text-center cursor-pointer"
-              >
-                Close
-              </button>
-            </div>
+            <button
+              onClick={() => setSelectedDayRecord(null)}
+              className="btn-secondary w-full text-xs mt-3"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default AttendanceCalendar;
+export default AttendanceCalendar

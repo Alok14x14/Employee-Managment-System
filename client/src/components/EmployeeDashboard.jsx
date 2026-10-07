@@ -1,15 +1,7 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import {
-  CalendarIcon,
-  DollarSignIcon,
-  FileTextIcon,
-  ClockIcon,
-  CheckCircle2,
-  Download,
-} from 'lucide-react';
-import { format } from 'date-fns';
-import { getWorkingHoursDisplay } from '../assets/assets';
+import React from 'react'
+import { Link } from 'react-router-dom'
+import { formatDate, formatTime, formatCurrency } from '../utils/formatters'
+import { getWorkingHoursDisplay } from '../assets/assets'
 import {
   AreaChart,
   Area,
@@ -19,248 +11,186 @@ import {
   Tooltip as RechartsTooltip,
   ResponsiveContainer,
   Legend,
-} from 'recharts';
+} from 'recharts'
 
 const EmployeeDashboard = ({ data }) => {
-  const emp = data.employee || {};
-  const weeklyHours = data.weeklyHours || [];
-  const recentAttendance = data.recentAttendance || [];
-  const recentLeaves = data.recentLeaves || [];
-  const todayRecord = data.todayRecord;
-  const latestPayslip = data.latestPayslip;
+  const weeklyHours = data.weeklyHours || []
+  const recentAttendance = data.recentAttendance || []
+  const recentLeaves = data.recentLeaves || []
+  const todayRecord = data.todayRecord
+  const latestPayslip = data.latestPayslip
 
-  // Calculate average hours from weekly record
-  const recordedDays = weeklyHours.filter((w) => w.hours > 0);
+  // Calculate average hours from recorded days
+  const recordedDays = weeklyHours.filter((w) => w.hours > 0)
   const avgHours = recordedDays.length
     ? (recordedDays.reduce((acc, w) => acc + w.hours, 0) / recordedDays.length).toFixed(1)
-    : '0';
+    : '0'
 
   const stats = [
     {
-      icon: CalendarIcon,
-      value: data.currentMonthAttendance || 0,
-      label: 'Days Present',
+      label: 'Days present',
+      value: data.currentMonthAttendance ?? 0,
+      description: 'Current month total',
       link: '/attendance',
     },
     {
-      icon: FileTextIcon,
-      value: data.pendingLeaves || 0,
-      label: 'Pending Leaves',
+      label: 'Pending leaves',
+      value: data.pendingLeaves ?? 0,
+      description: 'Awaiting manager response',
       link: '/leave',
     },
     {
-      icon: ClockIcon,
+      label: 'Avg. work hours',
       value: `${avgHours}h`,
-      label: 'Avg. Work Hours',
+      description: 'Based on weekly logs',
       link: '/attendance',
     },
     {
-      icon: DollarSignIcon,
-      value: latestPayslip ? `₹${latestPayslip.netSalary?.toLocaleString()}` : 'N/A',
-      label: 'Latest Payslip',
+      label: 'Latest payslip',
+      value: latestPayslip?.netSalary != null ? formatCurrency(latestPayslip.netSalary) : '—',
+      description: latestPayslip?.month ? `${latestPayslip.month} ${latestPayslip.year || ''}` : 'No cycle yet',
       link: '/payslips',
     },
-  ];
+  ]
 
   return (
-    <div className="animate-fade-in">
-      {/* Page Header matching Admin Dashboard */}
-      <div className="page-header flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-6">
+      {/* Header with plain title and one-line neutral description */}
+      <div className="page-header">
         <div>
           <h1 className="page-title">Dashboard</h1>
           <p className="page-subtitle">
-            Welcome back, {emp.firstName || 'Employee'} — here's your overview
+            Personal attendance tracking, leave status, and payroll summary.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <Link to="/attendance" className="btn-primary">
-            Mark Attendance
+            Record attendance
           </Link>
           <Link to="/leave" className="btn-secondary">
-            Apply for Leave
+            Apply for leave
           </Link>
         </div>
       </div>
 
-      {/* 4 Stat Cards matching Admin Dashboard */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mb-8">
+      {/* 4 Stat Cards: Bordered boxes, no icon boxes, no left accent bars, tabular numbers */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {stats.map((s) => (
           <Link
             to={s.link}
             key={s.label}
-            className="surface-card card-hover p-5 sm:p-6 relative overflow-hidden group flex items-center justify-between cursor-pointer"
+            className="card card-hover p-4 block"
           >
-            <div>
-              <div className="absolute left-0 top-0 bottom-0 w-1 rounded-r-full bg-slate-500/70 group-hover:bg-indigo-500/70" />
-              <p className="text-sm font-medium text-slate-700">{s.label}</p>
-              <p className="text-2xl font-bold text-slate-900 mt-1">{s.value}</p>
-            </div>
-            <s.icon className="size-10 p-2.5 rounded-lg bg-slate-100 text-slate-600 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors duration-200" />
+            <p className="text-xs font-medium text-[#71717A]">{s.label}</p>
+            <p className="text-2xl font-semibold text-[#18181B] mt-1 tabular-nums tracking-tight">
+              {s.value}
+            </p>
+            <p className="text-[11px] text-[#A1A1AA] mt-1 truncate">{s.description}</p>
           </Link>
         ))}
       </div>
 
-      {/* Charts / Mid Section matching Admin Dashboard layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {/* Weekly Hours Trend (Area Chart) */}
-        <div className="surface-card p-5 lg:col-span-2">
-          <h3 className="font-semibold text-slate-800 mb-4">Weekly Working Hours Trend</h3>
-          <div className="h-[300px] w-full">
+      {/* Weekly Hours Trend + Today Status */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Hours Chart */}
+        <div className="card p-4 sm:p-5 lg:col-span-2">
+          <div className="mb-4">
+            <h2 className="text-sm font-semibold text-[#18181B]">Weekly working hours</h2>
+            <p className="text-xs text-[#71717A] mt-0.5">Recorded daily duration for the current cycle</p>
+          </div>
+          <div className="h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={weeklyHours} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#14b8a6" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                <CartesianGrid strokeDasharray="2 2" vertical={false} stroke="#E4E4E7" />
                 <XAxis
                   dataKey="day"
-                  axisLine={false}
+                  axisLine={{ stroke: '#E4E4E7' }}
                   tickLine={false}
-                  tick={{ fill: '#64748b', fontSize: 12 }}
-                  dy={10}
+                  tick={{ fill: '#71717A', fontSize: 11 }}
+                  dy={6}
                 />
                 <YAxis
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fill: '#64748b', fontSize: 12 }}
+                  tick={{ fill: '#71717A', fontSize: 11 }}
                   domain={[0, 12]}
                 />
                 <RechartsTooltip
                   contentStyle={{
-                    borderRadius: '8px',
-                    border: 'none',
-                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+                    backgroundColor: '#FFFFFF',
+                    border: '1px solid #E4E4E7',
+                    borderRadius: '6px',
+                    fontSize: '12px',
+                    color: '#18181B',
+                    boxShadow: 'none',
                   }}
+                  formatter={(val) => [`${val} hours`, 'Duration']}
                 />
-                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '20px' }} />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
                 <Area
                   type="monotone"
                   dataKey="hours"
-                  name="Hours Logged"
-                  stroke="#14b8a6"
-                  strokeWidth={2}
-                  fillOpacity={1}
-                  fill="url(#colorHours)"
+                  name="Hours worked"
+                  stroke="#2563EB"
+                  strokeWidth={1.5}
+                  fill="#EFF6FF"
                 />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Today's Punch Status & Payroll Snapshot */}
-        <div className="surface-card p-5 flex flex-col justify-between">
-          <h3 className="font-semibold text-slate-800 mb-4">Today's Attendance</h3>
+        {/* Today's Record Tile */}
+        <div className="card p-4 sm:p-5 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between pb-3 border-b border-[#E4E4E7]">
+              <h2 className="text-sm font-semibold text-[#18181B]">Today's attendance</h2>
+              {todayRecord ? (
+                <span className="badge badge-success">
+                  {todayRecord.status?.toLowerCase() || 'present'}
+                </span>
+              ) : (
+                <span className="badge badge-neutral">Not recorded</span>
+              )}
+            </div>
 
-          <div className="space-y-4 my-auto">
-            {todayRecord ? (
-              <div className="space-y-3">
-                {todayRecord.checkOut ? (
-                  <div className="flex items-center gap-2.5 p-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                    <div>
-                      <span className="font-semibold">Shift Completed</span>
-                      <span className="block text-slate-500 mt-0.5">
-                        Clocked out at{' '}
-                        <span className="font-mono font-medium text-slate-700">
-                          {format(new Date(todayRecord.checkOut), 'hh:mm a')}
-                        </span>
-                      </span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2.5 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 animate-pulse" />
-                    <div>
-                      <span className="font-semibold">Currently Clocked In</span>
-                      <span className="block text-emerald-600 mt-0.5">
-                        Active shift since{' '}
-                        <span className="font-mono font-medium">
-                          {todayRecord.checkIn
-                            ? format(new Date(todayRecord.checkIn), 'hh:mm a')
-                            : 'Recorded'}
-                        </span>
-                      </span>
-                    </div>
-                  </div>
-                )}
+            <div className="mt-4 space-y-3 text-xs">
+              <div className="flex justify-between py-1 border-b border-[#E4E4E7]">
+                <span className="text-[#71717A]">Check-in</span>
+                <span className="font-medium text-[#18181B] font-mono tabular-nums">
+                  {todayRecord?.checkIn ? formatTime(todayRecord.checkIn) : '—'}
+                </span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-[#E4E4E7]">
+                <span className="text-[#71717A]">Check-out</span>
+                <span className="font-medium text-[#18181B] font-mono tabular-nums">
+                  {todayRecord?.checkOut ? formatTime(todayRecord.checkOut) : '—'}
+                </span>
+              </div>
+              <div className="flex justify-between py-1">
+                <span className="text-[#71717A]">Duration</span>
+                <span className="font-medium text-[#18181B] tabular-nums">
+                  {todayRecord ? getWorkingHoursDisplay(todayRecord) : '—'}
+                </span>
+              </div>
+            </div>
+          </div>
 
-                <div className="p-3 bg-slate-50 rounded-lg space-y-2 text-xs">
-                  <div className="flex justify-between text-slate-500">
-                    <span>Clock In:</span>
-                    <span className="font-medium text-slate-800 font-mono">
-                      {todayRecord.checkIn
-                        ? format(new Date(todayRecord.checkIn), 'hh:mm a')
-                        : '—'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-slate-500">
-                    <span>Clock Out:</span>
-                    <span className="font-medium text-slate-800 font-mono">
-                      {todayRecord.checkOut
-                        ? format(new Date(todayRecord.checkOut), 'hh:mm a')
-                        : 'In Progress'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-slate-500 pt-1.5 border-t border-slate-200/70">
-                    <span>Total Duration:</span>
-                    <span className="font-semibold text-slate-900">
-                      {todayRecord.checkOut
-                        ? (todayRecord.workingHours != null && todayRecord.workingHours >= 0.1
-                          ? `${todayRecord.workingHours.toFixed(1)} hrs`
-                          : getWorkingHoursDisplay(todayRecord))
-                        : getWorkingHoursDisplay(todayRecord)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="p-4 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs space-y-2.5">
-                <p className="font-medium">Not checked in yet today</p>
-                <p className="text-amber-700 text-[11px]">
-                  Please remember to punch in to record your daily attendance.
-                </p>
-                <Link
-                  to="/attendance"
-                  className="btn-primary inline-flex items-center justify-center w-full text-xs py-1.5 shadow-none"
-                >
-                  Clock In Now
-                </Link>
-              </div>
-            )}
-
-            {/* Latest Payslip Quick Action */}
-            {latestPayslip && (
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-                <div>
-                  <span className="text-[11px] text-slate-400 block">Latest Payout</span>
-                  <span className="font-semibold text-slate-900 text-sm">
-                    ₹{latestPayslip.netSalary?.toLocaleString()}
-                  </span>
-                </div>
-                <a
-                  href={`/print/payslips/${latestPayslip.id || latestPayslip._id}?autoprint=true`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1.5 rounded-md transition-colors"
-                >
-                  <Download className="w-3.5 h-3.5" /> Statement
-                </a>
-              </div>
-            )}
+          <div className="pt-4 border-t border-[#E4E4E7] mt-4">
+            <Link to="/attendance" className="btn-secondary w-full text-xs">
+              Open attendance console
+            </Link>
           </div>
         </div>
       </div>
 
-      {/* Recent Activity Sections matching Admin Dashboard 2-column layout */}
+      {/* Activity Tables */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Leave Requests */}
-        <div className="surface-card overflow-hidden">
-          <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-            <h3 className="font-semibold text-slate-800">Recent Leave Requests</h3>
-            <Link to="/leave" className="text-xs font-medium text-indigo-600 hover:text-indigo-700">
+        {/* Recent Attendance */}
+        <div className="card overflow-hidden">
+          <div className="px-4 py-3 border-b border-[#E4E4E7] flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-[#18181B]">Recent attendance</h2>
+            <Link to="/attendance" className="text-xs text-[#2563EB] hover:underline font-medium">
               View all
             </Link>
           </div>
@@ -268,38 +198,42 @@ const EmployeeDashboard = ({ data }) => {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Type</th>
-                  <th>Dates</th>
+                  <th>Date</th>
+                  <th>Check in</th>
+                  <th>Check out</th>
                   <th>Status</th>
                 </tr>
               </thead>
               <tbody>
-                {recentLeaves.length === 0 ? (
+                {!recentAttendance?.length ? (
                   <tr>
-                    <td colSpan="3" className="text-center py-6 text-slate-400">
-                      No recent leave requests
+                    <td colSpan="4" className="text-center py-8 text-xs text-[#71717A]">
+                      No recent attendance entries
                     </td>
                   </tr>
                 ) : (
-                  recentLeaves.map((leave) => (
-                    <tr key={leave.id || leave._id}>
-                      <td className="font-medium text-slate-700">
-                        <span className="badge bg-slate-100 text-slate-600">{leave.type}</span>
+                  recentAttendance.slice(0, 5).map((att) => (
+                    <tr key={att.id || att._id}>
+                      <td className="font-medium text-[#18181B] text-xs tabular-nums">
+                        {formatDate(att.date)}
                       </td>
-                      <td className="text-slate-500">
-                        {format(new Date(leave.startDate), 'MMM dd')} -{' '}
-                        {format(new Date(leave.endDate), 'MMM dd, yyyy')}
+                      <td className="text-[#52525B] text-xs font-mono tabular-nums">
+                        {att.checkIn ? formatTime(att.checkIn) : '—'}
+                      </td>
+                      <td className="text-[#52525B] text-xs font-mono tabular-nums">
+                        {att.checkOut ? formatTime(att.checkOut) : '—'}
                       </td>
                       <td>
                         <span
-                          className={`badge ${leave.status === 'APPROVED'
+                          className={`badge ${
+                            att.status === 'PRESENT'
                               ? 'badge-success'
-                              : leave.status === 'REJECTED'
-                                ? 'badge-danger'
-                                : 'badge-warning'
-                            }`}
+                              : att.status === 'LATE'
+                              ? 'badge-warning'
+                              : 'badge-danger'
+                          }`}
                         >
-                          {leave.status}
+                          {att.status?.toLowerCase()}
                         </span>
                       </td>
                     </tr>
@@ -310,51 +244,50 @@ const EmployeeDashboard = ({ data }) => {
           </div>
         </div>
 
-        {/* Recent Attendance Logs */}
-        <div className="surface-card overflow-hidden">
-          <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-            <h3 className="font-semibold text-slate-800">Recent Attendance Activity</h3>
-            <Link to="/attendance" className="text-xs font-medium text-indigo-600 hover:text-indigo-700">
-              View calendar
+        {/* Recent Leaves */}
+        <div className="card overflow-hidden">
+          <div className="px-4 py-3 border-b border-[#E4E4E7] flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-[#18181B]">Recent leave requests</h2>
+            <Link to="/leave" className="text-xs text-[#2563EB] hover:underline font-medium">
+              View all
             </Link>
           </div>
           <div className="overflow-x-auto">
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Date</th>
-                  <th>Working Hours</th>
+                  <th>Type</th>
+                  <th>Period</th>
                   <th>Status</th>
                 </tr>
               </thead>
               <tbody>
-                {recentAttendance.length === 0 ? (
+                {!recentLeaves?.length ? (
                   <tr>
-                    <td colSpan="3" className="text-center py-6 text-slate-400">
-                      No recent attendance logs
+                    <td colSpan="3" className="text-center py-8 text-xs text-[#71717A]">
+                      No leave requests filed
                     </td>
                   </tr>
                 ) : (
-                  recentAttendance.map((att) => (
-                    <tr key={att.id || att._id}>
-                      <td className="font-medium text-slate-700">
-                        {format(new Date(att.date), 'MMM dd, yyyy')}
+                  recentLeaves.slice(0, 5).map((leave) => (
+                    <tr key={leave.id || leave._id}>
+                      <td className="font-medium text-[#18181B] text-xs">
+                        <span className="badge badge-neutral">{leave.type}</span>
                       </td>
-                      <td className="text-slate-500">
-                        {att.workingHours != null && att.workingHours >= 0.1
-                          ? `${att.workingHours.toFixed(1)} hrs`
-                          : getWorkingHoursDisplay(att)}
+                      <td className="text-[#52525B] text-xs tabular-nums">
+                        {formatDate(leave.startDate)} – {formatDate(leave.endDate)}
                       </td>
                       <td>
                         <span
-                          className={`badge ${att.status === 'PRESENT'
+                          className={`badge ${
+                            leave.status === 'APPROVED'
                               ? 'badge-success'
-                              : att.status === 'LATE'
-                                ? 'badge-warning'
-                                : 'badge-danger'
-                            }`}
+                              : leave.status === 'REJECTED'
+                              ? 'badge-danger'
+                              : 'badge-warning'
+                          }`}
                         >
-                          {att.status}
+                          {leave.status?.toLowerCase()}
                         </span>
                       </td>
                     </tr>
@@ -366,7 +299,7 @@ const EmployeeDashboard = ({ data }) => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default EmployeeDashboard;
+export default EmployeeDashboard

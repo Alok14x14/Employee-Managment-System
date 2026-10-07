@@ -11,39 +11,42 @@ import Payslips from "./pages/Payslips"
 import Settings from "./pages/Settings"
 import PrintPayslip from "./pages/PrintPayslip"
 import LoginForm from "./components/LoginForm"
-import { useEffect } from "react"
 
 const App = () => {
-  useEffect(() => {
-    if (localStorage.getItem('darkMode') === 'true') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, []);
-
   return (
     <>
-      <Toaster />
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 3500,
+          style: {
+            background: "#FFFFFF",
+            color: "#18181B",
+            border: "1px solid #E4E4E7",
+            borderRadius: "6px",
+            fontSize: "13px",
+            padding: "10px 14px",
+            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
+          },
+        }}
+      />
       <Routes>
-        <Route path="/login" element={ <LoginLanding/> }/>
-
-      <Route path="/login/admin" element={ <LoginForm role="admin" title="Admin Portal" subtitle="Sign in to manage the organization"/> }/>
-
-      <Route path="/login/employee" element={ <LoginForm role="employee" title="Employee Portal" subtitle="Sign in to access your account"/> }/>
+        <Route path="/login" element={<LoginLanding />} />
+        <Route path="/login/admin" element={<LoginForm role="admin" />} />
+        <Route path="/login/employee" element={<LoginForm role="employee" />} />
 
         <Route element={<Layout />}>
-          <Route path="/dashboard" element={<Dashboard />}/>
-          <Route path="/employees" element={<Employees />}/>
-          <Route path="/departments" element={<Departments />}/>
-          <Route path="/attendance" element={<Attendance />}/>
-          <Route path="/leave" element={<Leave />}/>
-          <Route path="/payslips" element={<Payslips />}/>
-          <Route path="/settings" element={<Settings />}/>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/employees" element={<Employees />} />
+          <Route path="/departments" element={<Departments />} />
+          <Route path="/attendance" element={<Attendance />} />
+          <Route path="/leave" element={<Leave />} />
+          <Route path="/payslips" element={<Payslips />} />
+          <Route path="/settings" element={<Settings />} />
         </Route>
-        <Route path="/print/payslips/:id" element={ <PrintPayslip/> }/>
+        <Route path="/print/payslips/:id" element={<PrintPayslip />} />
 
-        <Route path="*" element={<Navigate to="/dashboard" replace/>}/>
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </>
   )

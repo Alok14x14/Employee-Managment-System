@@ -1,16 +1,26 @@
-
+import React from 'react'
 
 const LoginLeftSide = () => {
   return (
-    <div className="hidden md:flex w-1/2 bg-indigo-950 relative overflow-hidden border-r border-slate-200">
+    <div className="hidden md:flex w-1/2 bg-[#0A0A0B] border-r border-[#27272A] p-12 lg:p-16 flex-col justify-between text-white select-none">
+      <div className="flex items-center gap-2">
+        <span className="font-semibold text-sm tracking-tight text-white">
+          StaffFlow
+        </span>
+      </div>
 
-        <div className="absolute -top-30 -left-30 w-72 h-72 bg-indigo-500/20 rounded-full blur-3xl"></div>
-            
-        <div className="relative z-10 flex flex-col items-start justify-center p-12 lg:p-20 w-full h-full">
-            
-            <h1 className="text-4xl lg:text-5xl font-medium text-white mb-6 leading-tight tracking-tight">StaffFlow <br /></h1>
-            <p className="text-slate-400 text-lg max-w-md leading-relaxed font-mono">A Smart Employee Management System.<br /> Streamline your workforce operations, track attendance, manage payroll, and empower your team securely.</p>
-        </div>
+      <div className="max-w-[400px] space-y-3">
+        <h1 className="text-2xl font-semibold tracking-tight text-white leading-snug">
+          Workforce operations, payroll, and attendance.
+        </h1>
+        <p className="text-sm text-[#A1A1AA] leading-relaxed">
+          Centralized employee records, precise attendance tracking, and streamlined payroll distribution for technical teams.
+        </p>
+      </div>
+
+      <div className="text-xs text-[#71717A]">
+        Enterprise workforce management
+      </div>
     </div>
   )
 }

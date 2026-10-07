@@ -20,7 +20,7 @@ export function AuthProvider({children}){
         try {
             const { data } = await api.get("/auth/session")
             setUser(data.user)
-        } catch (error) {
+        } catch {
             // Token is invalid, clear it
             localStorage.removeItem("token")
             setUser(null)
@@ -55,8 +55,9 @@ export function AuthProvider({children}){
     </AuthContext.Provider>
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth(){
     const ctx = useContext(AuthContext);
     if(!ctx) throw new Error("useAuth must be used within AuthProvider");
     return ctx;
-}
+}

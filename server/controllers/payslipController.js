@@ -68,16 +68,28 @@ export const getPayslipById = async (req, res) => {
         }
         const payslip = await Payslip.findById(id).populate("employeeId").lean();
 
-        if(!payslip) return res.status(404).json({ error: "Not found" });
+        if (!payslip) return res.status(404).json({ error: "Not found" });
+
+        const session = req.session;
+        if (session.role !== "ADMIN") {
+            const employee = await Employee.findOne({ userId: session.userId });
+            if (!employee) {
+                return res.status(403).json({ error: "Unauthorized access" });
+            }
+            const payslipEmpId = (payslip.employeeId?._id || payslip.employeeId)?.toString();
+            if (payslipEmpId !== employee._id.toString()) {
+                return res.status(403).json({ error: "Forbidden: You cannot view this payslip" });
+            }
+        }
 
         const result = {
             ...payslip,
             id: payslip._id.toString(),
             employee: payslip.employeeId,
-        }
-        return res.json(result)
+        };
+        return res.json(result);
     } catch (error) {
         console.error("getPayslipById error:", error);
         return res.status(500).json({ error: error.message || "Failed" });
     }
-}
+};

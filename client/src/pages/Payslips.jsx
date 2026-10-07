@@ -34,20 +34,22 @@ const Payslips = () => {
     if(isAdmin) api.get("/employees").then((res)=> setEmployees(res.data.filter((e)=> !e.isDeleted))).catch(()=>{})
   },[isAdmin])
 
-  if(loading) return <Loading />
+  if (loading) return <Loading />;
 
   return (
-    <div className="animate-fade-in">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-zinc-200">
         <div>
-          <h1 className="page-title">Payslips</h1>
-          <p className="page-subtitle">{isAdmin ? "Generate and manage employee payslips" : "Your payslip history"}</p>
+          <h1 className="text-xl font-semibold text-zinc-900 tracking-tight">Payslips</h1>
+          <p className="text-sm text-zinc-500 mt-1">
+            {isAdmin ? "Generate, review, and issue employee compensation records." : "Review and download issued payroll records."}
+          </p>
         </div>
-        {isAdmin && <GeneratePayslipForm employees={employees} onSuccess={fetchPayslips}/>}
+        {isAdmin && <GeneratePayslipForm employees={employees} onSuccess={fetchPayslips} />}
       </div>
-      <PayslipList payslips={payslips} isAdmin={isAdmin}/>
+      <PayslipList payslips={payslips} isAdmin={isAdmin} />
     </div>
-  )
-}
+  );
+};
 
-export default Payslips
+export default Payslips;
