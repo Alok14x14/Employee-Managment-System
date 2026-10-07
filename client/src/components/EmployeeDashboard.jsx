@@ -150,11 +150,19 @@ const EmployeeDashboard = ({ data }) => {
           </div>
         </div>
 
-        {/* Today's Punch Status & Payroll Snapshot */}
-        <div className="surface-card p-5 flex flex-col justify-between">
-          <h3 className="font-semibold text-slate-800 mb-4">Today's Attendance</h3>
+        {/* Right Column: Separate Tiles for Attendance & Payslip */}
+        <div className="flex flex-col gap-6">
+          {/* Tile 1: Today's Attendance / Clock */}
+          <div className="surface-card p-5 flex flex-col justify-between flex-1">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-slate-800 flex items-center gap-2">
+                <ClockIcon className="w-4 h-4 text-indigo-600" /> Today's Attendance
+              </h3>
+              <span className="text-xs text-slate-400 font-mono">
+                {format(new Date(), 'dd MMM')}
+              </span>
+            </div>
 
-          <div className="space-y-4 my-auto">
             {todayRecord ? (
               <div className="space-y-3">
                 {todayRecord.checkOut ? (
@@ -187,7 +195,7 @@ const EmployeeDashboard = ({ data }) => {
                   </div>
                 )}
 
-                <div className="p-3 bg-slate-50 rounded-lg space-y-2 text-xs">
+                <div className="p-2.5 bg-slate-50 rounded-lg space-y-1.5 text-xs">
                   <div className="flex justify-between text-slate-500">
                     <span>Clock In:</span>
                     <span className="font-medium text-slate-800 font-mono">
@@ -230,24 +238,49 @@ const EmployeeDashboard = ({ data }) => {
                 </Link>
               </div>
             )}
+          </div>
 
-            {/* Latest Payslip Quick Action */}
-            {latestPayslip && (
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
-                <div>
-                  <span className="text-[11px] text-slate-400 block">Latest Payout</span>
-                  <span className="font-semibold text-slate-900 text-sm">
-                    ₹{latestPayslip.netSalary?.toLocaleString()}
+          {/* Tile 2: Dedicated Latest Payslip Tile */}
+          <div className="surface-card p-5 flex flex-col justify-between flex-1">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-slate-800 flex items-center gap-2">
+                <DollarSignIcon className="w-4 h-4 text-indigo-600" /> Latest Payslip
+              </h3>
+              {latestPayslip && (
+                <span className="badge bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/10">
+                  Disbursed
+                </span>
+              )}
+            </div>
+
+            {latestPayslip ? (
+              <div className="space-y-3">
+                <div className="p-3 bg-slate-50 rounded-lg flex items-center justify-between">
+                  <div>
+                    <span className="text-[11px] text-slate-400 uppercase tracking-wider block">
+                      {format(new Date(latestPayslip.year, latestPayslip.month - 1), 'MMMM yyyy')}
+                    </span>
+                    <span className="text-xl font-bold text-slate-900 font-mono mt-0.5 block">
+                      ₹{latestPayslip.netSalary?.toLocaleString()}
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-slate-500 font-medium bg-white px-2 py-1 rounded border border-slate-200">
+                    Net Pay
                   </span>
                 </div>
+
                 <a
                   href={`/print/payslips/${latestPayslip.id || latestPayslip._id}?autoprint=true`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1.5 rounded-md transition-colors"
+                  className="btn-secondary w-full inline-flex items-center justify-center gap-2 text-xs py-2 text-slate-700 hover:text-indigo-600 hover:border-indigo-200 transition-colors"
                 >
-                  <Download className="w-3.5 h-3.5" /> Statement
+                  <Download className="w-3.5 h-3.5 text-indigo-600" /> Download Payslip Statement
                 </a>
+              </div>
+            ) : (
+              <div className="p-4 rounded-lg bg-slate-50 text-center text-xs text-slate-400">
+                <p>No payslip generated yet for this period.</p>
               </div>
             )}
           </div>
