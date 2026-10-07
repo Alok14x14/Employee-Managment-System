@@ -62,7 +62,11 @@ export const getPayslips = async (req, res) => {
 // GET /api/payslips/:id
 export const getPayslipById = async (req, res) => {
     try {
-        const payslip = await Payslip.findById(req.params.id).populate("employeeId").lean();
+        const { id } = req.params;
+        if (!id || id === 'undefined') {
+            return res.status(400).json({ error: "Invalid payslip ID" });
+        }
+        const payslip = await Payslip.findById(id).populate("employeeId").lean();
 
         if(!payslip) return res.status(404).json({ error: "Not found" });
 
@@ -73,6 +77,7 @@ export const getPayslipById = async (req, res) => {
         }
         return res.json(result)
     } catch (error) {
-        return res.status(500).json({ error: "Failed" });
+        console.error("getPayslipById error:", error);
+        return res.status(500).json({ error: error.message || "Failed" });
     }
 }
