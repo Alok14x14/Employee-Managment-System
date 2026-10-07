@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react"
 import { DEPARTMENTS } from "../assets/assets"
-import { Plus, Search, X } from "lucide-react"
-import EmployeeCard from "../components/EmployeeCard"
+import { Plus, Search, X, PencilIcon, Trash2Icon } from "lucide-react"
 import EmployeeForm from "../components/EmployeeForm"
 import api from "../api/axios"
+import toast from "react-hot-toast"
 
 
 
@@ -34,6 +34,15 @@ const Employees = () => {
 
   const filtered = employees.filter((emp)=> `${emp.firstName} ${emp.lastName} ${emp.position}`.toLowerCase().includes(search.toLowerCase()))
 
+  const handleDelete = async (id)=>{
+      if(!window.confirm("Are you sure you want to delete this employee?")) return;
+      try {
+          await api.delete(`/employees/${id}`)
+          fetchEmployees()
+      } catch (err) {
+          toast.error(err.response?.data?.error || err.message);
+      }
+  }
 
   return (
     <div className="animate-fade-in">
@@ -68,12 +77,70 @@ const Employees = () => {
           <div className="animate-spin h-8 w-8 border-2 border-indigo-600 border-t-transparent rounded-full"/>
         </div>
        ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
-          {filtered.length === 0 ? (
-            <p className="col-span-full text-center py-16 text-slate-400 bg-white rounded-2xl border border-dashed border-slate-200">No employees found</p>
-          ) : (
-            filtered.map((emp)=> <EmployeeCard key={emp.id} employee={emp} onDelete={fetchEmployees} onEdit={(e)=> setEditEmployee(e)}/>)
-          )}
+        <div className="card overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="table-modern">
+              <thead>
+                <tr>
+                  <th>Employee</th>
+                  <th>Department</th>
+                  <th>Position</th>
+                  <th>Status</th>
+                  <th className="text-right pr-6">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="text-center py-16 text-slate-400">
+                      No employees found
+                    </td>
+                  </tr>
+                ) : (
+                  filtered.map((emp) => (
+                    <tr key={emp.id} className={emp.isDeleted ? 'opacity-60' : ''}>
+                      <td>
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center shrink-0">
+                            <span className="font-medium text-indigo-600">
+                              {emp.firstName[0]}{emp.lastName[0]}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="font-medium text-slate-900">{emp.firstName} {emp.lastName}</p>
+                            <p className="text-xs text-slate-500">{emp.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <span className="badge bg-slate-100 text-slate-600">{emp.department || "Remote"}</span>
+                      </td>
+                      <td className="text-slate-500">{emp.position}</td>
+                      <td>
+                        {emp.isDeleted ? (
+                          <span className="badge bg-red-100 text-red-600">Deleted</span>
+                        ) : (
+                          <span className="badge bg-emerald-100 text-emerald-600">Active</span>
+                        )}
+                      </td>
+                      <td className="text-right pr-4">
+                        {!emp.isDeleted && (
+                          <div className="flex justify-end gap-2">
+                            <button onClick={() => setEditEmployee(emp)} className="p-1.5 bg-slate-50 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
+                              <PencilIcon className="w-4 h-4"/>
+                            </button>
+                            <button onClick={() => handleDelete(emp.id)} className="p-1.5 bg-slate-50 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
+                              <Trash2Icon className="w-4 h-4"/>
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
        )}
 
