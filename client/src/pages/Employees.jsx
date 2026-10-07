@@ -12,21 +12,26 @@ const Employees = () => {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("");
   const [selectedDept, setSelectedDept] = useState("")
+  const [statusFilter, setStatusFilter] = useState("active")
   const [editEmployee, setEditEmployee] = useState(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [deleteModal, setDeleteModal] = useState({ open: false, id: null })
 
 
   const fetchEmployees = useCallback(async ()=> {
     try {
-      const url = selectedDept ? `/employees?department=${selectedDept}` : "/employees";
-      const res = await api.get(url)
+      const params = new URLSearchParams();
+      if (selectedDept) params.append("department", selectedDept);
+      if (statusFilter === "deleted") params.append("status", "deleted");
+      
+      const res = await api.get(`/employees?${params.toString()}`)
       setEmployees(res.data)
     } catch (error) {
       console.error("Failed to fetch employees");
     }finally{
       setLoading(false)
     }
-  }, [selectedDept])
+  }, [selectedDept, statusFilter])
 
   useEffect(()=>{
     fetchEmployees();
@@ -34,11 +39,12 @@ const Employees = () => {
 
   const filtered = employees.filter((emp)=> `${emp.firstName} ${emp.lastName} ${emp.position}`.toLowerCase().includes(search.toLowerCase()))
 
-  const handleDelete = async (id)=>{
-      if(!window.confirm("Are you sure you want to delete this employee?")) return;
+  const handleDelete = async ()=>{
+      if(!deleteModal.id) return;
       try {
-          await api.delete(`/employees/${id}`)
+          await api.delete(`/employees/${deleteModal.id}`)
           fetchEmployees()
+          setDeleteModal({ open: false, id: null })
       } catch (err) {
           toast.error(err.response?.data?.error || err.message);
       }
@@ -62,6 +68,10 @@ const Employees = () => {
             <Search className="absolute left-3.5 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4"/>
             <input placeholder="Search employees..." className="w-full pl-10!" onChange={(e)=>setSearch(e.target.value)} value={search}/>
           </div>
+          <select value={statusFilter} onChange={(e)=>setStatusFilter(e.target.value)} className="max-w-48">
+            <option value="active">Active Employees</option>
+            <option value="deleted">Deleted Employees</option>
+          </select>
           <select value={selectedDept} onChange={(e)=>setSelectedDept(e.target.value)} className="max-w-40">
             <option value="">All Departments</option>
             {DEPARTMENTS.map((deptName)=>(
@@ -85,20 +95,20 @@ const Employees = () => {
                   <th>Employee</th>
                   <th>Department</th>
                   <th>Position</th>
-                  <th>Status</th>
+                  <th>Attendance</th>
                   <th className="text-right pr-6">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="text-center py-16 text-slate-400">
+                    <td colSpan="6" className="text-center py-16 text-slate-400">
                       No employees found
                     </td>
                   </tr>
                 ) : (
                   filtered.map((emp) => (
-                    <tr key={emp.id} className={emp.isDeleted ? 'opacity-60' : ''}>
+                    <tr key={emp.id}>
                       <td>
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center shrink-0">
@@ -117,10 +127,10 @@ const Employees = () => {
                       </td>
                       <td className="text-slate-500">{emp.position}</td>
                       <td>
-                        {emp.isDeleted ? (
-                          <span className="badge bg-red-100 text-red-600">Deleted</span>
+                        {emp.isPresentToday ? (
+                          <span className="badge bg-emerald-50 text-emerald-600 border border-emerald-100">Present</span>
                         ) : (
-                          <span className="badge bg-emerald-100 text-emerald-600">Active</span>
+                          <span className="badge bg-rose-50 text-rose-600 border border-rose-100">Absent</span>
                         )}
                       </td>
                       <td className="text-right pr-4">
@@ -129,7 +139,7 @@ const Employees = () => {
                             <button onClick={() => setEditEmployee(emp)} className="p-1.5 bg-slate-50 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
                               <PencilIcon className="w-4 h-4"/>
                             </button>
-                            <button onClick={() => handleDelete(emp.id)} className="p-1.5 bg-slate-50 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
+                            <button onClick={() => setDeleteModal({ open: true, id: emp.id })} className="p-1.5 bg-slate-50 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors">
                               <Trash2Icon className="w-4 h-4"/>
                             </button>
                           </div>
@@ -196,6 +206,33 @@ const Employees = () => {
         </div>
        )}
 
+       {/* Delete Confirmation Modal */}
+       {deleteModal.open && (
+        <div className="fixed bg-black/40 backdrop-blur-sm inset-0 z-50 flex items-center justify-center p-4" onClick={() => setDeleteModal({ open: false, id: null })}>
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm animate-fade-in" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-6 pb-0">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">Delete Employee</h2>
+                <p className="text-sm text-slate-500 mt-0.5">This action cannot be undone.</p>
+              </div>
+              <button onClick={() => setDeleteModal({ open: false, id: null })} className="p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-400 hover:text-slate-600">
+                <X className="w-5 h-5"/>
+              </button>
+            </div>
+            <div className="p-6">
+              <p className="text-slate-600 mb-6 text-sm">Are you sure you want to delete this employee account? They will lose access to the portal immediately.</p>
+              <div className="flex gap-3">
+                <button onClick={() => setDeleteModal({ open: false, id: null })} className="btn-secondary flex-1">
+                  Cancel
+                </button>
+                <button onClick={handleDelete} className="btn-primary flex-1 flex justify-center from-rose-600 to-rose-500 hover:from-rose-700 hover:to-rose-600 shadow-rose-500/25">
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+       )}
 
     </div>
   )

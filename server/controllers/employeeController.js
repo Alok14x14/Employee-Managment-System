@@ -2,21 +2,41 @@ import Employee from "../models/Employee.js";
 import bcrypt from "bcrypt";
 import User from "../models/User.js";
 import { sendWelcomeEmail } from "../utils/emailService.js";
+import Attendance from "../models/Attendance.js";
 
 // Get employees
 // GET /api/employees
 export const getEmployees = async (req, res)=>{
     try {
-        const { department } = req.query;
-        const where = {isDeleted: { $ne: true }};
+        const { department, status } = req.query;
+        const where = {};
+        if (status === 'deleted') {
+            where.isDeleted = true;
+        } else {
+            where.isDeleted = { $ne: true };
+        }
+        
         if(department) where.department = department;
 
         const employees = await Employee.find(where).sort({createdAt: -1}).populate("userId", "email role").lean();
 
+        // Get today's attendances
+        const startOfDay = new Date(new Date().setHours(0,0,0,0));
+        const endOfDay = new Date(new Date().setHours(24,0,0,0));
+        const todayAttendances = await Attendance.find({
+            date: { $gte: startOfDay, $lt: endOfDay }
+        }).lean();
+
+        const attendanceMap = todayAttendances.reduce((acc, curr) => {
+            acc[curr.employeeId.toString()] = curr;
+            return acc;
+        }, {});
+
         const result = employees.map((emp)=>({
             ...emp,
             id: emp._id.toString(),
-            user: emp.userId ? {email: emp.userId.email, role: emp.userId.role} : null
+            user: emp.userId ? {email: emp.userId.email, role: emp.userId.role} : null,
+            isPresentToday: !!attendanceMap[emp._id.toString()]
         }))
         return res.json(result)
     } catch (error) {
