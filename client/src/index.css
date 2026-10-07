@@ -1,55 +1,79 @@
-@import url("https://fonts.googleapis.com/css2?family=Fira+Code:wght@300..700&family=Outfit:wght@100..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300..800&family=Fraunces:opsz,wght@9..144,300..900&display=swap");
 @import "tailwindcss";
 
-* {
-    font-family: "Outfit", "Inter";
+@theme {
+    --color-indigo-50: #f0fdfa;
+    --color-indigo-100: #ccfbf1;
+    --color-indigo-200: #99f6e4;
+    --color-indigo-300: #5eead4;
+    --color-indigo-400: #2dd4bf;
+    --color-indigo-500: #14b8a6;
+    --color-indigo-600: #0d9488;
+    --color-indigo-700: #0f766e;
+    --color-indigo-900: #134e4a;
+    --color-indigo-950: #042f2e;
+
+    --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+    --font-display: "Fraunces", serif;
+}
+
+body {
+    font-family: var(--font-sans);
+}
+
+.page-title,
+.login-heading {
+    font-family: var(--font-display);
 }
 
 @layer utilities {
+
     /* Card styles */
-    .card {
+    .surface-card {
         @apply bg-white rounded-lg border border-slate-200/70;
     }
+
     .card-hover {
         @apply hover:-translate-y-0.5 transition-all duration-300;
     }
 
     /* Button styles */
     .btn-primary {
-        @apply bg-linear-to-r from-indigo-600 to-indigo-500 text-white px-5 py-2.5 rounded-md text-sm
-            hover:from-indigo-700 hover:to-indigo-600 transition-all duration-200 shadow-md shadow-indigo-500/25
-            active:scale-[0.98];
+        @apply bg-linear-to-r from-indigo-600 to-indigo-500 text-white px-5 py-2.5 rounded-md text-sm hover:from-indigo-700 hover:to-indigo-600 transition-all duration-200 shadow-md shadow-indigo-500/25 active:scale-[0.98];
     }
+
     .btn-secondary {
-        @apply bg-white text-slate-700 border border-slate-200 px-5 py-2.5 rounded-md text-sm
-            hover:bg-slate-50 hover:border-slate-300 transition-all duration-200;
+        @apply bg-white text-slate-700 border border-slate-200 px-5 py-2.5 rounded-md text-sm hover:bg-slate-50 hover:border-slate-300 transition-all duration-200;
     }
 
     /* Input, Select, Textarea styles */
     input,
     select,
     textarea {
-        @apply w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-md
-            focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400
-            transition-all duration-200 text-sm placeholder:text-slate-400;
+        @apply w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-all duration-200 text-sm placeholder:text-slate-400;
     }
 
     /* Table styles */
     .data-table {
         @apply w-full text-left text-sm;
     }
+
     .data-table thead {
         @apply text-xs font-semibold text-slate-500 uppercase tracking-wider;
     }
+
     .data-table thead th {
         @apply px-6 py-4 bg-slate-50/80;
     }
+
     .data-table tbody {
         @apply divide-y divide-slate-100;
     }
+
     .data-table tbody tr {
         @apply hover:bg-slate-50/50 transition-colors duration-150;
     }
+
     .data-table tbody td {
         @apply px-6 py-4;
     }
@@ -58,12 +82,15 @@
     .badge {
         @apply inline-flex items-center px-2.5 py-1 rounded-md text-xs;
     }
+
     .badge-success {
         @apply bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/10;
     }
+
     .badge-warning {
         @apply bg-amber-50 text-amber-700 ring-1 ring-amber-600/10;
     }
+
     .badge-danger {
         @apply bg-rose-50 text-rose-700 ring-1 ring-rose-600/10;
     }
@@ -72,9 +99,11 @@
     .page-header {
         @apply mb-8;
     }
+
     .page-title {
         @apply text-2xl font-medium text-slate-900 tracking-tight;
     }
+
     .page-subtitle {
         @apply text-slate-500 text-sm mt-1;
     }
@@ -83,6 +112,7 @@
     .animate-fade-in {
         animation: fadeIn 0.4s ease-out;
     }
+
     .animate-slide-up {
         animation: slideUp 0.4s ease-out;
     }
@@ -92,6 +122,7 @@
     from {
         opacity: 0;
     }
+
     to {
         opacity: 1;
     }
@@ -102,6 +133,7 @@
         opacity: 0;
         transform: translateY(12px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -112,12 +144,15 @@
 ::-webkit-scrollbar {
     width: 6px;
 }
+
 ::-webkit-scrollbar-track {
     @apply bg-transparent;
 }
+
 ::-webkit-scrollbar-thumb {
     @apply bg-slate-300 rounded-full;
 }
+
 ::-webkit-scrollbar-thumb:hover {
     @apply bg-slate-400;
 }
