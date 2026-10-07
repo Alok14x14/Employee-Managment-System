@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import {Link, useLocation} from 'react-router-dom'
-import {CalendarIcon, ChevronRightIcon, DollarSignIcon, FileTextIcon, LayoutGridIcon, Loader2, LogOutIcon, MenuIcon, SettingsIcon, UserIcon, XIcon} from 'lucide-react'
+import {CalendarIcon, ChevronRightIcon, DollarSignIcon, FileTextIcon, LayoutGridIcon, Loader2, LogOutIcon, MenuIcon, SettingsIcon, UserIcon, XIcon, Building2Icon} from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import api from '../api/axios'
 
@@ -25,9 +25,12 @@ const Sidebar = () => {
     const role = user?.role;
     const navItems = [
         {name: "Dashboard", href: "/dashboard", icon: LayoutGridIcon},
-        role === "ADMIN" ? 
-        {name: "Employees", href: "/employees", icon: UserIcon} :
-        {name: "Attendance", href: "/attendance", icon: CalendarIcon},
+        ...(role === "ADMIN" ? [
+            {name: "Employees", href: "/employees", icon: UserIcon},
+            {name: "Departments", href: "/departments", icon: Building2Icon}
+        ] : [
+            {name: "Attendance", href: "/attendance", icon: CalendarIcon}
+        ]),
         {name: "Leave", href: "/leave", icon: FileTextIcon},
         {name: "Payslips", href: "/payslips", icon: DollarSignIcon},
         {name: "Settings", href: "/settings", icon: SettingsIcon},

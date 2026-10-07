@@ -1,6 +1,7 @@
 import { Building2Icon, CalendarIcon, FileTextIcon, UsersIcon } from 'lucide-react'
 import React from 'react'
 import { format } from 'date-fns'
+import { Link } from 'react-router-dom'
 
 const AdminDashboard = ({ data }) => {
     const stats = [
@@ -9,12 +10,14 @@ const AdminDashboard = ({ data }) => {
             value: data.totalEmployees,
             label: "Total Employees",
             description: "Active workforce",
+            link: "/employees"
         },
         {
             icon: Building2Icon,
             value: data.totalDepartments,
             label: "Departments",
             description: "Organization units",
+            link: "/departments"
         },
         {
             icon: CalendarIcon,
@@ -27,6 +30,7 @@ const AdminDashboard = ({ data }) => {
             value: data.pendingLeaves,
             label: "Pending Leaves",
             description: "Awaiting approval",
+            link: "/leave"
         },
     ]
   return (
@@ -40,14 +44,14 @@ const AdminDashboard = ({ data }) => {
 
         <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mb-8'>
             {stats.map((s)=>(
-                <div key={s.label} className='card card-hover p-5 sm:p-6 relative overflow-hidden group flex items-center justify-between'>
+                <Link to={s.link} key={s.label} className='card card-hover p-5 sm:p-6 relative overflow-hidden group flex items-center justify-between cursor-pointer'>
                     <div>
                         <div className="absolute left-0 top-0 bottom-0 w-1 rounded-r-full bg-slate-500/70 group-hover:bg-indigo-500/70"/>
                         <p className='text-sm font-medium text-slate-700'>{s.label}</p>
                         <p className='text-2xl font-bold text-slate-900 mt-1'>{s.value}</p>
                     </div>
                     <s.icon className='size-10 p-2.5 rounded-lg bg-slate-100  text-slate-600 group-hover:bg-indigo-50  group-hover:text-indigo-600 transition-colors duration-200'/>
-                </div>
+                </Link>
             ))}
         </div>   
 
