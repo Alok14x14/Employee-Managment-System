@@ -36,7 +36,7 @@ const EmployeeForm = ({initialData, onSuccess, onCancel}) => {
     <form onSubmit={handleSubmit} className="space-y-6 max-w-3xl animate-fade-in">
 
         {/* Personal Information */}
-        <div className="card p-5 sm:p-6">
+        <div className="surface-card p-5 sm:p-6">
             <h3 className="font-medium mb-6 pb-4 border-b border-slate-100">Personal Information</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 text-sm text-slate-700">
                 <div>
@@ -64,7 +64,7 @@ const EmployeeForm = ({initialData, onSuccess, onCancel}) => {
         </div>
 
         {/* Employment Details */}
-        <div className="card p-5 sm:p-6">
+        <div className="surface-card p-5 sm:p-6">
             <h3 className="text-base font-medium text-slate-900 mb-6 pb-4 border-b border-slate-100">Employment Details</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 text-sm text-slate-700">
                 <div>
@@ -107,7 +107,7 @@ const EmployeeForm = ({initialData, onSuccess, onCancel}) => {
         </div>
 
         {/* Account Setup */}
-         <div className="card p-5 sm:p-6">
+         <div className="surface-card p-5 sm:p-6">
             <h3 className="text-base font-medium text-slate-900 mb-6 pb-4 border-b border-slate-100">Account Setup</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 text-sm text-slate-700">
                 <div className="sm:col-span-2">

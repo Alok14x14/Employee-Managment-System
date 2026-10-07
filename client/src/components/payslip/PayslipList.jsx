@@ -4,9 +4,9 @@ import React from 'react'
 
 const PayslipList = ({payslips, isAdmin}) => {
   return (
-    <div className='card overflow-hidden'>
+    <div className='surface-card overflow-hidden'>
         <div className="overflow-x-auto">
-            <table className="table-modern">
+            <table className="data-table">
                 <thead>
                     <tr>
                         {isAdmin && <th>Employee</th>}
@@ -38,11 +38,11 @@ const PayslipList = ({payslips, isAdmin}) => {
                                     </td>
 
                                     <td className='text-slate-500'>
-                                        ${payslip.basicSalary?.toLocaleString()}
+                                        ₹{payslip.basicSalary?.toLocaleString()}
                                     </td>
 
                                     <td className='font-medium text-slate-800'>
-                                        ${payslip.netSalary?.toLocaleString()}
+                                        ₹{payslip.netSalary?.toLocaleString()}
                                     </td>
 
                                     <td className='text-center'>

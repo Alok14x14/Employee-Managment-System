@@ -20,7 +20,7 @@ const EmployeeDashboard = ({data}) => {
         },
         {
             icon: DollarSignIcon,
-            value: data.latestPayslip ? `$${data.latestPayslip.netSalary?.toLocaleString()}` : "N/A",
+            value: data.latestPayslip ? `₹${data.latestPayslip.netSalary?.toLocaleString()}` : "N/A",
             title: "Latest Payslip",
             subtitle: "Most recent payout",
         },
@@ -37,7 +37,7 @@ const EmployeeDashboard = ({data}) => {
 
         <div className='grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5 mb-8'>
             {cards.map((card, index)=>(
-                <div key={index} className='card card-hover p-5 sm:p-6 relative overflow-hidden group flex items-center justify-between'>
+                <div key={index} className='surface-card card-hover p-5 sm:p-6 relative overflow-hidden group flex items-center justify-between'>
                     <div>
                         <div className="absolute left-0 top-0 bottom-0 w-1 rounded-r-full bg-slate-500/70 group-hover:bg-indigo-500/70"/>
                         <p className='text-sm font-medium text-slate-700'>{card.title}</p>

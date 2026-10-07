@@ -43,7 +43,7 @@ const Settings = () => {
       {profile && <ProfileForm initialData={profile} onSuccess={fetchProfile}/>}
 
        {/* Change Password trigger */}
-       <div className="card max-w-md p-6 flex items-center justify-between">
+       <div className="surface-card max-w-md p-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-slate-100 rounded-lg">
               <Lock className="w-5 h-5 text-slate-600" />

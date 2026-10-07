@@ -32,9 +32,9 @@ const LeaveHistory = ({leaves, isAdmin, onUpdate}) => {
         setRejectModal({ open: false, leaveId: null, reason: "" });
     }
   return (
-     <div className='card overflow-hidden'>
+     <div className='surface-card overflow-hidden'>
             <div className="overflow-x-auto">
-                <table className="table-modern">
+                <table className="data-table">
                     <thead>
                         <tr>
                             {isAdmin && <th>Employee</th>}

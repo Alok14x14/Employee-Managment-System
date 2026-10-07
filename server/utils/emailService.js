@@ -57,7 +57,7 @@ export const sendCheckOutReminderEmail = async (email, firstName, department, ch
                     <p style="font-size: 16px;">If you have any questions, please contact your admin.</p>
                     <br />
                     <p style="font-size: 16px;">Best Regards,</p>
-                    <p style="font-size: 16px;">EMS</p>
+                    <p style="font-size: 16px;"><strong>The StaffFlow Team</strong></p>
                 </div>`;
     return sendEmail({ to: email, subject, body });
 };
@@ -71,7 +71,7 @@ export const sendLeaveApplicationAdminReminder = async (adminEmail, department, 
                 <p style="font-size: 16px;">Please make sure to take action on this leave application.</p>
                 <br />
                 <p style="font-size: 16px;">Best Regards,</p>
-                <p style="font-size: 16px;">EMS</p>
+                <p style="font-size: 16px;"><strong>The StaffFlow Team</strong></p>
             </div>`;
     return sendEmail({ to: adminEmail, subject, body });
 };
@@ -87,7 +87,7 @@ export const sendAttendanceReminderEmail = async (email, firstName, department) 
                     <p style="font-size: 14px; color: #666;">Department: ${department}</p>
                     <br />
                     <p style="font-size: 16px;">Best Regards,</p>
-                    <p style="font-size: 16px;"><strong>QuickEMS</strong></p>
+                    <p style="font-size: 16px;"><strong>The StaffFlow Team</strong></p>
                 </div>`;
     return sendEmail({ to: email, subject, body });
 };

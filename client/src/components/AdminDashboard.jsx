@@ -44,7 +44,7 @@ const AdminDashboard = ({ data }) => {
 
         <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 mb-8'>
             {stats.map((s)=>(
-                <Link to={s.link} key={s.label} className='card card-hover p-5 sm:p-6 relative overflow-hidden group flex items-center justify-between cursor-pointer'>
+                <Link to={s.link} key={s.label} className='surface-card card-hover p-5 sm:p-6 relative overflow-hidden group flex items-center justify-between cursor-pointer'>
                     <div>
                         <div className="absolute left-0 top-0 bottom-0 w-1 rounded-r-full bg-slate-500/70 group-hover:bg-indigo-500/70"/>
                         <p className='text-sm font-medium text-slate-700'>{s.label}</p>
@@ -58,12 +58,12 @@ const AdminDashboard = ({ data }) => {
         {/* Recent Activity Sections */}
         <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
             {/* Recent Leaves */}
-            <div className='card overflow-hidden'>
+            <div className='surface-card overflow-hidden'>
                 <div className='p-5 border-b border-slate-100 flex items-center justify-between'>
                     <h3 className='font-semibold text-slate-800'>Recent Leave Requests</h3>
                 </div>
                 <div className='overflow-x-auto'>
-                    <table className='table-modern'>
+                    <table className='data-table'>
                         <thead>
                             <tr>
                                 <th>Employee</th>
@@ -97,12 +97,12 @@ const AdminDashboard = ({ data }) => {
             </div>
 
             {/* Recent Employees */}
-            <div className='card overflow-hidden'>
+            <div className='surface-card overflow-hidden'>
                 <div className='p-5 border-b border-slate-100 flex items-center justify-between'>
                     <h3 className='font-semibold text-slate-800'>New Employees</h3>
                 </div>
                 <div className='overflow-x-auto'>
-                    <table className='table-modern'>
+                    <table className='data-table'>
                         <thead>
                             <tr>
                                 <th>Name</th>

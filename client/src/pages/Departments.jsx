@@ -39,7 +39,7 @@ const Departments = () => {
 
             <div className="space-y-4">
                 {departments.map(dept => (
-                    <div key={dept} className="card overflow-hidden">
+                    <div key={dept} className="surface-card overflow-hidden">
                         <div 
                             className="p-5 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition-colors"
                             onClick={() => setExpandedDept(expandedDept === dept ? null : dept)}
@@ -64,7 +64,7 @@ const Departments = () => {
                         {expandedDept === dept && (
                             <div className="border-t border-slate-100 bg-slate-50/50 p-5">
                                 <div className="overflow-x-auto">
-                                    <table className="table-modern bg-white shadow-sm rounded-lg">
+                                    <table className="data-table bg-white shadow-sm rounded-lg">
                                         <thead>
                                             <tr>
                                                 <th>Name</th>

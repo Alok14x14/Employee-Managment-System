@@ -87,9 +87,9 @@ const Employees = () => {
           <div className="animate-spin h-8 w-8 border-2 border-indigo-600 border-t-transparent rounded-full"/>
         </div>
        ) : (
-        <div className="card overflow-hidden">
+        <div className="surface-card overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="table-modern">
+            <table className="data-table">
               <thead>
                 <tr>
                   <th>Employee</th>

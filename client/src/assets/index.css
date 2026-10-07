@@ -35,22 +35,22 @@
     }
 
     /* Table styles */
-    .table-modern {
+    .data-table {
         @apply w-full text-left text-sm;
     }
-    .table-modern thead {
+    .data-table thead {
         @apply text-xs font-semibold text-slate-500 uppercase tracking-wider;
     }
-    .table-modern thead th {
+    .data-table thead th {
         @apply px-6 py-4 bg-slate-50/80;
     }
-    .table-modern tbody {
+    .data-table tbody {
         @apply divide-y divide-slate-100;
     }
-    .table-modern tbody tr {
+    .data-table tbody tr {
         @apply hover:bg-slate-50/50 transition-colors duration-150;
     }
-    .table-modern tbody td {
+    .data-table tbody td {
         @apply px-6 py-4;
     }
 
