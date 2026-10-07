@@ -44,7 +44,7 @@ const autoCheckOut = inngest.createFunction(
 
         attendance = await Attendance.findById(attendanceId)
         if(!attendance?.checkOut){
-            attendance.checkOut = new Date(attendance.checkIn).getTime() + 4 * 60 * 60 * 1000;
+            attendance.checkOut = new Date(new Date(attendance.checkIn).getTime() + 4 * 60 * 60 * 1000);
             attendance.workingHours = 4;
             attendance.dayType = "Half Day";
             attendance.status = "LATE";

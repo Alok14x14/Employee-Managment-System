@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react"
-import {dummyProfileData} from "../assets/assets"
+import { useEffect, useState, useCallback } from "react"
 import Loading from "../components/Loading"
 import { Lock } from "lucide-react"
 import ProfileForm from "../components/ProfileForm"
@@ -16,7 +15,7 @@ const Settings = () => {
   const [loading, setLoading] = useState(true)
   const [showPasswordModal, setShowPasswordModal] = useState(false)
 
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
    try {
     const res = await api.get("/profile")
     const profile = res.data;
@@ -26,11 +25,11 @@ const Settings = () => {
    }finally{
     setLoading(false)
    }
-  }
+  }, [])
 
   useEffect(()=>{
     fetchProfile()
-  },[user])
+  },[user, fetchProfile])
 
   if(loading) return <Loading />
 

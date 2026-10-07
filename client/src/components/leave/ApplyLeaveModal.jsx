@@ -24,6 +24,8 @@ const ApplyLeaveModal = ({open, onClose, onSuccess}) => {
             onClose();
         } catch (err) {
             toast.error(err.response?.data?.error || err?.message)
+        } finally {
+            setLoading(false)
         }
     }
 

@@ -1,19 +1,22 @@
 import { useEffect, useState } from 'react';
-import {useParams} from 'react-router-dom'
-import { dummyPayslipData } from '../assets/assets';
+import {useParams, Navigate} from 'react-router-dom'
 import Loading from '../components/Loading';
 import {format} from 'date-fns'
 import api from '../api/axios';
+import { useAuth } from '../context/AuthContext';
 
 const PrintPayslip = () => {
   const {id} = useParams();
   const [payslip, setPayslip] = useState(null)
   const [loading, setLoading] = useState(true)
 
+  const { user } = useAuth();
+
   useEffect(()=>{
     api.get(`/payslips/${id}`).then((res)=> setPayslip(res.data)).catch(console.error).finally(()=> setLoading(false))
   },[id])
 
+  if(!user) return <Navigate to="/login" replace />
   if(loading) return <Loading />
   if(!payslip) return <p className='text-center py-12 text-slate-400'>Payslip not found</p>
 

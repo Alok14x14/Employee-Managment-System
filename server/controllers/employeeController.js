@@ -7,7 +7,7 @@ import User from "../models/User.js";
 export const getEmployees = async (req, res)=>{
     try {
         const { department } = req.query;
-        const where = {};
+        const where = {isDeleted: { $ne: true }};
         if(department) where.department = department;
 
         const employees = await Employee.find(where).sort({createdAt: -1}).populate("userId", "email role").lean();
