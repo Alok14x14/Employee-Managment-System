@@ -10,7 +10,7 @@ export const getDashboard  = async (req, res) => {
     try {
         const session = req.session;
         if(session.role === "ADMIN"){
-            const [totalEmployees, todayAttendance, pendingLeaves] = await Promise.all([
+            const [totalEmployees, todayAttendance, pendingLeaves, recentLeaves, recentEmployees] = await Promise.all([
                 Employee.countDocuments({isDeleted: { $ne: true }}),
                 Attendance.countDocuments({
                     date: {
@@ -18,15 +18,32 @@ export const getDashboard  = async (req, res) => {
                         $lt: new Date(new Date().setHours(24,0,0,0)),
                     }
                 }),
-                LeaveApplication.countDocuments({status: "PENDING" })
+                LeaveApplication.countDocuments({status: "PENDING" }),
+                LeaveApplication.find().populate("employeeId", "firstName lastName department").sort({createdAt: -1}).limit(5).lean(),
+                Employee.find({isDeleted: { $ne: true }}).sort({createdAt: -1}).limit(5).lean()
             ])
+
+            // Map the IDs for the frontend
+            const formattedRecentLeaves = recentLeaves.map(leave => ({
+                ...leave,
+                id: leave._id.toString(),
+                employee: leave.employeeId,
+                employeeId: leave.employeeId?._id?.toString()
+            }));
+            
+            const formattedRecentEmployees = recentEmployees.map(emp => ({
+                ...emp,
+                id: emp._id.toString()
+            }));
 
             return res.json({
                 role: "ADMIN",
                 totalEmployees,
                 totalDepartments: DEPARTMENTS.length,
                 todayAttendance,
-                pendingLeaves
+                pendingLeaves,
+                recentLeaves: formattedRecentLeaves,
+                recentEmployees: formattedRecentEmployees
             })
 
         }else{

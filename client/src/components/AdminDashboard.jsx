@@ -1,5 +1,6 @@
 import { Building2Icon, CalendarIcon, FileTextIcon, UsersIcon } from 'lucide-react'
 import React from 'react'
+import { format } from 'date-fns'
 
 const AdminDashboard = ({ data }) => {
     const stats = [
@@ -50,6 +51,84 @@ const AdminDashboard = ({ data }) => {
             ))}
         </div>   
 
+        {/* Recent Activity Sections */}
+        <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+            {/* Recent Leaves */}
+            <div className='card overflow-hidden'>
+                <div className='p-5 border-b border-slate-100 flex items-center justify-between'>
+                    <h3 className='font-semibold text-slate-800'>Recent Leave Requests</h3>
+                </div>
+                <div className='overflow-x-auto'>
+                    <table className='table-modern'>
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {data.recentLeaves?.length === 0 ? (
+                                <tr>
+                                    <td colSpan="3" className="text-center py-6 text-slate-400">No recent leaves</td>
+                                </tr>
+                            ) : (
+                                data.recentLeaves?.map(leave => (
+                                    <tr key={leave.id}>
+                                        <td className="font-medium text-slate-700">
+                                            {leave.employee?.firstName} {leave.employee?.lastName}
+                                        </td>
+                                        <td><span className='badge bg-slate-100 text-slate-600'>{leave.type}</span></td>
+                                        <td>
+                                            <span className={`badge ${leave.status === "APPROVED" ? "badge-success" : leave.status === "REJECTED" ? "badge-danger" : "badge-warning"}`}>
+                                                {leave.status}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {/* Recent Employees */}
+            <div className='card overflow-hidden'>
+                <div className='p-5 border-b border-slate-100 flex items-center justify-between'>
+                    <h3 className='font-semibold text-slate-800'>New Employees</h3>
+                </div>
+                <div className='overflow-x-auto'>
+                    <table className='table-modern'>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Department</th>
+                                <th>Joined</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {data.recentEmployees?.length === 0 ? (
+                                <tr>
+                                    <td colSpan="3" className="text-center py-6 text-slate-400">No recent employees</td>
+                                </tr>
+                            ) : (
+                                data.recentEmployees?.map(emp => (
+                                    <tr key={emp.id}>
+                                        <td className="font-medium text-slate-700">
+                                            {emp.firstName} {emp.lastName}
+                                        </td>
+                                        <td className="text-slate-500">{emp.department}</td>
+                                        <td className="text-slate-500">
+                                            {emp.joinDate ? format(new Date(emp.joinDate), "MMM dd, yyyy") : "N/A"}
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
   )
 }
