@@ -1,6 +1,7 @@
 import { inngest } from "../inngest/index.js";
 import Employee from "../models/Employee.js";
 import LeaveApplication from "../models/LeaveApplication.js";
+import { sendLeaveStatusEmail } from "../utils/emailService.js";
 
 // Create leave
 // POST /api/leaves
@@ -95,11 +96,36 @@ export const getLeaves = async (req, res) => {
 // PATCH /api/leaves/:id
 export const updateLeaveStatus = async (req, res) => {
     try {
-        const { status } = req.body;
+        const { status, rejectReason } = req.body;
         if(!["APPROVED", "REJECTED", "PENDING"].includes(status)){
             return res.status(400).json({ error: "Invalid status" });
         }
-        const leave = await LeaveApplication.findByIdAndUpdate(req.params.id, {status}, {returnDocument: "after"})
+        if (status === "REJECTED" && !rejectReason) {
+            return res.status(400).json({ error: "Rejection reason is required" });
+        }
+        
+        const updateData = { status };
+        if (status === "REJECTED") updateData.rejectReason = rejectReason;
+
+        const leave = await LeaveApplication.findByIdAndUpdate(req.params.id, updateData, {returnDocument: "after"})
+        
+        // Send email notification for approved/rejected leaves
+        if (leave && ["APPROVED", "REJECTED"].includes(status)) {
+            const employee = await Employee.findById(leave.employeeId);
+            if (employee && employee.email) {
+                sendLeaveStatusEmail(
+                    employee.email, 
+                    employee.firstName, 
+                    status, 
+                    leave.type, 
+                    leave.startDate, 
+                    leave.endDate, 
+                    leave.reason,
+                    leave.rejectReason
+                ).catch(err => console.error("Failed to send leave status email:", err));
+            }
+        }
+
         return res.json({success: true, data: leave})
     } catch (error) {
         return res.status(500).json({ error: "Failed" });

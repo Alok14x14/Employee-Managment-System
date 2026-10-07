@@ -1,6 +1,7 @@
 import Employee from "../models/Employee.js";
 import bcrypt from "bcrypt";
 import User from "../models/User.js";
+import { sendWelcomeEmail } from "../utils/emailService.js";
 
 // Get employees
 // GET /api/employees
@@ -55,6 +56,10 @@ export const createEmployee = async (req, res)=>{
             joinDate: new Date(joinDate),
             bio: bio || "",
         })
+
+        // Send welcome email
+        sendWelcomeEmail(email, firstName, joinDate)
+            .catch(err => console.error("Failed to send welcome email:", err));
 
         return res.status(201).json({success: true, employee})
     } catch (error) {
