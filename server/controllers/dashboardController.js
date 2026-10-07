@@ -10,7 +10,7 @@ export const getDashboard  = async (req, res) => {
     try {
         const session = req.session;
         if(session.role === "ADMIN"){
-            const [totalEmployees, todayAttendance, pendingLeaves, recentLeaves, recentEmployees] = await Promise.all([
+            const [totalEmployees, todayAttendance, pendingLeaves, recentLeaves, recentEmployees, deptHeadcount, leaveDistribution] = await Promise.all([
                 Employee.countDocuments({isDeleted: { $ne: true }}),
                 Attendance.countDocuments({
                     date: {
@@ -20,8 +20,39 @@ export const getDashboard  = async (req, res) => {
                 }),
                 LeaveApplication.countDocuments({status: "PENDING" }),
                 LeaveApplication.find().populate("employeeId", "firstName lastName department").sort({createdAt: -1}).limit(5).lean(),
-                Employee.find({isDeleted: { $ne: true }}).sort({createdAt: -1}).limit(5).lean()
+                Employee.find({isDeleted: { $ne: true }}).sort({createdAt: -1}).limit(5).lean(),
+                Employee.aggregate([
+                    { $match: { isDeleted: { $ne: true } } },
+                    { $group: { _id: "$department", headcount: { $sum: 1 } } },
+                    { $project: { name: "$_id", headcount: 1, _id: 0 } }
+                ]),
+                LeaveApplication.aggregate([
+                    { $group: { _id: "$type", value: { $sum: 1 } } },
+                    { $project: { name: "$_id", value: 1, _id: 0 } }
+                ])
             ])
+
+            // Calculate past 5 days attendance trend
+            const past5Days = Array.from({length: 5}, (_, i) => {
+                const d = new Date();
+                d.setDate(d.getDate() - (4 - i));
+                d.setHours(0,0,0,0);
+                return d;
+            });
+
+            const attendancePromises = past5Days.map(async (day) => {
+                const nextDay = new Date(day);
+                nextDay.setDate(day.getDate() + 1);
+                const present = await Attendance.countDocuments({
+                    date: { $gte: day, $lt: nextDay }
+                });
+                return {
+                    name: day.toLocaleDateString('en-US', { weekday: 'short' }),
+                    present,
+                    absent: Math.max(0, totalEmployees - present)
+                };
+            });
+            const attendanceData = await Promise.all(attendancePromises);
 
             // Map the IDs for the frontend
             const formattedRecentLeaves = recentLeaves.map(leave => ({
@@ -43,7 +74,10 @@ export const getDashboard  = async (req, res) => {
                 todayAttendance,
                 pendingLeaves,
                 recentLeaves: formattedRecentLeaves,
-                recentEmployees: formattedRecentEmployees
+                recentEmployees: formattedRecentEmployees,
+                deptData: deptHeadcount,
+                leaveData: leaveDistribution,
+                attendanceData
             })
 
         }else{

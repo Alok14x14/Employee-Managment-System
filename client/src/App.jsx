@@ -11,8 +11,17 @@ import Payslips from "./pages/Payslips"
 import Settings from "./pages/Settings"
 import PrintPayslip from "./pages/PrintPayslip"
 import LoginForm from "./components/LoginForm"
+import { useEffect } from "react"
 
 const App = () => {
+  useEffect(() => {
+    if (localStorage.getItem('darkMode') === 'true') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
   return (
     <>
       <Toaster />
