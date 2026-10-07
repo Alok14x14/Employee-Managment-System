@@ -87,28 +87,80 @@ export const getDashboard  = async (req, res) => {
             if (!employee) return res.status(404).json({ error: "Employee not found" });
 
             const today = new Date();
-            const [currentMonthAttendance, pendingLeaves, latestPayslip] = await Promise.all([
+            today.setHours(0, 0, 0, 0);
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+
+            const [currentMonthAttendance, pendingLeaves, approvedLeaves, latestPayslip, todayRecord, recentAttendance, recentLeaves] = await Promise.all([
                 Attendance.countDocuments({
                     employeeId: employee._id,
                     date: {
                         $gte: new Date(today.getFullYear(), today.getMonth(), 1),
                         $lt: new Date(today.getFullYear(), today.getMonth() + 1, 1),
-                       
                     }
                 }),
                 LeaveApplication.countDocuments({
                     employeeId: employee._id,
                     status: "PENDING",
                 }),
+                LeaveApplication.countDocuments({
+                    employeeId: employee._id,
+                    status: "APPROVED",
+                }),
                 Payslip.findOne({ employeeId: employee._id }).sort({ createdAt: -1 }).lean(),
-            ])
+                Attendance.findOne({
+                    employeeId: employee._id,
+                    date: { $gte: today, $lt: tomorrow }
+                }).lean(),
+                Attendance.find({ employeeId: employee._id }).sort({ date: -1 }).limit(5).lean(),
+                LeaveApplication.find({ employeeId: employee._id }).sort({ createdAt: -1 }).limit(5).lean(),
+            ]);
+
+            // Calculate past 7 days logged hours for employee
+            const past7Days = Array.from({ length: 7 }, (_, i) => {
+                const d = new Date();
+                d.setDate(d.getDate() - (6 - i));
+                d.setHours(0, 0, 0, 0);
+                return d;
+            });
+
+            const weeklyAttendancePromises = past7Days.map(async (day) => {
+                const nextDay = new Date(day);
+                nextDay.setDate(day.getDate() + 1);
+                const record = await Attendance.findOne({
+                    employeeId: employee._id,
+                    date: { $gte: day, $lt: nextDay }
+                }).lean();
+                return {
+                    day: day.toLocaleDateString('en-US', { weekday: 'short' }),
+                    date: day.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                    hours: record && record.workingHours ? Number(record.workingHours.toFixed(1)) : 0,
+                    status: record ? record.status : 'ABSENT',
+                };
+            });
+            const weeklyHours = await Promise.all(weeklyAttendancePromises);
+
+            const formattedAttendance = recentAttendance.map(a => ({
+                ...a,
+                id: a._id.toString()
+            }));
+
+            const formattedLeaves = recentLeaves.map(l => ({
+                ...l,
+                id: l._id.toString()
+            }));
 
             return res.json({
                 role: "EMPLOYEE",
                 employee: {...employee, id: employee._id.toString()},
                 currentMonthAttendance,
                 pendingLeaves,
-                latestPayslip: latestPayslip ? {...latestPayslip, id: latestPayslip._id.toString()} : null
+                approvedLeaves,
+                latestPayslip: latestPayslip ? {...latestPayslip, id: latestPayslip._id.toString()} : null,
+                todayRecord: todayRecord ? {...todayRecord, id: todayRecord._id.toString()} : null,
+                weeklyHours,
+                recentAttendance: formattedAttendance,
+                recentLeaves: formattedLeaves,
             })
         }
     } catch (error) {
