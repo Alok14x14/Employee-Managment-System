@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken'
+import Employee from '../models/Employee.js'
 
-export const protect = (req, res, next)=>{
+export const protect = async (req, res, next) => {
     try {
         const authHeader = req.headers.authorization;
         if(!authHeader || !authHeader.startsWith("Bearer ")){
@@ -12,6 +13,14 @@ export const protect = (req, res, next)=>{
         if(!session){
             return res.status(401).json({ error: "Unauthorized" });
         }
+
+        if(session.role === "EMPLOYEE"){
+            const emp = await Employee.findOne({ userId: session.userId }).select("isDeleted").lean();
+            if(emp?.isDeleted){
+                return res.status(403).json({ error: "Account deactivated" });
+            }
+        }
+
         req.session = session;
         next()
     } catch (error) {

@@ -1,4 +1,5 @@
 import User from "../models/User.js";
+import Employee from "../models/Employee.js";
 import bcrypt from "bcrypt"
 import jwt from 'jsonwebtoken'
 
@@ -17,6 +18,11 @@ export const login = async (req, res) => {
             return res.status(401).json({ error: "Invalid credentials" });
         }
 
+        const isValid = await bcrypt.compare(password, user.password)
+        if(!isValid){
+            return res.status(401).json({ error: "Invalid credentials" });
+        }
+
         if(role_type === "admin" && user.role !== "ADMIN"){
             return res.status(401).json({ error: "Not authorized as admin" });
         }
@@ -25,10 +31,8 @@ export const login = async (req, res) => {
             return res.status(401).json({ error: "Not authorized as employee" });
         }
 
-        const isValid = await bcrypt.compare(password, user.password)
-        if(!isValid){
-            return res.status(401).json({ error: "Invalid credentials" });
-        }
+        const emp = await Employee.findOne({ userId: user._id }).select("isDeleted").lean();
+        if (emp?.isDeleted) return res.status(403).json({ error: "Account deactivated" });
 
         const payload = {
             userId: user._id.toString(),
