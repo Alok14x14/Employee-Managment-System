@@ -56,6 +56,10 @@ export const createEmployee = async (req, res)=>{
             return res.status(400).json({ error: "Missing required fields" });
         }
 
+        if(!joinDate || isNaN(new Date(joinDate).getTime())){
+            return res.status(400).json({ error: "Valid join date is required" });
+        }
+
         const hashed = await bcrypt.hash(password, 10)
         const user = await User.create({
             email,
@@ -63,20 +67,26 @@ export const createEmployee = async (req, res)=>{
             role: role || "EMPLOYEE"
         })
 
-        const employee = await Employee.create({
-            userId: user._id,
-            firstName,
-            lastName,
-            email,
-            phone,
-            position,
-            department: department || "Engineering",
-            basicSalary: Number(basicSalary) || 0,
-            allowances: Number(allowances) || 0,
-            deductions: Number(deductions) || 0,
-            joinDate: new Date(joinDate),
-            bio: bio || "",
-        })
+        let employee;
+        try {
+            employee = await Employee.create({
+                userId: user._id,
+                firstName,
+                lastName,
+                email,
+                phone,
+                position,
+                department: department || "Engineering",
+                basicSalary: Number(basicSalary) || 0,
+                allowances: Number(allowances) || 0,
+                deductions: Number(deductions) || 0,
+                joinDate: new Date(joinDate),
+                bio: bio || "",
+            })
+        } catch (employeeError) {
+            await User.findByIdAndDelete(user._id);
+            throw employeeError;
+        }
 
         // Send welcome email
         sendWelcomeEmail(email, firstName, joinDate)
@@ -86,6 +96,9 @@ export const createEmployee = async (req, res)=>{
     } catch (error) {
         if(error.code === 11000){
             return res.status(400).json({ error: "Email already exists" })
+        }
+        if (error.name === "ValidationError") {
+            return res.status(400).json({ error: error.message });
         }
         console.error("Create employee error:", error)
         return res.status(500).json({ error: "Failed to create employee" });
