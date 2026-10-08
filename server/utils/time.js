@@ -30,10 +30,16 @@ export const isLate = (d = new Date()) => {
   return +hour > 9 || (+hour === 9 && +minute > 0);
 };
 
+export const isWeekend = (d = new Date()) => {
+  const weekday = new Intl.DateTimeFormat("en-US", { timeZone: TZ, weekday: "short" }).format(d);
+  return weekday === "Sat" || weekday === "Sun";
+};
+
 export default {
   TZ,
   istParts,
   istDayStart,
   istDayEnd,
   isLate,
+  isWeekend,
 };

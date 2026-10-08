@@ -24,12 +24,26 @@ export const clockInOut = async (req, res) => {
         const now = new Date();
 
         if(!existing){
-            const attendance = await Attendance.create({
-                employeeId: employee._id,
-                date: today,
-                checkIn: now,
-                status: isLate(now) ? "LATE" : "PRESENT"
-            })
+            let attendance;
+            try {
+                attendance = await Attendance.create({
+                    employeeId: employee._id,
+                    date: today,
+                    checkIn: now,
+                    status: isLate(now) ? "LATE" : "PRESENT"
+                })
+            } catch (createErr) {
+                if (createErr.code === 11000) {
+                    const record = await Attendance.findOne({
+                        employeeId: employee._id,
+                        date: today,
+                    });
+                    if (record) {
+                        return res.json({ success: true, type: "CHECK_IN", data: record });
+                    }
+                }
+                throw createErr;
+            }
 
             try {
                 await inngest.send({
@@ -70,6 +84,24 @@ export const clockInOut = async (req, res) => {
 
 
     } catch (error) {
+        if (error.code === 11000) {
+            try {
+                const today = istDayStart();
+                const session = req.session;
+                const employee = await Employee.findOne({ userId: session?.userId });
+                if (employee) {
+                    const record = await Attendance.findOne({
+                        employeeId: employee._id,
+                        date: today,
+                    });
+                    if (record) {
+                        return res.json({ success: true, type: "CHECK_IN", data: record });
+                    }
+                }
+            } catch (refetchErr) {
+                console.error("Failed to re-fetch attendance after 11000:", refetchErr);
+            }
+        }
         console.error("Attendance Error:", error);
         return res.status(500).json({ error: "Operation failed" });
     }

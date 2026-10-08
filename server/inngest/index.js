@@ -7,7 +7,7 @@ import {
     sendLeaveApplicationAdminReminder, 
     sendAttendanceReminderEmail 
 } from "../utils/emailService.js";
-import { istDayStart, istDayEnd } from "../utils/time.js";
+import { istDayStart, istDayEnd, isWeekend } from "../utils/time.js";
 
 // Create a client to send and receive events
 export const inngest = new Inngest({ id: "fullstack-ems" });
@@ -78,18 +78,24 @@ const leaveApplicationReminder = inngest.createFunction(
 );
 
 
-// Cron: Check attendance at 11:30 AM IST (06:00 UTC) and email absent employees
+// Cron: Check attendance at 11:30 AM IST (06:00 UTC) Mon-Fri and email absent employees
 const attendanceReminderCron = inngest.createFunction(
-  { id: "attendance-reminder-cron", triggers: [{cron: "TZ=Asia/Kolkata 30 11 * * *"}] }, 
+  { id: "attendance-reminder-cron", triggers: [{cron: "TZ=Asia/Kolkata 30 11 * * 1-5"}] }, 
     async ({ step }) => {
-        // Step 1: Get today's date range (IST)
+        // Step 1: Skip if today is a weekend in IST
+        const isWeekendToday = await step.run("check-weekend", () => isWeekend());
+        if (isWeekendToday) {
+            return { skipped: "Weekend - no attendance reminders sent" };
+        }
+
+        // Step 2: Get today's date range (IST)
         const today = await step.run("get-today-date", ()=>{
             const startUTC = istDayStart();
             const endUTC = istDayEnd();
             return {startUTC: startUTC.toISOString(), endUTC: endUTC.toISOString()}
         })
 
-        // Step 2: Get all active, non-deleted employees
+        // Step 3: Get all active, non-deleted employees
         const activeEmployees = await step.run("get-active-employees", async ()=>{
             const employees = await Employee.find({
                 isDeleted: false,
@@ -98,7 +104,7 @@ const attendanceReminderCron = inngest.createFunction(
             return employees.map((e)=>({_id: e._id.toString(),firstName: e.firstName, lastName: e.lastName, email: e.email, department: e.department}))
         })
 
-        // Step 3: Get employee IDs on approved leave today
+        // Step 4: Get employee IDs on approved leave today
         const onLeaveIds = await step.run("get-on-leave-ids", async () => {
             const leaves = await LeaveApplication.find({
                 status: "APPROVED",
@@ -108,7 +114,7 @@ const attendanceReminderCron = inngest.createFunction(
             return leaves.map((l)=>l.employeeId.toString())
         })
 
-        // Step 4: Get employee IDs who already checked in today
+        // Step 5: Get employee IDs who already checked in today
         const checkedInIds = await step.run("get-checked-in-ids", async ()=>{
             const attendances = await Attendance.find({
                 date: { $gte: new Date(today.startUTC), $lt: new Date(today.endUTC) },
@@ -116,22 +122,27 @@ const attendanceReminderCron = inngest.createFunction(
             return attendances.map((a)=> a.employeeId.toString())
         })
 
-        // Step 5: Filter absent employees (not on leave & not checked in)
+        // Step 6: Filter absent employees (not on leave & not checked in)
         const absentEmployees = activeEmployees.filter((emp)=> !onLeaveIds.includes(emp._id) && !checkedInIds.includes(emp._id))
 
-        // Step 6: Send reminder emails
+        // Step 7: Send reminder emails
         if(absentEmployees.length > 0){
             await step.run("send-reminder-emails", async ()=>{
                 const emailPromises = absentEmployees.map((emp)=> {
-                    // send email
-                    sendAttendanceReminderEmail(
+                    return sendAttendanceReminderEmail(
                         emp.email,
                         emp.firstName,
                         emp.department
-                    )
-                })
-                await Promise.all(emailPromises)
-                return {emailsSent: absentEmployees.length}
+                    );
+                });
+                const results = await Promise.allSettled(emailPromises);
+                results.forEach((res, index) => {
+                    if (res.status === "rejected") {
+                        console.error(`Failed to send reminder email to ${absentEmployees[index].email}:`, res.reason);
+                    }
+                });
+                const sentCount = results.filter(r => r.status === "fulfilled").length;
+                return { emailsSent: sentCount, total: absentEmployees.length };
             })
         }
 
