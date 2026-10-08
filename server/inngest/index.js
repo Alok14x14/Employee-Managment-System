@@ -68,6 +68,8 @@ const leaveApplicationReminder = inngest.createFunction(
 
          if (leaveApplication?.status === "PENDING"){
             const employee = await Employee.findById(leaveApplication.employeeId)
+            if (!employee) return;
+            if (!process.env.ADMIN_EMAIL) return;
 
             // Send reminder email to admin to take action on leave application
             await sendLeaveApplicationAdminReminder(

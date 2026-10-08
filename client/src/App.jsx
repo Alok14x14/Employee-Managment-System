@@ -1,5 +1,5 @@
 import { Toaster } from "react-hot-toast"
-import { Navigate, Route, Routes } from "react-router-dom"
+import { Navigate, Route, Routes, Outlet } from "react-router-dom"
 import LoginLanding from "./pages/LoginLanding"
 import Layout from "./pages/Layout"
 import Dashboard from "./pages/Dashboard"
@@ -11,6 +11,15 @@ import Payslips from "./pages/Payslips"
 import Settings from "./pages/Settings"
 import PrintPayslip from "./pages/PrintPayslip"
 import LoginForm from "./components/LoginForm"
+import RequireRole from "./components/RequireRole"
+import { useAuth } from "./context/AuthContext"
+
+const RedirectIfAuth = ({ children }) => {
+  const { user, loading } = useAuth()
+  if (loading) return null
+  if (user) return <Navigate to="/dashboard" replace />
+  return children || <Outlet />
+}
 
 const App = () => {
   return (
@@ -31,15 +40,57 @@ const App = () => {
         }}
       />
       <Routes>
-        <Route path="/login" element={<LoginLanding />} />
-        <Route path="/login/admin" element={<LoginForm role="admin" />} />
-        <Route path="/login/employee" element={<LoginForm role="employee" />} />
+        <Route
+          path="/login"
+          element={
+            <RedirectIfAuth>
+              <LoginLanding />
+            </RedirectIfAuth>
+          }
+        />
+        <Route
+          path="/login/admin"
+          element={
+            <RedirectIfAuth>
+              <LoginForm role="admin" />
+            </RedirectIfAuth>
+          }
+        />
+        <Route
+          path="/login/employee"
+          element={
+            <RedirectIfAuth>
+              <LoginForm role="employee" />
+            </RedirectIfAuth>
+          }
+        />
 
         <Route element={<Layout />}>
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/employees" element={<Employees />} />
-          <Route path="/departments" element={<Departments />} />
-          <Route path="/attendance" element={<Attendance />} />
+          <Route
+            path="/employees"
+            element={
+              <RequireRole role="ADMIN">
+                <Employees />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="/departments"
+            element={
+              <RequireRole role="ADMIN">
+                <Departments />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="/attendance"
+            element={
+              <RequireRole role="EMPLOYEE">
+                <Attendance />
+              </RequireRole>
+            }
+          />
           <Route path="/leave" element={<Leave />} />
           <Route path="/payslips" element={<Payslips />} />
           <Route path="/settings" element={<Settings />} />

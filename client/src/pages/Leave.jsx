@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Loading from '../components/Loading'
 import { PlusIcon } from 'lucide-react'
 import LeaveHistory from '../components/leave/LeaveHistory'
@@ -34,9 +34,18 @@ const Leave = () => {
   if (loading) return <Loading />
 
   const approvedLeaves = leaves.filter((l) => l.status === 'APPROVED')
-  const sickCount = approvedLeaves.filter((l) => l.type === 'SICK').length
-  const casualCount = approvedLeaves.filter((l) => l.type === 'CASUAL').length
-  const annualCount = approvedLeaves.filter((l) => l.type === 'ANNUAL').length
+  const countDays = (items) =>
+    items.reduce((sum, l) => {
+      const start = new Date(l.startDate)
+      const end = new Date(l.endDate)
+      const diffMs = end.getTime() - start.getTime()
+      const days = Math.round(diffMs / (1000 * 60 * 60 * 24)) + 1
+      return sum + (days > 0 ? days : 1)
+    }, 0)
+
+  const sickCount = countDays(approvedLeaves.filter((l) => l.type === 'SICK'))
+  const casualCount = countDays(approvedLeaves.filter((l) => l.type === 'CASUAL'))
+  const annualCount = countDays(approvedLeaves.filter((l) => l.type === 'ANNUAL'))
 
   const leaveStats = [
     { label: 'Sick leave', value: sickCount, helper: 'Days approved' },

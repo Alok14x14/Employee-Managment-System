@@ -1,12 +1,21 @@
 import mongoose from "mongoose";
 
+let cachedPromise = null;
+
 const connectDB = async () => {
-    try {
-        mongoose.connection.on('connected', ()=> console.log("Database connected"))
-        await mongoose.connect(process.env.MONGODB_URI)
-    } catch (error) {
-        console.error("Database connection failed:", error.message)
+    if (mongoose.connection.readyState === 1) {
+        return mongoose.connection;
     }
-}
+
+    if (!cachedPromise) {
+        mongoose.connection.on('connected', () => console.log("Database connected"));
+        cachedPromise = mongoose.connect(process.env.MONGODB_URI).catch((err) => {
+            cachedPromise = null;
+            throw err;
+        });
+    }
+
+    return cachedPromise;
+};
 
 export default connectDB;

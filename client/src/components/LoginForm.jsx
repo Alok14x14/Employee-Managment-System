@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import LoginLeftSide from './LoginLeftSide'
 import { useNavigate } from 'react-router-dom'
 import { EyeIcon, EyeOffIcon, Loader2Icon } from 'lucide-react'

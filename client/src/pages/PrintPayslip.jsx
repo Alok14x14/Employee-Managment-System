@@ -1,11 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, Navigate, useNavigate } from 'react-router-dom';
 import Loading from '../components/Loading';
-import { format } from 'date-fns';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { ArrowLeft, Printer } from 'lucide-react';
-import { formatCurrency } from '../utils/formatters';
+import { formatCurrency, formatDate, formatISTDate } from '../utils/formatters';
 
 function numberToWordsINR(num) {
   if (!num || isNaN(num)) return '';
@@ -83,7 +82,7 @@ const PrintPayslip = () => {
   if (!payslip) return <p className="text-center py-12 text-zinc-400">Payslip not found</p>;
 
   const emp = payslip.employee || {};
-  const payPeriod = format(new Date(payslip.year, payslip.month - 1), 'MMMM yyyy');
+  const payPeriod = formatISTDate(new Date(Date.UTC(payslip.year, payslip.month - 1, 1)), { month: 'long', year: 'numeric' });
   const basicSalary = Math.round((Number(payslip.basicSalary) || 0) * 100) / 100;
   const allowances = Math.round((Number(payslip.allowances) || 0) * 100) / 100;
   const grossEarnings = Math.round((basicSalary + allowances) * 100) / 100;
@@ -153,7 +152,7 @@ const PrintPayslip = () => {
               Period: {payPeriod}
             </p>
             <p className="text-xs text-zinc-500 font-mono">
-              Issue Date: {payslip.createdAt ? format(new Date(payslip.createdAt), 'dd MMM yyyy') : format(new Date(), 'dd MMM yyyy')}
+              Issue Date: {payslip.createdAt ? formatDate(payslip.createdAt) : formatDate(new Date())}
             </p>
           </div>
         </div>
@@ -186,7 +185,7 @@ const PrintPayslip = () => {
             <div className="flex">
               <span className="w-28 text-zinc-500">Date of Joining:</span>
               <span className="text-zinc-800">
-                {emp.joinDate ? format(new Date(emp.joinDate), 'dd MMM yyyy') : '—'}
+                {emp.joinDate ? formatDate(emp.joinDate) : '—'}
               </span>
             </div>
           </div>

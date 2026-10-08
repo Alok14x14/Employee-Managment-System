@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Check, Loader2, X } from 'lucide-react'
 import { formatDate } from '../../utils/formatters'
 import api from '../../api/axios'

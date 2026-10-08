@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import {
   format,
   startOfMonth,
@@ -7,7 +7,6 @@ import {
   endOfWeek,
   eachDayOfInterval,
   isSameMonth,
-  isSameDay,
   isToday,
   addMonths,
   subMonths,
@@ -18,7 +17,7 @@ import {
   X,
 } from 'lucide-react'
 import { getWorkingHoursDisplay } from '../../utils/attendance'
-import { formatTime } from '../../utils/formatters'
+import { formatTime, formatISTDate, istDayKey } from '../../utils/formatters'
 
 const AttendanceCalendar = ({
   history = [],
@@ -120,7 +119,7 @@ const AttendanceCalendar = ({
         {days.map((day) => {
           const isCurrMonth = isSameMonth(day, currentMonth)
           const isCurrDay = isToday(day)
-          const record = history.find((r) => isSameDay(new Date(r.date), day))
+          const record = history.find((r) => istDayKey(r.date) === format(day, 'yyyy-MM-dd'))
 
           let dotColor = null
           if (record) {
@@ -192,7 +191,7 @@ const AttendanceCalendar = ({
             <div className="flex items-center justify-between pb-2 border-b border-[#E4E4E7]">
               <div>
                 <h3 className="text-sm font-semibold text-[#18181B]">
-                  {format(selectedDayRecord.day, 'EEEE, dd MMM yyyy')}
+                  {formatISTDate(selectedDayRecord.record?.date || selectedDayRecord.day, { weekday: 'long', day: '2-digit', month: 'short', year: 'numeric' })}
                 </h3>
                 <p className="text-xs text-[#71717A] capitalize">
                   Status: {selectedDayRecord.record.status?.toLowerCase() || 'unspecified'}
@@ -211,13 +210,13 @@ const AttendanceCalendar = ({
               <div className="flex justify-between py-1 border-b border-[#E4E4E7]">
                 <span className="text-[#71717A]">Check in</span>
                 <span className="font-medium text-[#18181B] font-mono tabular-nums">
-                  {selectedDayRecord.record.checkIn ? formatTime(selectedDayRecord.record.checkIn) : '—'}
+                  {selectedDayRecord.record.checkIn ? formatTime(selectedDayRecord.record.checkIn, { timeZone: 'Asia/Kolkata' }) : '—'}
                 </span>
               </div>
               <div className="flex justify-between py-1 border-b border-[#E4E4E7]">
                 <span className="text-[#71717A]">Check out</span>
                 <span className="font-medium text-[#18181B] font-mono tabular-nums inline-flex items-center gap-1.5">
-                  {selectedDayRecord.record.checkOut ? formatTime(selectedDayRecord.record.checkOut) : '—'}
+                  {selectedDayRecord.record.checkOut ? formatTime(selectedDayRecord.record.checkOut, { timeZone: 'Asia/Kolkata' }) : '—'}
                   {selectedDayRecord.record.autoCheckedOut && (
                     <span className="badge badge-neutral text-[10px] py-0 px-1 font-normal font-sans">
                       Auto

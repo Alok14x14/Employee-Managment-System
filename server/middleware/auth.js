@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken'
 import Employee from '../models/Employee.js'
+import User from '../models/User.js'
 
 export const protect = async (req, res, next) => {
     try {
@@ -14,14 +15,20 @@ export const protect = async (req, res, next) => {
             return res.status(401).json({ error: "Unauthorized" });
         }
 
-        if(session.role === "EMPLOYEE"){
-            const emp = await Employee.findOne({ userId: session.userId }).select("isDeleted").lean();
-            if(emp?.isDeleted){
-                return res.status(403).json({ error: "Account deactivated" });
-            }
+        const [user, emp] = await Promise.all([
+            User.findById(session.userId).select("role email").lean(),
+            Employee.findOne({ userId: session.userId }).select("isDeleted").lean()
+        ]);
+
+        if(!user){
+            return res.status(401).json({ error: "Unauthorized" });
         }
 
-        req.session = session;
+        if(user.role === "EMPLOYEE" && emp?.isDeleted){
+            return res.status(403).json({ error: "Account deactivated" });
+        }
+
+        req.session = { ...session, role: user.role };
         next()
     } catch (error) {
         return res.status(401).json({ error: "Unauthorized" });

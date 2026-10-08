@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Loading from '../components/Loading';
 import api from '../api/axios';
 import toast from 'react-hot-toast';

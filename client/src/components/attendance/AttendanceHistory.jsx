@@ -1,6 +1,5 @@
-import React from 'react'
 import { getDayTypeDisplay, getWorkingHoursDisplay } from '../../utils/attendance'
-import { format } from 'date-fns'
+import { formatDate, formatTime } from '../../utils/formatters'
 
 const AttendanceHistory = ({ history = [] }) => {
   return (
@@ -36,14 +35,14 @@ const AttendanceHistory = ({ history = [] }) => {
                 return (
                   <tr key={record._id || record.id}>
                     <td className="text-xs font-medium text-[#18181B]">
-                      {record.date ? format(new Date(record.date), 'MMM dd, yyyy') : '—'}
+                      {formatDate(record.date)}
                     </td>
                     <td className="text-xs text-[#52525B]">
-                      {record.checkIn ? format(new Date(record.checkIn), 'hh:mm a') : '—'}
+                      {formatTime(record.checkIn)}
                     </td>
                     <td className="text-xs text-[#52525B]">
                       <span className="inline-flex items-center gap-1.5">
-                        {record.checkOut ? format(new Date(record.checkOut), 'hh:mm a') : '—'}
+                        {formatTime(record.checkOut)}
                         {record.autoCheckedOut && (
                           <span className="badge badge-neutral text-[10px] py-0 px-1 font-normal">
                             Auto

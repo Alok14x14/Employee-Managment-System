@@ -1,5 +1,3 @@
-import React from 'react'
-
 const LoginLeftSide = () => {
   return (
     <div className="hidden md:flex w-1/2 bg-[#0A0A0B] border-r border-[#27272A] p-12 lg:p-16 flex-col justify-between text-white select-none">

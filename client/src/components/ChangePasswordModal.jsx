@@ -1,5 +1,5 @@
 import { Loader2Icon, LockIcon, X } from 'lucide-react';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import api from '../api/axios';
 
 const ChangePasswordModal = ({ open, onClose }) => {
@@ -13,6 +13,13 @@ const ChangePasswordModal = ({ open, onClose }) => {
         const formData = new FormData(e.currentTarget);
         const currentPassword = formData.get('currentPassword');
         const newPassword = formData.get('newPassword');
+        const confirmPassword = formData.get('confirmPassword');
+
+        if (newPassword !== confirmPassword) {
+            setMessage({ type: 'error', text: 'Passwords do not match' });
+            setLoading(false);
+            return;
+        }
 
         try {
             const { data } = await api.post('/auth/change-password', { currentPassword, newPassword });
@@ -56,8 +63,8 @@ const ChangePasswordModal = ({ open, onClose }) => {
                         <div
                             className={`p-3 rounded-[4px] text-xs flex items-center gap-2 border ${
                                 message.type === 'success'
-                                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                                    : 'bg-rose-50 text-rose-800 border-rose-200'
+                                     ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                     : 'bg-rose-50 text-rose-800 border-rose-200'
                             }`}
                         >
                             <span
@@ -74,6 +81,7 @@ const ChangePasswordModal = ({ open, onClose }) => {
                             type="password"
                             name="currentPassword"
                             required
+                            minLength={8}
                             className="w-full text-xs"
                             placeholder="••••••••"
                         />
@@ -84,6 +92,18 @@ const ChangePasswordModal = ({ open, onClose }) => {
                             type="password"
                             name="newPassword"
                             required
+                            minLength={8}
+                            className="w-full text-xs"
+                            placeholder="••••••••"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-medium text-zinc-700 mb-1.5">Confirm New Password</label>
+                        <input
+                            type="password"
+                            name="confirmPassword"
+                            required
+                            minLength={8}
                             className="w-full text-xs"
                             placeholder="••••••••"
                         />

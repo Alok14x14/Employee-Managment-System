@@ -4,6 +4,7 @@ import User from "../models/User.js";
 import { sendWelcomeEmail } from "../utils/emailService.js";
 import Attendance from "../models/Attendance.js";
 import { istDayStart, istDayEnd } from "../utils/time.js";
+import { isValidObjectId, parseDate } from "../utils/validate.js";
 
 const round2 = (x) => Math.round(Number(x || 0) * 100) / 100;
 
@@ -27,7 +28,8 @@ export const getEmployees = async (req, res)=>{
         const startOfDay = istDayStart();
         const endOfDay = istDayEnd();
         const todayAttendances = await Attendance.find({
-            date: { $gte: startOfDay, $lt: endOfDay }
+            date: { $gte: startOfDay, $lt: endOfDay },
+            status: { $ne: "ABSENT" }
         }).lean();
 
         const attendanceMap = todayAttendances.reduce((acc, curr) => {
@@ -58,7 +60,12 @@ export const createEmployee = async (req, res)=>{
             return res.status(400).json({ error: "Missing required fields" });
         }
 
-        if(!joinDate || isNaN(new Date(joinDate).getTime())){
+        if (typeof password !== "string" || password.length < 8) {
+            return res.status(400).json({ error: "Password must be at least 8 characters" });
+        }
+
+        const parsedJoin = parseDate(joinDate);
+        if(!parsedJoin){
             return res.status(400).json({ error: "Valid join date is required" });
         }
 
@@ -82,7 +89,7 @@ export const createEmployee = async (req, res)=>{
                 basicSalary: round2(basicSalary),
                 allowances: round2(allowances),
                 deductions: round2(deductions),
-                joinDate: new Date(joinDate),
+                joinDate: parsedJoin,
                 bio: bio || "",
             })
         } catch (employeeError) {
@@ -91,7 +98,7 @@ export const createEmployee = async (req, res)=>{
         }
 
         // Send welcome email
-        sendWelcomeEmail(email, firstName, joinDate)
+        sendWelcomeEmail(email, firstName, parsedJoin)
             .catch(err => console.error("Failed to send welcome email:", err));
 
         return res.status(201).json({success: true, employee})
@@ -113,36 +120,79 @@ export const createEmployee = async (req, res)=>{
 export const updateEmployee = async (req, res)=>{
     try {
         const {id} = req.params;
-        const {firstName, lastName, email, phone, position, department, basicSalary, allowances, deductions, password, role, bio, employmentStatus} = req.body;
+
+        if (!isValidObjectId(id)) {
+            return res.status(400).json({ error: "Invalid ID" });
+        }
 
         const employee = await Employee.findById(id);
-        if(!employee) return res.status(404).json({error: "Employee not found"})
+        if(!employee) return res.status(404).json({error: "Employee not found"});
 
-       
-        await Employee.findByIdAndUpdate(id, {
-            firstName,
-            lastName,
-            email,
-            phone,
-            position,
-            department: department || "Engineering",
-            basicSalary: round2(basicSalary),
-            allowances: round2(allowances),
-            deductions: round2(deductions),
-            employmentStatus: employmentStatus || "ACTIVE",
-            bio: bio || "",
-        })
+        if(employee.isDeleted){
+            return res.status(400).json({ error: "Employee is archived" });
+        }
 
-         // Update user record
-         const userUpdate = {email}
-         if(role) userUpdate.role = role;
-         if(password) userUpdate.password = await bcrypt.hash(password, 10);
-         await User.findByIdAndUpdate(employee.userId, userUpdate)
+        const {firstName, lastName, email, phone, position, department, basicSalary, allowances, deductions, password, role, bio, employmentStatus, joinDate} = req.body;
+
+        if (password !== undefined) {
+            if (typeof password !== "string" || password.length < 8) {
+                return res.status(400).json({ error: "Password must be at least 8 characters" });
+            }
+        }
+
+        // Update user record FIRST
+        const userUpdate = {};
+        if (email !== undefined) userUpdate.email = email;
+        if (role !== undefined) userUpdate.role = role;
+        if (password !== undefined) {
+            userUpdate.password = await bcrypt.hash(password, 10);
+        }
+
+        if (Object.keys(userUpdate).length > 0) {
+            try {
+                await User.findByIdAndUpdate(employee.userId, userUpdate, { runValidators: true });
+            } catch (userError) {
+                if (userError.code === 11000) {
+                    return res.status(400).json({ error: "Email already exists" });
+                }
+                throw userError;
+            }
+        }
+
+        // Build employee update object from only present fields (not undefined)
+        const employeeUpdate = {};
+        if (firstName !== undefined) employeeUpdate.firstName = firstName;
+        if (lastName !== undefined) employeeUpdate.lastName = lastName;
+        if (email !== undefined) employeeUpdate.email = email;
+        if (phone !== undefined) employeeUpdate.phone = phone;
+        if (position !== undefined) employeeUpdate.position = position;
+        if (department !== undefined) employeeUpdate.department = department;
+        if (employmentStatus !== undefined) employeeUpdate.employmentStatus = employmentStatus;
+        if (bio !== undefined) employeeUpdate.bio = bio;
+
+        if (basicSalary !== undefined) employeeUpdate.basicSalary = round2(basicSalary);
+        if (allowances !== undefined) employeeUpdate.allowances = round2(allowances);
+        if (deductions !== undefined) employeeUpdate.deductions = round2(deductions);
+
+        if (joinDate !== undefined) {
+            const parsedJoinDate = parseDate(joinDate);
+            if (!parsedJoinDate) {
+                return res.status(400).json({ error: "Valid join date is required" });
+            }
+            employeeUpdate.joinDate = parsedJoinDate;
+        }
+
+        if (Object.keys(employeeUpdate).length > 0) {
+            await Employee.findByIdAndUpdate(id, employeeUpdate, { runValidators: true });
+        }
 
         return res.json({success: true})
     } catch (error) {
         if(error.code === 11000){
             return res.status(400).json({ error: "Email already exists" })
+        }
+        if (error.name === "ValidationError") {
+            return res.status(400).json({ error: error.message });
         }
         return res.status(500).json({ error: "Failed to update employee" });
     }
@@ -153,6 +203,10 @@ export const updateEmployee = async (req, res)=>{
 export const deleteEmployee = async (req, res)=>{
     try {
         const { id } = req.params;
+
+        if (!isValidObjectId(id)) {
+            return res.status(400).json({ error: "Invalid ID" });
+        }
 
         const employee = await Employee.findById(id)
         if(!employee) return res.status(404).json({ error: "Employee not found" });

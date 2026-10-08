@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDepartments } from '../constants/departments'
 import { Loader2Icon } from 'lucide-react'
@@ -88,7 +88,7 @@ const EmployeeForm = ({ initialData, onSuccess, onCancel }) => {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mt-3 text-xs">
           <div>
             <label className="block font-medium text-[#18181B] mb-1">Department</label>
-            <select name="department" defaultValue={initialData?.department || ''}>
+            <select name="department" required defaultValue={initialData?.department || ''}>
               <option value="">Select department</option>
               {departments.map((deptName) => (
                 <option key={deptName} value={deptName}>
@@ -165,13 +165,13 @@ const EmployeeForm = ({ initialData, onSuccess, onCancel }) => {
           {!isEditMode && (
             <div>
               <label className="block font-medium text-[#18181B] mb-1">Initial password</label>
-              <input type="password" name="password" required placeholder="••••••••" minLength={6} />
+              <input type="password" name="password" required placeholder="••••••••" minLength={8} />
             </div>
           )}
           {isEditMode && (
             <div>
               <label className="block font-medium text-[#18181B] mb-1">Change password (optional)</label>
-              <input type="password" name="password" placeholder="Leave blank to keep" minLength={6} />
+              <input type="password" name="password" placeholder="Leave blank to keep" minLength={8} />
             </div>
           )}
           <div>

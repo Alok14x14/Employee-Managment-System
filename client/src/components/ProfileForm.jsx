@@ -1,5 +1,4 @@
 import {
-    Briefcase,
     Building2,
     DollarSign,
     Loader2,
@@ -7,7 +6,7 @@ import {
     ShieldCheck,
     User
 } from 'lucide-react';
-import React, { useState } from 'react';
+import { useState } from 'react';
 import api from '../api/axios';
 import { formatCurrency, formatDate } from '../utils/formatters';
 

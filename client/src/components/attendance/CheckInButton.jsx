@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Loader2Icon, LogInIcon, LogOutIcon } from 'lucide-react'
 import api from '../../api/axios'
 import toast from 'react-hot-toast'

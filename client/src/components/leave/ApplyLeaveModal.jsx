@@ -1,10 +1,11 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { Loader2, X } from 'lucide-react'
 import api from '../../api/axios'
 import toast from 'react-hot-toast'
 
 const ApplyLeaveModal = ({ open, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false)
+  const [startDate, setStartDate] = useState('')
 
   const today = new Date()
   const tomorrow = new Date(today)
@@ -69,11 +70,23 @@ const ApplyLeaveModal = ({ open, onClose, onSuccess }) => {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block font-medium text-[#18181B] mb-1">Start date</label>
-              <input type="date" name="startDate" required min={minDate} />
+              <input
+                type="date"
+                name="startDate"
+                required
+                min={minDate}
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
             </div>
             <div>
               <label className="block font-medium text-[#18181B] mb-1">End date</label>
-              <input type="date" name="endDate" required min={minDate} />
+              <input
+                type="date"
+                name="endDate"
+                required
+                min={startDate || minDate}
+              />
             </div>
           </div>
 

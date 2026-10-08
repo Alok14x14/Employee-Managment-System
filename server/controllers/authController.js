@@ -66,6 +66,12 @@ export const changePassword = async (req, res) => {
         if(!currentPassword || !newPassword){
             return res.status(400).json({ error: "Both passwords are required" });
         }
+        if(typeof newPassword !== "string" || newPassword.length < 8){
+            return res.status(400).json({ error: "Password must be at least 8 characters" });
+        }
+        if(currentPassword === newPassword){
+            return res.status(400).json({ error: "New password cannot be the same as current password" });
+        }
         const user = await User.findById(session.userId)
         if(!user) return res.status(404).json({ error: "User not found" });
         const isValid = await bcrypt.compare(currentPassword, user.password);

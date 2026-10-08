@@ -220,7 +220,9 @@ export const getAttendance = async (req, res) => {
 
         let historyQuery = Attendance.find(query).sort({ date: -1 });
         if (!isMonthQuery) {
-            const lim = parseInt(limit || 30, 10);
+            let lim = parseInt(limit, 10);
+            if (isNaN(lim)) lim = 30;
+            lim = Math.max(1, Math.min(100, lim));
             historyQuery = historyQuery.limit(lim);
         }
         const history = await historyQuery;

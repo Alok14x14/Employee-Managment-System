@@ -13,4 +13,22 @@ api.interceptors.request.use((config)=>{
     return config;
 })
 
+// Handle 401 responses
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response?.status === 401) {
+            const url = error.config?.url || "";
+            const isLogin = url.includes("/auth/login");
+            if (!isLogin) {
+                localStorage.removeItem("token");
+                if (window.location.pathname !== "/login") {
+                    window.location.href = "/login";
+                }
+            }
+        }
+        return Promise.reject(error);
+    }
+);
+
 export default api

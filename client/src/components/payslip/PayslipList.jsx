@@ -1,7 +1,5 @@
-import React from 'react';
-import { format } from 'date-fns';
 import { Download } from 'lucide-react';
-import { formatCurrency } from '../../utils/formatters';
+import { formatCurrency, formatISTDate } from '../../utils/formatters';
 
 const PayslipList = ({ payslips, isAdmin }) => {
   return (
@@ -52,7 +50,7 @@ const PayslipList = ({ payslips, isAdmin }) => {
                     )}
 
                     <td className="px-3.5 py-2.5 text-zinc-600">
-                      {format(new Date(payslip.year, payslip.month - 1), 'MMMM yyyy')}
+                      {formatISTDate(new Date(Date.UTC(payslip.year, payslip.month - 1, 1)), { month: 'long', year: 'numeric' })}
                     </td>
 
                     <td className="px-3.5 py-2.5 text-right text-zinc-600 font-mono tabular-nums">

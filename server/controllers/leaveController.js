@@ -3,6 +3,7 @@ import Employee from "../models/Employee.js";
 import LeaveApplication from "../models/LeaveApplication.js";
 import { sendLeaveStatusEmail } from "../utils/emailService.js";
 import { istDayStart } from "../utils/time.js";
+import { isValidObjectId, parseDate } from "../utils/validate.js";
 
 // Create leave
 // POST /api/leaves
@@ -23,22 +24,36 @@ export const createLeave = async (req, res) => {
             return res.status(400).json({ error: "Missing fields" });
         }
 
+        if (!["SICK", "CASUAL", "ANNUAL"].includes(type)) {
+            return res.status(400).json({ error: "Invalid leave type" });
+        }
+
+        const parsedStart = parseDate(startDate);
+        const parsedEnd = parseDate(endDate);
+        if (!parsedStart || !parsedEnd) {
+            return res.status(400).json({ error: "Valid start and end dates are required" });
+        }
+
         const today = istDayStart();
-        if(new Date(startDate) < today || new Date(endDate) < today){
+        if(parsedStart < today || parsedEnd < today){
             return res.status(400).json({ error: "Leave dates must be in the future" });
         }
 
-        if(new Date(endDate) < new Date(startDate) ){
+        if(parsedEnd < parsedStart){
             return res.status(400).json({ error: "End date cannot be before start date" });
         }
 
+        const trimmedReason = typeof reason === "string" ? reason.trim().slice(0, 500) : "";
+        if (!trimmedReason) {
+            return res.status(400).json({ error: "Reason is required" });
+        }
 
         const leave = await LeaveApplication.create({
             employeeId: employee._id,
             type,
-            startDate: new Date(startDate),
-            endDate: new Date(endDate),
-            reason,
+            startDate: parsedStart,
+            endDate: parsedEnd,
+            reason: trimmedReason,
             status: "PENDING",
         })
 
@@ -100,37 +115,58 @@ export const getLeaves = async (req, res) => {
 // PATCH /api/leaves/:id
 export const updateLeaveStatus = async (req, res) => {
     try {
+        const { id } = req.params;
+        if (!isValidObjectId(id)) {
+            return res.status(400).json({ error: "Invalid ID" });
+        }
+
+        const leave = await LeaveApplication.findById(id);
+        if (!leave) {
+            return res.status(404).json({ error: "Leave not found" });
+        }
+
         const { status, rejectReason } = req.body;
-        if(!["APPROVED", "REJECTED", "PENDING"].includes(status)){
+        if (!["APPROVED", "REJECTED"].includes(status)) {
             return res.status(400).json({ error: "Invalid status" });
         }
+
+        if (leave.status !== "PENDING") {
+            return res.status(400).json({ error: "Leave status can only be updated from PENDING" });
+        }
+
         if (status === "REJECTED" && !rejectReason) {
             return res.status(400).json({ error: "Rejection reason is required" });
         }
-        
-        const updateData = { status };
-        if (status === "REJECTED") updateData.rejectReason = rejectReason;
 
-        const leave = await LeaveApplication.findByIdAndUpdate(req.params.id, updateData, {returnDocument: "after"})
+        const updateOps = {
+            $set: { status }
+        };
+        if (status === "REJECTED") {
+            updateOps.$set.rejectReason = rejectReason;
+        } else {
+            updateOps.$unset = { rejectReason: "" };
+        }
+
+        const updatedLeave = await LeaveApplication.findByIdAndUpdate(id, updateOps, { returnDocument: "after" });
         
         // Send email notification for approved/rejected leaves
-        if (leave && ["APPROVED", "REJECTED"].includes(status)) {
-            const employee = await Employee.findById(leave.employeeId);
+        if (updatedLeave && ["APPROVED", "REJECTED"].includes(status)) {
+            const employee = await Employee.findById(updatedLeave.employeeId);
             if (employee && employee.email) {
                 sendLeaveStatusEmail(
                     employee.email, 
                     employee.firstName, 
                     status, 
-                    leave.type, 
-                    leave.startDate, 
-                    leave.endDate, 
-                    leave.reason,
-                    leave.rejectReason
+                    updatedLeave.type, 
+                    updatedLeave.startDate, 
+                    updatedLeave.endDate, 
+                    updatedLeave.reason,
+                    updatedLeave.rejectReason
                 ).catch(err => console.error("Failed to send leave status email:", err));
             }
         }
 
-        return res.json({success: true, data: leave})
+        return res.json({ success: true, data: updatedLeave });
     } catch (error) {
         return res.status(500).json({ error: "Failed" });
     }
