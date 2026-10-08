@@ -1,7 +1,8 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+import { format } from 'date-fns'
 import { formatDate, formatTime, formatCurrency } from '../utils/formatters'
-import { getWorkingHoursDisplay } from '../assets/assets'
+import { getWorkingHoursDisplay } from '../utils/attendance'
 import {
   AreaChart,
   Area,
@@ -48,7 +49,10 @@ const EmployeeDashboard = ({ data }) => {
     {
       label: 'Latest payslip',
       value: latestPayslip?.netSalary != null ? formatCurrency(latestPayslip.netSalary) : '—',
-      description: latestPayslip?.month ? `${latestPayslip.month} ${latestPayslip.year || ''}` : 'No cycle yet',
+      description:
+        latestPayslip?.month && latestPayslip?.year
+          ? format(new Date(latestPayslip.year, latestPayslip.month - 1), 'MMMM yyyy')
+          : 'No cycle yet',
       link: '/payslips',
     },
   ]

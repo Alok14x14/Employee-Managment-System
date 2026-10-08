@@ -1,12 +1,13 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { DEPARTMENTS } from '../assets/assets'
+import { useDepartments } from '../constants/departments'
 import { Loader2Icon } from 'lucide-react'
 import api from '../api/axios'
 import toast from 'react-hot-toast'
 
 const EmployeeForm = ({ initialData, onSuccess, onCancel }) => {
   const navigate = useNavigate()
+  const departments = useDepartments()
   const [loading, setLoading] = useState(false)
   const isEditMode = Boolean(initialData)
 
@@ -89,7 +90,7 @@ const EmployeeForm = ({ initialData, onSuccess, onCancel }) => {
             <label className="block font-medium text-[#18181B] mb-1">Department</label>
             <select name="department" defaultValue={initialData?.department || ''}>
               <option value="">Select department</option>
-              {DEPARTMENTS.map((deptName) => (
+              {departments.map((deptName) => (
                 <option key={deptName} value={deptName}>
                   {deptName}
                 </option>

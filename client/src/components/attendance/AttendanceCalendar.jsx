@@ -17,7 +17,7 @@ import {
   ChevronRight,
   X,
 } from 'lucide-react'
-import { getWorkingHoursDisplay } from '../../assets/assets'
+import { getWorkingHoursDisplay } from '../../utils/attendance'
 import { formatTime } from '../../utils/formatters'
 
 const AttendanceCalendar = ({ history = [] }) => {
@@ -199,8 +199,13 @@ const AttendanceCalendar = ({ history = [] }) => {
               </div>
               <div className="flex justify-between py-1 border-b border-[#E4E4E7]">
                 <span className="text-[#71717A]">Check out</span>
-                <span className="font-medium text-[#18181B] font-mono tabular-nums">
+                <span className="font-medium text-[#18181B] font-mono tabular-nums inline-flex items-center gap-1.5">
                   {selectedDayRecord.record.checkOut ? formatTime(selectedDayRecord.record.checkOut) : '—'}
+                  {selectedDayRecord.record.autoCheckedOut && (
+                    <span className="badge badge-neutral text-[10px] py-0 px-1 font-normal font-sans">
+                      Auto
+                    </span>
+                  )}
                 </span>
               </div>
               <div className="flex justify-between py-1">

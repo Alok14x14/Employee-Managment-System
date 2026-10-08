@@ -1,59 +1,76 @@
 import React from 'react'
-import { getDayTypeDisplay, getWorkingHoursDisplay } from '../../assets/assets'
+import { getDayTypeDisplay, getWorkingHoursDisplay } from '../../utils/attendance'
 import { format } from 'date-fns'
 
-const AttendanceHistory = ({ history }) => {
+const AttendanceHistory = ({ history = [] }) => {
   return (
-    <div className='surface-card overflow-hidden'>
-      <div className="px-6 py-4 border-b border-slate-100">
-        <h3 className="font-semibold text-slate-900">Recent Activity</h3>
+    <div className="card overflow-hidden">
+      <div className="px-4 py-3 border-b border-[#E4E4E7] flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-[#18181B]">Attendance activity</h3>
+        <span className="text-xs text-[#71717A] tabular-nums">{history.length} records</span>
       </div>
       <div className="overflow-x-auto">
         <table className="data-table">
           <thead>
             <tr>
-              <th className="px-6 py-4">Date</th>
-              <th className="px-6 py-4">Check In</th>
-              <th className="px-6 py-4">Check Out</th>
-              <th className="px-6 py-4">Working Hours</th>
-              <th className="px-6 py-4">Day Type</th>
-              <th className="px-6 py-4">Status</th>
+              <th>Date</th>
+              <th>Check in</th>
+              <th>Check out</th>
+              <th>Working hours</th>
+              <th>Day type</th>
+              <th>Status</th>
             </tr>
           </thead>
           <tbody>
             {history.length === 0 ? (
               <tr>
-                <td colSpan={6} className="text-center py-12 text-slate-400">
-                  No records found
+                <td colSpan={6} className="text-center py-12 text-xs text-[#71717A]">
+                  No attendance records found
                 </td>
               </tr>
             ) : (
               history.map((record) => {
                 const dayType = getDayTypeDisplay(record)
+                const hasValidDayType = dayType.label && dayType.label !== '—' && dayType.label !== '-'
+
                 return (
                   <tr key={record._id || record.id}>
-                    <td className='px-6 py-4 font-medium text-slate-900'>
-                      {format(new Date(record.date), "MMM dd, yyyy")}
+                    <td className="text-xs font-medium text-[#18181B]">
+                      {record.date ? format(new Date(record.date), 'MMM dd, yyyy') : '—'}
                     </td>
-
-                    <td className='px-6 py-4 text-slate-600'>
-                      {record.checkIn ? format(new Date(record.checkIn), "hh:mm a") : "-"}
+                    <td className="text-xs text-[#52525B]">
+                      {record.checkIn ? format(new Date(record.checkIn), 'hh:mm a') : '—'}
                     </td>
-
-                    <td className='px-6 py-4 text-slate-600'>
-                      {record.checkOut ? format(new Date(record.checkOut), "hh:mm a") : "-"}
+                    <td className="text-xs text-[#52525B]">
+                      <span className="inline-flex items-center gap-1.5">
+                        {record.checkOut ? format(new Date(record.checkOut), 'hh:mm a') : '—'}
+                        {record.autoCheckedOut && (
+                          <span className="badge badge-neutral text-[10px] py-0 px-1 font-normal">
+                            Auto
+                          </span>
+                        )}
+                      </span>
                     </td>
-
-                    <td className='px-6 py-4 text-slate-600 font-medium'>
+                    <td className="text-xs text-[#52525B] font-medium tabular-nums">
                       {getWorkingHoursDisplay(record)}
                     </td>
-
-                    <td className='px-6 py-4'>
-                      {dayType.label !== "-" ? <span className={`badge ${dayType.className}`}>{dayType.label}</span> : "-"}
+                    <td className="text-xs">
+                      {hasValidDayType ? (
+                        <span className={`badge ${dayType.className}`}>{dayType.label}</span>
+                      ) : (
+                        <span className="text-[#A1A1AA]">—</span>
+                      )}
                     </td>
-
-                    <td className='px-6 py-4'>
-                      <span className={`badge ${record.status === "PRESENT" ? "badge-success" : record.status === "LATE" ? "badge-warning" : "badge-danger"}`}>
+                    <td className="text-xs">
+                      <span
+                        className={`badge ${
+                          record.status === 'PRESENT'
+                            ? 'badge-success'
+                            : record.status === 'LATE'
+                            ? 'badge-warning'
+                            : 'badge-danger'
+                        }`}
+                      >
                         {record.status}
                       </span>
                     </td>

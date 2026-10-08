@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { DEPARTMENTS } from '../assets/assets'
+import { useDepartments } from '../constants/departments'
 import { Plus, Search, X, PencilIcon, Trash2Icon } from 'lucide-react'
 import EmployeeForm from '../components/EmployeeForm'
 import api from '../api/axios'
 import toast from 'react-hot-toast'
 
 const Employees = () => {
+  const departments = useDepartments()
   const [employees, setEmployees] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -77,7 +78,7 @@ const Employees = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A1A1AA] size-4" />
           <input
             placeholder="Search by name or title..."
-            className="pl-9!"
+            className="pl-9"
             onChange={(e) => setSearch(e.target.value)}
             value={search}
           />
@@ -96,7 +97,7 @@ const Employees = () => {
           className="sm:w-48"
         >
           <option value="">All departments</option>
-          {DEPARTMENTS.map((deptName) => (
+          {departments.map((deptName) => (
             <option key={deptName} value={deptName}>
               {deptName}
             </option>

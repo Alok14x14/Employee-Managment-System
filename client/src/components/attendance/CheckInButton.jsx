@@ -3,7 +3,7 @@ import { Loader2Icon, LogInIcon, LogOutIcon } from 'lucide-react'
 import api from '../../api/axios'
 import toast from 'react-hot-toast'
 import { formatTime } from '../../utils/formatters'
-import { getWorkingHoursDisplay } from '../../assets/assets'
+import { getWorkingHoursDisplay } from '../../utils/attendance'
 
 const CheckInButton = ({ todayRecord, onAction }) => {
   const [loading, setLoading] = useState(false)

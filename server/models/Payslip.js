@@ -11,6 +11,8 @@ const payslipSchema = new mongoose.Schema({
 
 }, {timestamps: true})
 
+payslipSchema.index({ employeeId: 1, year: -1, month: -1 });
+
 const Payslip = mongoose.models.Payslip || mongoose.model("Payslip", payslipSchema)
 
 export default Payslip;

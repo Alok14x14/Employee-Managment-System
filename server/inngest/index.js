@@ -14,40 +14,43 @@ export const inngest = new Inngest({ id: "fullstack-ems" });
 
 // Auto Check-out for employees
 const autoCheckOut = inngest.createFunction(
-  { id: "auto-check-out", triggers: [{event: "employee/check-in"}, {event: "employee/check-out"}] }, 
+  { id: "auto-check-out", triggers: [{event: "employee/check-in"}] }, 
   async ({ event, step }) => {
     const {employeeId, attendanceId} = event.data;
 
     // Wait for 9 hours
-    await step.sleepUntil("wait-for-the-9-hours", new Date(new Date().getTime() + 9 * 60 * 60 * 1000))
+    await step.sleep("wait-9-hours", "9h");
 
-    // get Attendance data
-    let attendance = await Attendance.findById(attendanceId)
+    // Check attendance data
+    let attendance = await Attendance.findById(attendanceId);
+    if (!attendance || attendance.checkOut) return;
 
-    if (!attendance?.checkOut){
-        // get Employee data
-        const employee = await Employee.findById(employeeId)
+    // Check employee data
+    const employee = await Employee.findById(employeeId);
+    if (!employee || employee.isDeleted) return;
 
-        // Send reminder email
-        await sendCheckOutReminderEmail(
-            employee.email, 
-            employee.firstName, 
-            employee.department, 
-            attendance?.checkIn
-        );
+    // Send reminder email
+    await sendCheckOutReminderEmail(
+        employee.email, 
+        employee.firstName, 
+        employee.department, 
+        attendance.checkIn
+    );
 
-        // After 10 hours, mark attendance as checked out with status "LATE"
-        await step.sleepUntil("wait-for-the-1-hour", new Date(new Date().getTime() + 1 * 60 * 60 * 1000))
+    // Wait for 1 hour
+    await step.sleep("wait-1-hour", "1h");
 
-        attendance = await Attendance.findById(attendanceId)
-        if(!attendance?.checkOut){
-            attendance.checkOut = new Date(new Date(attendance.checkIn).getTime() + 4 * 60 * 60 * 1000);
-            attendance.workingHours = 4;
-            attendance.dayType = "Half Day";
-            attendance.status = "LATE";
-            await attendance.save();
-        }
-    }
+    attendance = await Attendance.findById(attendanceId);
+    if (!attendance || attendance.checkOut) return;
+
+    const employeeCheck = await Employee.findById(employeeId);
+    if (!employeeCheck || employeeCheck.isDeleted) return;
+
+    attendance.checkOut = new Date(new Date(attendance.checkIn).getTime() + 4 * 60 * 60 * 1000);
+    attendance.workingHours = 4;
+    attendance.dayType = "Half Day";
+    attendance.autoCheckedOut = true;
+    await attendance.save();
   },
 );
 
@@ -59,7 +62,7 @@ const leaveApplicationReminder = inngest.createFunction(
         const { leaveApplicationId } = event.data;
 
         // wait for 24 hours
-        await step.sleepUntil("wait-for-the-24-hours", new Date(new Date().getTime() + 24 * 60 * 60 * 1000))
+        await step.sleep("wait-24-hours", "24h");
 
         const leaveApplication = await LeaveApplication.findById(leaveApplicationId)
 

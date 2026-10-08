@@ -11,15 +11,19 @@ export const createPayslip = async (req, res) => {
             return res.status(400).json({ error: "Missing fields" });
         }
 
-        const netSalary = Number(basicSalary) + Number(allowances || 0) - Number(deductions || 0);
+        const round2 = (x) => Math.round(Number(x || 0) * 100) / 100;
+        const basic = round2(basicSalary);
+        const allow = round2(allowances);
+        const deduct = round2(deductions);
+        const netSalary = round2(basic + allow - deduct);
 
         const payslip = await Payslip.create({
             employeeId,
             month: Number(month),
             year: Number(year),
-            basicSalary: Number(basicSalary),
-            allowances: Number(allowances || 0),
-            deductions: Number(deductions || 0),
+            basicSalary: basic,
+            allowances: allow,
+            deductions: deduct,
             netSalary,
         })
 

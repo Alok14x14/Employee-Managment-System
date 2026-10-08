@@ -1,8 +1,15 @@
 import { format } from "date-fns";
 
+const inrFormatter = new Intl.NumberFormat("en-IN", {
+  style: "currency",
+  currency: "INR",
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
 export const formatCurrency = (amount) => {
-  if (amount == null || isNaN(amount)) return "₹0";
-  return `₹${Number(amount).toLocaleString("en-IN")}`;
+  if (amount == null || isNaN(Number(amount))) return "₹0.00";
+  return inrFormatter.format(Number(amount));
 };
 
 export const formatDate = (date, formatStr = "dd MMM yyyy") => {
