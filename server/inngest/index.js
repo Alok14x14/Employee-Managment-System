@@ -155,9 +155,74 @@ const attendanceReminderCron = inngest.createFunction(
 );
 
 
+// Cron: Mark absent records at 23:59 IST (18:29 UTC) Mon-Fri for any employee not clocked in & not on leave
+const markAbsentCron = inngest.createFunction(
+  { id: "mark-absent-cron", triggers: [{ cron: "TZ=Asia/Kolkata 59 23 * * 1-5" }] },
+  async ({ step }) => {
+    const isWeekendToday = await step.run("check-weekend", () => isWeekend());
+    if (isWeekendToday) {
+      return { skipped: "Weekend - no absent records marked" };
+    }
+
+    const today = await step.run("get-today-date", () => {
+      const startUTC = istDayStart();
+      const endUTC = istDayEnd();
+      return { startUTC: startUTC.toISOString(), endUTC: endUTC.toISOString() };
+    });
+
+    const activeEmployees = await step.run("get-active-employees", async () => {
+      return Employee.find({
+        isDeleted: false,
+        employmentStatus: "ACTIVE",
+      }).select("_id joinDate createdAt").lean();
+    });
+
+    const onLeaveIds = await step.run("get-on-leave-ids", async () => {
+      const leaves = await LeaveApplication.find({
+        status: "APPROVED",
+        startDate: { $lte: new Date(today.endUTC) },
+        endDate: { $gte: new Date(today.startUTC) },
+      }).lean();
+      return leaves.map((l) => l.employeeId.toString());
+    });
+
+    const checkedInIds = await step.run("get-checked-in-ids", async () => {
+      const attendances = await Attendance.find({
+        date: { $gte: new Date(today.startUTC), $lt: new Date(today.endUTC) },
+      }).lean();
+      return attendances.map((a) => a.employeeId.toString());
+    });
+
+    const absentEmployees = activeEmployees.filter((emp) => {
+      const id = emp._id.toString();
+      const join = istDayStart(emp.joinDate || emp.createdAt || new Date(0));
+      return join <= new Date(today.startUTC) && !onLeaveIds.includes(id) && !checkedInIds.includes(id);
+    });
+
+    if (absentEmployees.length > 0) {
+      await step.run("insert-absent-records", async () => {
+        const docs = absentEmployees.map((emp) => ({
+          employeeId: emp._id,
+          date: new Date(today.startUTC),
+          status: "ABSENT",
+          workingHours: 0,
+        }));
+        try {
+          await Attendance.insertMany(docs, { ordered: false });
+        } catch {
+          // Ignore duplicate key errors if already present
+        }
+      });
+    }
+
+    return { markedAbsent: absentEmployees.length };
+  }
+);
+
 // Create an empty array where we'll export future Inngest functions
 export const functions = [
     autoCheckOut, 
     leaveApplicationReminder,
-    attendanceReminderCron
+    attendanceReminderCron,
+    markAbsentCron
 ];

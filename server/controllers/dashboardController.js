@@ -15,13 +15,14 @@ export const getDashboard  = async (req, res) => {
             const todayEnd = istDayEnd();
             const fiveDaysAgo = new Date(todayStart.getTime() - 4 * 24 * 60 * 60 * 1000);
 
-            const [totalEmployees, todayAttendance, pendingLeaves, recentLeaves, recentEmployees, deptHeadcount, leaveDistribution, fiveDayTrend] = await Promise.all([
+            const [totalEmployees, todayAttendance, pendingLeaves, recentLeaves, recentEmployees, deptHeadcount, leaveDistribution, fiveDayTrend, approvedLeavesFiveDays] = await Promise.all([
                 Employee.countDocuments({isDeleted: { $ne: true }}),
                 Attendance.countDocuments({
                     date: {
                         $gte: todayStart,
                         $lt: todayEnd,
-                    }
+                    },
+                    status: { $ne: "ABSENT" }
                 }),
                 LeaveApplication.countDocuments({status: "PENDING" }),
                 LeaveApplication.find().populate("employeeId", "firstName lastName department").sort({createdAt: -1}).limit(5).lean(),
@@ -38,7 +39,8 @@ export const getDashboard  = async (req, res) => {
                 Attendance.aggregate([
                     {
                         $match: {
-                            date: { $gte: fiveDaysAgo, $lt: todayEnd }
+                            date: { $gte: fiveDaysAgo, $lt: todayEnd },
+                            status: { $ne: "ABSENT" }
                         }
                     },
                     {
@@ -53,7 +55,12 @@ export const getDashboard  = async (req, res) => {
                             count: { $sum: 1 }
                         }
                     }
-                ])
+                ]),
+                LeaveApplication.find({
+                    status: "APPROVED",
+                    startDate: { $lt: todayEnd },
+                    endDate: { $gte: fiveDaysAgo }
+                }).select("employeeId startDate endDate").lean()
             ])
 
             const trendMap = new Map();
@@ -70,10 +77,26 @@ export const getDashboard  = async (req, res) => {
                 const { year, month, day: d } = istParts(day);
                 const dateKey = `${year}-${month}-${d}`;
                 const present = trendMap.get(dateKey) || 0;
+
+                const dayStartTime = day.getTime();
+                const dayEndTime = dayStartTime + 24 * 60 * 60 * 1000;
+
+                const onLeaveSet = new Set();
+                approvedLeavesFiveDays.forEach((l) => {
+                    const lStart = new Date(l.startDate).getTime();
+                    const lEnd = new Date(l.endDate).getTime();
+                    if (lStart < dayEndTime && lEnd >= dayStartTime) {
+                        onLeaveSet.add(l.employeeId.toString());
+                    }
+                });
+
+                const onLeave = onLeaveSet.size;
+                const absent = Math.max(0, totalEmployees - present - onLeave);
+
                 return {
                     name: day.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'Asia/Kolkata' }),
                     present,
-                    absent: Math.max(0, totalEmployees - present)
+                    absent
                 };
             });
 

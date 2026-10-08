@@ -8,36 +8,40 @@ import api from "../api/axios";
 import { toast } from "react-hot-toast";
 import { Calendar, List } from "lucide-react";
 
+import { format } from "date-fns";
+
 const Attendance = () => {
   const [history, setHistory] = useState([]);
+  const [todayRecord, setTodayRecord] = useState(null);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
   const [loading, setLoading] = useState(true);
   const [isDeleted, setIsDeleted] = useState(false);
   const [viewMode, setViewMode] = useState("calendar"); // "calendar" | "table"
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (monthDate = currentMonth, mode = viewMode) => {
     try {
-      const res = await api.get("/attendance");
+      const queryParam = mode === "calendar"
+        ? `?month=${format(monthDate, "yyyy-MM")}`
+        : "?limit=50";
+      const res = await api.get(`/attendance${queryParam}`);
       const json = res.data;
       setHistory(json.data || []);
+      if (json.todayRecord !== undefined) {
+        setTodayRecord(json.todayRecord);
+      }
       if (json.employee?.isDeleted) setIsDeleted(true);
     } catch (error) {
       toast.error(error?.response?.data?.error || error?.message);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentMonth, viewMode]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    fetchData(currentMonth, viewMode);
+  }, [currentMonth, viewMode, fetchData]);
 
-  if (loading) return <Loading />;
-
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todayRecord = history.find(
-    (r) => new Date(r.date).toDateString() === today.toDateString()
-  );
+  if (loading && history.length === 0) return <Loading />;
 
   return (
     <div className="space-y-6">
@@ -94,7 +98,11 @@ const Attendance = () => {
 
       {/* Dynamic View Rendering */}
       {viewMode === "calendar" ? (
-        <AttendanceCalendar history={history} />
+        <AttendanceCalendar
+          history={history}
+          currentMonth={currentMonth}
+          onMonthChange={setCurrentMonth}
+        />
       ) : (
         <AttendanceHistory history={history} />
       )}

@@ -20,13 +20,26 @@ import {
 import { getWorkingHoursDisplay } from '../../utils/attendance'
 import { formatTime } from '../../utils/formatters'
 
-const AttendanceCalendar = ({ history = [] }) => {
-  const [currentMonth, setCurrentMonth] = useState(new Date())
+const AttendanceCalendar = ({
+  history = [],
+  currentMonth: controlledMonth,
+  onMonthChange,
+}) => {
+  const [internalMonth, setInternalMonth] = useState(new Date())
+  const currentMonth = controlledMonth || internalMonth
   const [selectedDayRecord, setSelectedDayRecord] = useState(null)
 
-  const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1))
-  const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1))
-  const goToToday = () => setCurrentMonth(new Date())
+  const handleMonthChange = (newMonth) => {
+    if (onMonthChange) {
+      onMonthChange(newMonth)
+    } else {
+      setInternalMonth(newMonth)
+    }
+  }
+
+  const prevMonth = () => handleMonthChange(subMonths(currentMonth, 1))
+  const nextMonth = () => handleMonthChange(addMonths(currentMonth, 1))
+  const goToToday = () => handleMonthChange(new Date())
 
   const monthStart = startOfMonth(currentMonth)
   const monthEnd = endOfMonth(monthStart)
@@ -154,6 +167,10 @@ const AttendanceCalendar = ({ history = [] }) => {
                 ) : record?.checkIn && !record?.checkOut ? (
                   <span className="text-xs text-[#2563EB] truncate block font-medium">
                     In shift
+                  </span>
+                ) : record?.status === 'ABSENT' ? (
+                  <span className="text-xs text-[#DC2626] truncate block font-medium">
+                    Absent
                   </span>
                 ) : null}
               </div>

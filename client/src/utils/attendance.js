@@ -1,5 +1,5 @@
 export function getWorkingHoursDisplay(record) {
-  if (record?.workingHours != null) {
+  if (record?.workingHours != null && record.workingHours > 0) {
     const hrs = Math.floor(record.workingHours);
     const mins = Math.round((record.workingHours - hrs) * 60);
     return `${hrs}h ${mins}m`;
