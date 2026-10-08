@@ -42,10 +42,14 @@ export const createLeave = async (req, res) => {
             status: "PENDING",
         })
 
-        await inngest.send({
-            name: "leave/pending",
-            data: {leaveApplicationId: leave._id,}
-        })
+        try {
+            await inngest.send({
+                name: "leave/pending",
+                data: {leaveApplicationId: leave._id,}
+            })
+        } catch (e) {
+            console.error("inngest send failed", e);
+        }
 
         return res.json({ success: true, data: leave });
         

@@ -31,13 +31,17 @@ export const clockInOut = async (req, res) => {
                 status: isLate(now) ? "LATE" : "PRESENT"
             })
 
-            await inngest.send({
-                name: "employee/check-out",
-                data: {
-                    employeeId: employee._id,
-                    attendanceId: attendance._id,
-                }
-            })
+            try {
+                await inngest.send({
+                    name: "employee/check-in",
+                    data: {
+                        employeeId: employee._id,
+                        attendanceId: attendance._id,
+                    }
+                })
+            } catch (e) {
+                console.error("inngest send failed", e);
+            }
 
             return res.json({ success: true, type: "CHECK_IN", data: attendance });
         } else if(!existing.checkOut){

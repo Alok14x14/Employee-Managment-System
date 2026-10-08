@@ -14,7 +14,7 @@ export const inngest = new Inngest({ id: "fullstack-ems" });
 
 // Auto Check-out for employees
 const autoCheckOut = inngest.createFunction(
-  { id: "auto-check-out", triggers: [{event: "employee/check-out"}] }, 
+  { id: "auto-check-out", triggers: [{event: "employee/check-in"}, {event: "employee/check-out"}] }, 
   async ({ event, step }) => {
     const {employeeId, attendanceId} = event.data;
 
