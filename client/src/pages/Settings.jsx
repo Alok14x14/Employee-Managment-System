@@ -41,7 +41,7 @@ const Settings = () => {
         </div>
       </div>
 
-      <div className="max-w-2xl space-y-6">
+      <div className="max-w-3xl space-y-6">
         {profile && <ProfileForm initialData={profile} onSuccess={fetchProfile} />}
 
         {/* Change Password trigger */}
