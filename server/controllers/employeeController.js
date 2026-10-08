@@ -5,6 +5,8 @@ import { sendWelcomeEmail } from "../utils/emailService.js";
 import Attendance from "../models/Attendance.js";
 import { istDayStart, istDayEnd } from "../utils/time.js";
 
+const round2 = (x) => Math.round(Number(x || 0) * 100) / 100;
+
 // Get employees
 // GET /api/employees
 export const getEmployees = async (req, res)=>{
@@ -77,9 +79,9 @@ export const createEmployee = async (req, res)=>{
                 phone,
                 position,
                 department: department || "Engineering",
-                basicSalary: Number(basicSalary) || 0,
-                allowances: Number(allowances) || 0,
-                deductions: Number(deductions) || 0,
+                basicSalary: round2(basicSalary),
+                allowances: round2(allowances),
+                deductions: round2(deductions),
                 joinDate: new Date(joinDate),
                 bio: bio || "",
             })
@@ -124,9 +126,9 @@ export const updateEmployee = async (req, res)=>{
             phone,
             position,
             department: department || "Engineering",
-            basicSalary: Number(basicSalary) || 0,
-            allowances: Number(allowances) || 0,
-            deductions: Number(deductions) || 0,
+            basicSalary: round2(basicSalary),
+            allowances: round2(allowances),
+            deductions: round2(deductions),
             employmentStatus: employmentStatus || "ACTIVE",
             bio: bio || "",
         })

@@ -84,11 +84,13 @@ const PrintPayslip = () => {
 
   const emp = payslip.employee || {};
   const payPeriod = format(new Date(payslip.year, payslip.month - 1), 'MMMM yyyy');
-  const basicSalary = payslip.basicSalary || 0;
-  const allowances = payslip.allowances || 0;
-  const grossEarnings = basicSalary + allowances;
-  const totalDeductions = payslip.deductions || 0;
-  const netPayable = payslip.netSalary ?? (grossEarnings - totalDeductions);
+  const basicSalary = Math.round((Number(payslip.basicSalary) || 0) * 100) / 100;
+  const allowances = Math.round((Number(payslip.allowances) || 0) * 100) / 100;
+  const grossEarnings = Math.round((basicSalary + allowances) * 100) / 100;
+  const totalDeductions = Math.round((Number(payslip.deductions) || 0) * 100) / 100;
+  const netPayable = payslip.netSalary != null
+    ? Math.round(Number(payslip.netSalary) * 100) / 100
+    : Math.round(Math.max(0, grossEarnings - totalDeductions) * 100) / 100;
   const payslipRef = `SF-PAY-${payslip.year}${String(payslip.month).padStart(2, '0')}-${(payslip._id || payslip.id || '').slice(-6).toUpperCase()}`;
 
   return (

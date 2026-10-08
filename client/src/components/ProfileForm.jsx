@@ -28,10 +28,10 @@ const ProfileForm = ({ initialData, onSuccess }) => {
         ? (initialData._id.length > 8 ? initialData._id.slice(-8).toUpperCase() : initialData._id)
         : (initialData?.id || '—');
 
-    const basicSalary = Number(initialData?.basicSalary) || 0;
-    const allowances = Number(initialData?.allowances) || 0;
-    const deductions = Number(initialData?.deductions) || 0;
-    const netSalary = Math.max(0, basicSalary + allowances - deductions);
+    const basicSalary = Math.round((Number(initialData?.basicSalary) || 0) * 100) / 100;
+    const allowances = Math.round((Number(initialData?.allowances) || 0) * 100) / 100;
+    const deductions = Math.round((Number(initialData?.deductions) || 0) * 100) / 100;
+    const netSalary = Math.round(Math.max(0, basicSalary + allowances - deductions) * 100) / 100;
 
     const handleSubmit = async (e) => {
         e.preventDefault();

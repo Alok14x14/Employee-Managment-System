@@ -9,7 +9,8 @@ const inrFormatter = new Intl.NumberFormat("en-IN", {
 
 export const formatCurrency = (amount) => {
   if (amount == null || isNaN(Number(amount))) return "₹0.00";
-  return inrFormatter.format(Number(amount));
+  const rounded = Math.round(Number(amount) * 100) / 100;
+  return inrFormatter.format(rounded);
 };
 
 export const formatDate = (date, formatStr = "dd MMM yyyy") => {
