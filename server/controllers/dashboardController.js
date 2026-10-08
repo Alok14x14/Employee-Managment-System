@@ -3,6 +3,7 @@ import Attendance from "../models/Attendance.js";
 import Employee from "../models/Employee.js";
 import LeaveApplication from "../models/LeaveApplication.js";
 import Payslip from "../models/Payslip.js";
+import { istDayStart, istDayEnd, istParts } from "../utils/time.js";
 
 // Get dashboard for employee and admin
 // GET /api/dashboard
@@ -10,12 +11,15 @@ export const getDashboard  = async (req, res) => {
     try {
         const session = req.session;
         if(session.role === "ADMIN"){
+            const todayStart = istDayStart();
+            const todayEnd = istDayEnd();
+
             const [totalEmployees, todayAttendance, pendingLeaves, recentLeaves, recentEmployees, deptHeadcount, leaveDistribution] = await Promise.all([
                 Employee.countDocuments({isDeleted: { $ne: true }}),
                 Attendance.countDocuments({
                     date: {
-                        $gte: new Date(new Date().setHours(0,0,0,0)),
-                        $lt: new Date(new Date().setHours(24,0,0,0)),
+                        $gte: todayStart,
+                        $lt: todayEnd,
                     }
                 }),
                 LeaveApplication.countDocuments({status: "PENDING" }),
@@ -34,20 +38,16 @@ export const getDashboard  = async (req, res) => {
 
             // Calculate past 5 days attendance trend
             const past5Days = Array.from({length: 5}, (_, i) => {
-                const d = new Date();
-                d.setDate(d.getDate() - (4 - i));
-                d.setHours(0,0,0,0);
-                return d;
+                return new Date(todayStart.getTime() - (4 - i) * 24 * 60 * 60 * 1000);
             });
 
             const attendancePromises = past5Days.map(async (day) => {
-                const nextDay = new Date(day);
-                nextDay.setDate(day.getDate() + 1);
+                const nextDay = new Date(day.getTime() + 24 * 60 * 60 * 1000);
                 const present = await Attendance.countDocuments({
                     date: { $gte: day, $lt: nextDay }
                 });
                 return {
-                    name: day.toLocaleDateString('en-US', { weekday: 'short' }),
+                    name: day.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'Asia/Kolkata' }),
                     present,
                     absent: Math.max(0, totalEmployees - present)
                 };
@@ -86,17 +86,21 @@ export const getDashboard  = async (req, res) => {
             }).lean();
             if (!employee) return res.status(404).json({ error: "Employee not found" });
 
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const tomorrow = new Date(today);
-            tomorrow.setDate(tomorrow.getDate() + 1);
+            const today = istDayStart();
+            const tomorrow = istDayEnd();
+
+            const { year, month } = istParts();
+            const startOfMonth = new Date(`${year}-${month}-01T00:00:00+05:30`);
+            const nextMonthNum = +month === 12 ? 1 : +month + 1;
+            const nextYearNum = +month === 12 ? +year + 1 : +year;
+            const startOfNextMonth = new Date(`${nextYearNum}-${String(nextMonthNum).padStart(2, '0')}-01T00:00:00+05:30`);
 
             const [currentMonthAttendance, pendingLeaves, approvedLeaves, latestPayslip, todayRecord, recentAttendance, recentLeaves] = await Promise.all([
                 Attendance.countDocuments({
                     employeeId: employee._id,
                     date: {
-                        $gte: new Date(today.getFullYear(), today.getMonth(), 1),
-                        $lt: new Date(today.getFullYear(), today.getMonth() + 1, 1),
+                        $gte: startOfMonth,
+                        $lt: startOfNextMonth,
                     }
                 }),
                 LeaveApplication.countDocuments({
@@ -118,22 +122,18 @@ export const getDashboard  = async (req, res) => {
 
             // Calculate past 7 days logged hours for employee
             const past7Days = Array.from({ length: 7 }, (_, i) => {
-                const d = new Date();
-                d.setDate(d.getDate() - (6 - i));
-                d.setHours(0, 0, 0, 0);
-                return d;
+                return new Date(today.getTime() - (6 - i) * 24 * 60 * 60 * 1000);
             });
 
             const weeklyAttendancePromises = past7Days.map(async (day) => {
-                const nextDay = new Date(day);
-                nextDay.setDate(day.getDate() + 1);
+                const nextDay = new Date(day.getTime() + 24 * 60 * 60 * 1000);
                 const record = await Attendance.findOne({
                     employeeId: employee._id,
                     date: { $gte: day, $lt: nextDay }
                 }).lean();
                 return {
-                    day: day.toLocaleDateString('en-US', { weekday: 'short' }),
-                    date: day.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                    day: day.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'Asia/Kolkata' }),
+                    date: day.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'Asia/Kolkata' }),
                     hours: record && record.workingHours ? Number(record.workingHours.toFixed(1)) : 0,
                     status: record ? record.status : 'ABSENT',
                 };

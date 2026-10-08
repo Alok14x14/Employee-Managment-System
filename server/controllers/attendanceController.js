@@ -1,6 +1,7 @@
 import { inngest } from "../inngest/index.js";
 import Attendance from "../models/Attendance.js";
 import Employee from "../models/Employee.js";
+import { istDayStart, isLate } from "../utils/time.js";
 
 // Clock in/out for employee
 // POST /api/attendance
@@ -13,23 +14,21 @@ export const clockInOut = async (req, res) => {
                 error: "Your account is deactivated. You cannot clock in/out.",
             });
 
-         const today = new Date();
-         today.setHours(0, 0, 0, 0);
+        const today = istDayStart();
 
-         const existing = await Attendance.findOne({
+        const existing = await Attendance.findOne({
             employeeId: employee._id,
             date: today,
-         })
+        })
 
         const now = new Date();
 
         if(!existing){
-            const isLate = now.getHours() > 9 || (now.getHours() === 9 && now.getMinutes() > 0);
             const attendance = await Attendance.create({
                 employeeId: employee._id,
                 date: today,
                 checkIn: now,
-                status: isLate ? "LATE" : "PRESENT"
+                status: isLate(now) ? "LATE" : "PRESENT"
             })
 
             await inngest.send({

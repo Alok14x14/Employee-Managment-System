@@ -2,6 +2,7 @@ import { inngest } from "../inngest/index.js";
 import Employee from "../models/Employee.js";
 import LeaveApplication from "../models/LeaveApplication.js";
 import { sendLeaveStatusEmail } from "../utils/emailService.js";
+import { istDayStart } from "../utils/time.js";
 
 // Create leave
 // POST /api/leaves
@@ -22,8 +23,7 @@ export const createLeave = async (req, res) => {
             return res.status(400).json({ error: "Missing fields" });
         }
 
-        const today = new Date();
-        today.setHours(0,0,0,0);
+        const today = istDayStart();
         if(new Date(startDate) < today || new Date(endDate) < today){
             return res.status(400).json({ error: "Leave dates must be in the future" });
         }

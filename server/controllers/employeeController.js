@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import User from "../models/User.js";
 import { sendWelcomeEmail } from "../utils/emailService.js";
 import Attendance from "../models/Attendance.js";
+import { istDayStart, istDayEnd } from "../utils/time.js";
 
 // Get employees
 // GET /api/employees
@@ -21,8 +22,8 @@ export const getEmployees = async (req, res)=>{
         const employees = await Employee.find(where).sort({createdAt: -1}).populate("userId", "email role").lean();
 
         // Get today's attendances
-        const startOfDay = new Date(new Date().setHours(0,0,0,0));
-        const endOfDay = new Date(new Date().setHours(24,0,0,0));
+        const startOfDay = istDayStart();
+        const endOfDay = istDayEnd();
         const todayAttendances = await Attendance.find({
             date: { $gte: startOfDay, $lt: endOfDay }
         }).lean();
