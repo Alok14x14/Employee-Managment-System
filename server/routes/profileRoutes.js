@@ -1,10 +1,10 @@
 import { Router } from "express";
-import { protect } from "../middleware/auth.js";
+import { protect, requirePasswordChanged } from "../middleware/auth.js";
 import { getProfile, updateProfile } from "../controllers/profileController.js";
 
 const profileRouter = Router();
 
-profileRouter.get("/", protect, getProfile)
-profileRouter.post("/", protect, updateProfile)
+profileRouter.get("/", protect, requirePasswordChanged, getProfile);
+profileRouter.post("/", protect, requirePasswordChanged, updateProfile);
 
 export default profileRouter;

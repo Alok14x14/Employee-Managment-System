@@ -5,6 +5,10 @@ const userSchema = new mongoose.Schema({
     password: {type: String, required: true },
     role: {type: String, enum: ["ADMIN", "EMPLOYEE"], default: "EMPLOYEE"},
     bio: {type: String, default: "" },
+    passwordResetToken: { type: String, default: null },
+    passwordResetExpires: { type: Date, default: null },
+    passwordChangedAt: { type: Date, default: null },
+    mustChangePassword: { type: Boolean, default: false },
 }, {timestamps: true})
 
 const User = mongoose.models.User || mongoose.model("User", userSchema)

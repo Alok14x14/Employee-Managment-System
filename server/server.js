@@ -21,6 +21,8 @@ dns.setServers(['8.8.8.8', '1.1.1.1']); // Force DNS to Google's servers.
 const app = express()
 const PORT = process.env.PORT || 4000;
 
+app.set("trust proxy", 1);
+
 
 // Middleware
 app.use(cors({ origin: process.env.CLIENT_URL?.split(",") || true }))

@@ -73,7 +73,8 @@ export const createEmployee = async (req, res)=>{
         const user = await User.create({
             email,
             password: hashed,
-            role: role || "EMPLOYEE"
+            role: role || "EMPLOYEE",
+            mustChangePassword: true,
         })
 
         let employee;
@@ -146,6 +147,8 @@ export const updateEmployee = async (req, res)=>{
         if (role !== undefined) userUpdate.role = role;
         if (password !== undefined) {
             userUpdate.password = await bcrypt.hash(password, 10);
+            userUpdate.mustChangePassword = true;
+            userUpdate.passwordChangedAt = new Date();
         }
 
         if (Object.keys(userUpdate).length > 0) {

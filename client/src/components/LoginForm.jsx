@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import LoginLeftSide from './LoginLeftSide'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { EyeIcon, EyeOffIcon, Loader2Icon, MoonIcon, SunIcon } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
@@ -123,6 +123,12 @@ const LoginForm = ({ role = 'admin' }) => {
                 <label className="block text-xs font-medium text-[#18181B] dark:text-[#FAFAFA]">
                   Password
                 </label>
+                <Link
+                  to="/forgot-password"
+                  className="text-xs font-medium text-[#2563EB] dark:text-[#3B82F6] hover:underline"
+                >
+                  Forgot password?
+                </Link>
               </div>
               <div className="relative">
                 <input

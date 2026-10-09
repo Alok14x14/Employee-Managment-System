@@ -32,6 +32,7 @@ async function registerAdmin(){
             email: process.env.ADMIN_EMAIL,
             password: hashedPassword,
             role: "ADMIN",
+            mustChangePassword: true,
         })
 
         console.log("Admin user created");

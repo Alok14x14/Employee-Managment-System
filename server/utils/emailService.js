@@ -95,3 +95,21 @@ export const sendAttendanceReminderEmail = async (email, firstName, department) 
     return sendEmail({ to: email, subject, body });
 };
 
+export const sendPasswordResetEmail = async (email, firstName, resetUrl) => {
+    const subject = "Reset Your Password - StaffFlow";
+    const name = firstName || "there";
+    const body = `<div style="max-width: 600px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #18181b;">
+                    <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 16px;">Hello ${escapeHtml(name)},</h2>
+                    <p style="font-size: 14px; line-height: 1.5; color: #3f3f46;">We received a request to reset your password for your StaffFlow account.</p>
+                    <p style="font-size: 14px; line-height: 1.5; color: #3f3f46;">Click the button below to set a new password:</p>
+                    <div style="margin: 24px 0;">
+                        <a href="${resetUrl}" style="background-color: #2563eb; color: #ffffff; padding: 10px 20px; font-size: 14px; font-weight: 500; text-decoration: none; border-radius: 6px; display: inline-block;">Reset Password</a>
+                    </div>
+                    <p style="font-size: 13px; line-height: 1.5; color: #71717a;">Or copy and paste this link into your browser:<br /><a href="${resetUrl}" style="color: #2563eb; word-break: break-all;">${resetUrl}</a></p>
+                    <p style="font-size: 13px; line-height: 1.5; color: #71717a; margin-top: 16px;">This link will expire in 15 minutes. If you did not request a password reset, you can safely ignore this email.</p>
+                    <br />
+                    <p style="font-size: 14px; color: #71717a; margin-bottom: 4px;">StaffFlow Security</p>
+                </div>`;
+    return sendEmail({ to: email, subject, body });
+};
+

@@ -10,6 +10,9 @@ import Leave from "./pages/Leave"
 import Payslips from "./pages/Payslips"
 import Settings from "./pages/Settings"
 import PrintPayslip from "./pages/PrintPayslip"
+import ForgotPassword from "./pages/ForgotPassword"
+import ResetPassword from "./pages/ResetPassword"
+import ForceChangePassword from "./pages/ForceChangePassword"
 import LoginForm from "./components/LoginForm"
 import RequireRole from "./components/RequireRole"
 import { useAuth } from "./context/AuthContext"
@@ -18,7 +21,7 @@ import { useTheme } from "./context/ThemeContext"
 const RedirectIfAuth = ({ children }) => {
   const { user, loading } = useAuth()
   if (loading) return null
-  if (user) return <Navigate to="/dashboard" replace />
+  if (user) return <Navigate to={user.mustChangePassword ? "/change-password-required" : "/dashboard"} replace />
   return children || <Outlet />
 }
 
@@ -79,6 +82,27 @@ const App = () => {
               <LoginForm role="employee" />
             </RedirectIfAuth>
           }
+        />
+        <Route
+          path="/forgot-password"
+          element={
+            <RedirectIfAuth>
+              <ForgotPassword />
+            </RedirectIfAuth>
+          }
+        />
+        <Route
+          path="/reset-password/:token"
+          element={
+            <RedirectIfAuth>
+              <ResetPassword />
+            </RedirectIfAuth>
+          }
+        />
+
+        <Route
+          path="/change-password-required"
+          element={<ForceChangePassword />}
         />
 
         <Route element={<Layout />}>

@@ -1,8 +1,10 @@
 import { Loader2Icon, LockIcon, X } from 'lucide-react';
 import { useState } from 'react';
 import api from '../api/axios';
+import { useAuth } from '../context/AuthContext';
 
 const ChangePasswordModal = ({ open, onClose }) => {
+    const { updateToken } = useAuth();
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
 
@@ -24,6 +26,9 @@ const ChangePasswordModal = ({ open, onClose }) => {
         try {
             const { data } = await api.post('/auth/change-password', { currentPassword, newPassword });
             if (!data.success) throw new Error(data.error || 'Failed');
+            if (data.token) {
+                updateToken(data.token);
+            }
             setMessage({ type: 'success', text: 'Password updated successfully' });
             e.target.reset();
         } catch (error) {
