@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import LoginLeftSide from './LoginLeftSide'
 import { useNavigate } from 'react-router-dom'
-import { EyeIcon, EyeOffIcon, Loader2Icon } from 'lucide-react'
+import { EyeIcon, EyeOffIcon, Loader2Icon, MoonIcon, SunIcon } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 import toast from 'react-hot-toast'
 
 const LoginForm = ({ role = 'admin' }) => {
@@ -13,6 +14,7 @@ const LoginForm = ({ role = 'admin' }) => {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const { login } = useAuth()
+  const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
@@ -32,23 +34,36 @@ const LoginForm = ({ role = 'admin' }) => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-[#FAFAFA]">
+    <div className="min-h-screen flex flex-col md:flex-row bg-[#FAFAFA] dark:bg-[#0A0A0B]">
       <LoginLeftSide />
 
-      <div className="flex-1 flex items-center justify-center p-6 sm:p-10 bg-white">
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-10 bg-white dark:bg-[#111113] relative">
+        {/* Theme toggle in top-right corner of form side */}
+        <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="p-2 text-[#71717A] dark:text-[#A1A1AA] hover:text-[#18181B] dark:hover:text-[#FAFAFA] hover:bg-[#F4F4F5] dark:hover:bg-[#18181B] border border-transparent hover:border-[#E4E4E7] dark:hover:border-[#27272A] rounded-[6px] transition-colors cursor-pointer"
+            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {theme === 'dark' ? <SunIcon size={18} /> : <MoonIcon size={18} />}
+          </button>
+        </div>
+
         <div className="w-full max-w-[360px]">
           {/* Header */}
           <div className="mb-6">
-            <h1 className="text-xl font-semibold tracking-tight text-[#18181B]">
+            <h1 className="text-xl font-semibold tracking-tight text-[#18181B] dark:text-[#FAFAFA]">
               Sign in to StaffFlow
             </h1>
-            <p className="text-xs text-[#71717A] mt-1">
+            <p className="text-xs text-[#71717A] dark:text-[#A1A1AA] mt-1">
               Enter your credentials to access your organization workspace
             </p>
           </div>
 
           {/* Role Segmented Control */}
-          <div className="flex p-0.5 bg-[#F4F4F5] border border-[#E4E4E7] rounded-[6px] mb-5">
+          <div className="flex p-0.5 bg-[#F4F4F5] dark:bg-[#18181B] border border-[#E4E4E7] dark:border-[#27272A] rounded-[6px] mb-5">
             <button
               type="button"
               onClick={() => {
@@ -57,8 +72,8 @@ const LoginForm = ({ role = 'admin' }) => {
               }}
               className={`flex-1 py-1.5 text-xs font-medium rounded-[5px] transition-colors cursor-pointer ${
                 currentRole === 'admin'
-                  ? 'bg-white text-[#18181B] border border-[#E4E4E7]'
-                  : 'text-[#71717A] hover:text-[#18181B]'
+                  ? 'bg-white dark:bg-[#27272A] text-[#18181B] dark:text-[#FAFAFA] border border-[#E4E4E7] dark:border-[#3F3F46]'
+                  : 'text-[#71717A] dark:text-[#A1A1AA] hover:text-[#18181B] dark:hover:text-[#FAFAFA]'
               }`}
             >
               Administrator
@@ -71,8 +86,8 @@ const LoginForm = ({ role = 'admin' }) => {
               }}
               className={`flex-1 py-1.5 text-xs font-medium rounded-[5px] transition-colors cursor-pointer ${
                 currentRole === 'employee'
-                  ? 'bg-white text-[#18181B] border border-[#E4E4E7]'
-                  : 'text-[#71717A] hover:text-[#18181B]'
+                  ? 'bg-white dark:bg-[#27272A] text-[#18181B] dark:text-[#FAFAFA] border border-[#E4E4E7] dark:border-[#3F3F46]'
+                  : 'text-[#71717A] dark:text-[#A1A1AA] hover:text-[#18181B] dark:hover:text-[#FAFAFA]'
               }`}
             >
               Employee
@@ -80,14 +95,14 @@ const LoginForm = ({ role = 'admin' }) => {
           </div>
 
           {error && (
-            <div className="mb-4 p-2.5 bg-[#FEF2F2] border border-[#FECACA] text-[#DC2626] text-xs rounded-[6px] leading-relaxed">
+            <div className="mb-4 p-2.5 bg-[#FEF2F2] dark:bg-rose-950/30 border border-[#FECACA] dark:border-rose-900 text-[#DC2626] dark:text-rose-400 text-xs rounded-[6px] leading-relaxed">
               {error}
             </div>
           )}
 
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
-              <label className="block text-xs font-medium text-[#18181B] mb-1.5">
+              <label className="block text-xs font-medium text-[#18181B] dark:text-[#FAFAFA] mb-1.5">
                 Email address
               </label>
               <input
@@ -105,7 +120,7 @@ const LoginForm = ({ role = 'admin' }) => {
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-medium text-[#18181B]">
+                <label className="block text-xs font-medium text-[#18181B] dark:text-[#FAFAFA]">
                   Password
                 </label>
               </div>
@@ -124,7 +139,7 @@ const LoginForm = ({ role = 'admin' }) => {
                 />
                 <button
                   type="button"
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#A1A1AA] hover:text-[#18181B] p-1 cursor-pointer"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#A1A1AA] dark:text-[#71717A] hover:text-[#18181B] dark:hover:text-[#FAFAFA] p-1 cursor-pointer"
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
@@ -143,7 +158,7 @@ const LoginForm = ({ role = 'admin' }) => {
             </button>
           </form>
 
-          <p className="mt-8 text-center text-[11px] text-[#A1A1AA]">
+          <p className="mt-8 text-center text-[11px] text-[#A1A1AA] dark:text-[#71717A]">
             Protected internal tooling. Authorized access only.
           </p>
         </div>

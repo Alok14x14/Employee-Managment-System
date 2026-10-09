@@ -10,7 +10,7 @@ const Layout = () => {
   if (!user) return <Navigate to="/login" />;
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] flex flex-col lg:flex-row text-zinc-900">
+    <div className="min-h-screen bg-[#FAFAFA] dark:bg-[#0A0A0B] flex flex-col lg:flex-row text-zinc-900 dark:text-zinc-100">
       <Sidebar />
       <main className="flex-1 min-w-0 pt-14 lg:pt-0">
         <div className="p-6 lg:p-8 max-w-7xl mx-auto">

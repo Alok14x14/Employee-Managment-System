@@ -93,8 +93,16 @@ const PrintPayslip = () => {
   const payslipRef = `SF-PAY-${payslip.year}${String(payslip.month).padStart(2, '0')}-${(payslip._id || payslip.id || '').slice(-6).toUpperCase()}`;
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] py-8 px-4 print:p-0 print:bg-white text-zinc-900 font-sans">
+    <div className="force-light min-h-screen bg-[#FAFAFA] py-8 px-4 print:p-0 print:bg-white text-zinc-900 font-sans">
       <style>{`
+        .force-light {
+          color-scheme: light !important;
+          background-color: #FAFAFA !important;
+          color: #18181B !important;
+        }
+        .force-light * {
+          color-scheme: light !important;
+        }
         @media print {
           @page {
             size: A4 portrait;

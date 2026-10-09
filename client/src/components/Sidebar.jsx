@@ -8,12 +8,15 @@ import {
     Loader2,
     LogOutIcon,
     MenuIcon,
+    MoonIcon,
     SettingsIcon,
+    SunIcon,
     UserIcon,
     XIcon,
     Building2Icon
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import api from '../api/axios';
 
 const Sidebar = () => {
@@ -22,6 +25,7 @@ const Sidebar = () => {
     const [mobileOpen, setMobileOpen] = useState(false);
 
     const { user, loading, logout } = useAuth();
+    const { theme, toggleTheme } = useTheme();
 
     useEffect(() => {
         api.get('/profile').then(({ data }) => {
@@ -51,11 +55,11 @@ const Sidebar = () => {
     const sidebarBody = (
         <div className="flex flex-col h-full w-[240px]">
             {/* Brand Header */}
-            <div className="h-14 px-5 flex items-center justify-between border-b border-zinc-200">
-                <span className="text-sm font-semibold tracking-tight text-zinc-900">StaffFlow</span>
+            <div className="h-14 px-5 flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800">
+                <span className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">StaffFlow</span>
                 <button
                     onClick={() => setMobileOpen(false)}
-                    className="lg:hidden text-zinc-400 hover:text-zinc-600 p-1 rounded-[6px]"
+                    className="lg:hidden text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-1 rounded-[6px]"
                     aria-label="Close navigation menu"
                 >
                     <XIcon size={18} />
@@ -79,11 +83,11 @@ const Sidebar = () => {
                                 onClick={() => setMobileOpen(false)}
                                 className={`h-9 px-3 flex items-center gap-2.5 rounded-[6px] text-sm font-medium transition-colors ${
                                     isActive
-                                        ? 'bg-blue-50 text-blue-600'
-                                        : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'
+                                        ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400'
+                                        : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800/60'
                                 }`}
                             >
-                                <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-blue-600' : 'text-zinc-400'}`} />
+                                <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-400 dark:text-zinc-500'}`} />
                                 <span className="truncate">{item.name}</span>
                             </Link>
                         );
@@ -92,28 +96,39 @@ const Sidebar = () => {
             </nav>
 
             {/* Profile & Logout compact row */}
-            <div className="p-3 border-t border-zinc-200 flex items-center justify-between gap-2">
+            <div className="p-3 border-t border-zinc-200 dark:border-zinc-800 flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-7 h-7 rounded-full bg-zinc-100 border border-zinc-200 flex items-center justify-center text-xs font-medium text-zinc-700 shrink-0">
+                    <div className="w-7 h-7 rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-xs font-medium text-zinc-700 dark:text-zinc-300 shrink-0">
                         {(userName || user?.name || user?.email || 'U').charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0 flex-1">
-                        <p className="text-xs font-medium text-zinc-900 truncate">
+                        <p className="text-xs font-medium text-zinc-900 dark:text-zinc-100 truncate">
                             {userName || user?.name || 'Staff User'}
                         </p>
-                        <p className="text-[11px] text-zinc-500 truncate capitalize">
+                        <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate capitalize">
                             {role === 'ADMIN' ? 'Admin' : 'Employee'}
                         </p>
                     </div>
                 </div>
-                <button
-                    onClick={handleLogout}
-                    className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-[6px] transition-colors shrink-0"
-                    title="Log out"
-                    aria-label="Log out"
-                >
-                    <LogOutIcon className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-0.5 shrink-0">
+                    <button
+                        type="button"
+                        onClick={toggleTheme}
+                        className="p-1.5 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-[6px] transition-colors cursor-pointer"
+                        title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                        aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                    >
+                        {theme === 'dark' ? <SunIcon className="w-4 h-4" /> : <MoonIcon className="w-4 h-4" />}
+                    </button>
+                    <button
+                        onClick={handleLogout}
+                        className="p-1.5 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-[6px] transition-colors cursor-pointer"
+                        title="Log out"
+                        aria-label="Log out"
+                    >
+                        <LogOutIcon className="w-4 h-4" />
+                    </button>
+                </div>
             </div>
         </div>
     );
@@ -121,11 +136,11 @@ const Sidebar = () => {
     return (
         <>
             {/* Mobile Top Bar */}
-            <div className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-white border-b border-zinc-200 z-40 px-4 flex items-center justify-between">
-                <span className="text-sm font-semibold tracking-tight text-zinc-900">StaffFlow</span>
+            <div className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-white dark:bg-[#18181B] border-b border-zinc-200 dark:border-zinc-800 z-40 px-4 flex items-center justify-between">
+                <span className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">StaffFlow</span>
                 <button
                     onClick={() => setMobileOpen(true)}
-                    className="p-1.5 text-zinc-600 hover:bg-zinc-100 rounded-[6px] transition-colors"
+                    className="p-1.5 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-[6px] transition-colors"
                     aria-label="Open navigation menu"
                 >
                     <MenuIcon className="w-5 h-5" />
@@ -142,7 +157,7 @@ const Sidebar = () => {
 
             {/* Mobile Slide-over Drawer */}
             <aside
-                className={`lg:hidden fixed inset-y-0 left-0 w-[240px] bg-white z-50 flex flex-col border-r border-zinc-200 transform transition-transform duration-200 ease-in-out ${
+                className={`lg:hidden fixed inset-y-0 left-0 w-[240px] bg-white dark:bg-[#18181B] z-50 flex flex-col border-r border-zinc-200 dark:border-zinc-800 transform transition-transform duration-200 ease-in-out ${
                     mobileOpen ? 'translate-x-0' : '-translate-x-full'
                 }`}
             >
@@ -150,7 +165,7 @@ const Sidebar = () => {
             </aside>
 
             {/* Desktop Fixed Sidebar */}
-            <aside className="hidden lg:flex flex-col w-[240px] shrink-0 h-screen sticky top-0 bg-white border-r border-zinc-200">
+            <aside className="hidden lg:flex flex-col w-[240px] shrink-0 h-screen sticky top-0 bg-white dark:bg-[#18181B] border-r border-zinc-200 dark:border-zinc-800">
                 {sidebarBody}
             </aside>
         </>

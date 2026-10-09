@@ -38,24 +38,24 @@ const EmployeeForm = ({ initialData, onSuccess, onCancel }) => {
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Personal Information */}
       <div>
-        <h3 className="text-xs font-semibold text-[#18181B] uppercase tracking-wider pb-2 border-b border-[#E4E4E7]">
+        <h3 className="text-xs font-semibold text-[#18181B] dark:text-[#FAFAFA] uppercase tracking-wider pb-2 border-b border-[#E4E4E7] dark:border-[#27272A]">
           Personal details
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mt-3 text-xs">
           <div>
-            <label className="block font-medium text-[#18181B] mb-1">First name</label>
+            <label className="block font-medium text-[#18181B] dark:text-[#FAFAFA] mb-1">First name</label>
             <input name="firstName" required defaultValue={initialData?.firstName} placeholder="First name" />
           </div>
           <div>
-            <label className="block font-medium text-[#18181B] mb-1">Last name</label>
+            <label className="block font-medium text-[#18181B] dark:text-[#FAFAFA] mb-1">Last name</label>
             <input name="lastName" required defaultValue={initialData?.lastName} placeholder="Last name" />
           </div>
           <div>
-            <label className="block font-medium text-[#18181B] mb-1">Phone number</label>
+            <label className="block font-medium text-[#18181B] dark:text-[#FAFAFA] mb-1">Phone number</label>
             <input name="phone" required defaultValue={initialData?.phone} placeholder="+1 555-0100" />
           </div>
           <div>
-            <label className="block font-medium text-[#18181B] mb-1">Join date</label>
+            <label className="block font-medium text-[#18181B] dark:text-[#FAFAFA] mb-1">Join date</label>
             <input
               type="date"
               name="joinDate"
@@ -68,7 +68,7 @@ const EmployeeForm = ({ initialData, onSuccess, onCancel }) => {
             />
           </div>
           <div className="sm:col-span-2">
-            <label className="block font-medium text-[#18181B] mb-1">Bio (optional)</label>
+            <label className="block font-medium text-[#18181B] dark:text-[#FAFAFA] mb-1">Bio (optional)</label>
             <textarea
               name="bio"
               defaultValue={initialData?.bio}
@@ -82,12 +82,12 @@ const EmployeeForm = ({ initialData, onSuccess, onCancel }) => {
 
       {/* Employment Details */}
       <div>
-        <h3 className="text-xs font-semibold text-[#18181B] uppercase tracking-wider pb-2 border-b border-[#E4E4E7]">
+        <h3 className="text-xs font-semibold text-[#18181B] dark:text-[#FAFAFA] uppercase tracking-wider pb-2 border-b border-[#E4E4E7] dark:border-[#27272A]">
           Employment & compensation
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mt-3 text-xs">
           <div>
-            <label className="block font-medium text-[#18181B] mb-1">Department</label>
+            <label className="block font-medium text-[#18181B] dark:text-[#FAFAFA] mb-1">Department</label>
             <select name="department" required defaultValue={initialData?.department || ''}>
               <option value="">Select department</option>
               {departments.map((deptName) => (
@@ -98,11 +98,11 @@ const EmployeeForm = ({ initialData, onSuccess, onCancel }) => {
             </select>
           </div>
           <div>
-            <label className="block font-medium text-[#18181B] mb-1">Position title</label>
+            <label className="block font-medium text-[#18181B] dark:text-[#FAFAFA] mb-1">Position title</label>
             <input name="position" required defaultValue={initialData?.position} placeholder="e.g. Software Engineer" />
           </div>
           <div>
-            <label className="block font-medium text-[#18181B] mb-1">Basic salary</label>
+            <label className="block font-medium text-[#18181B] dark:text-[#FAFAFA] mb-1">Basic salary</label>
             <input
               type="number"
               name="basicSalary"
@@ -113,7 +113,7 @@ const EmployeeForm = ({ initialData, onSuccess, onCancel }) => {
             />
           </div>
           <div>
-            <label className="block font-medium text-[#18181B] mb-1">Allowances</label>
+            <label className="block font-medium text-[#18181B] dark:text-[#FAFAFA] mb-1">Allowances</label>
             <input
               type="number"
               name="allowances"
@@ -124,7 +124,7 @@ const EmployeeForm = ({ initialData, onSuccess, onCancel }) => {
             />
           </div>
           <div>
-            <label className="block font-medium text-[#18181B] mb-1">Deductions</label>
+            <label className="block font-medium text-[#18181B] dark:text-[#FAFAFA] mb-1">Deductions</label>
             <input
               type="number"
               name="deductions"
@@ -136,7 +136,7 @@ const EmployeeForm = ({ initialData, onSuccess, onCancel }) => {
           </div>
           {isEditMode && (
             <div>
-              <label className="block font-medium text-[#18181B] mb-1">Status</label>
+              <label className="block font-medium text-[#18181B] dark:text-[#FAFAFA] mb-1">Status</label>
               <select name="employmentStatus" defaultValue={initialData?.employmentStatus || 'ACTIVE'}>
                 <option value="ACTIVE">Active</option>
                 <option value="INACTIVE">Inactive</option>
@@ -148,12 +148,12 @@ const EmployeeForm = ({ initialData, onSuccess, onCancel }) => {
 
       {/* Account Setup */}
       <div>
-        <h3 className="text-xs font-semibold text-[#18181B] uppercase tracking-wider pb-2 border-b border-[#E4E4E7]">
+        <h3 className="text-xs font-semibold text-[#18181B] dark:text-[#FAFAFA] uppercase tracking-wider pb-2 border-b border-[#E4E4E7] dark:border-[#27272A]">
           Authentication & role
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mt-3 text-xs">
           <div className="sm:col-span-2">
-            <label className="block font-medium text-[#18181B] mb-1">Work email</label>
+            <label className="block font-medium text-[#18181B] dark:text-[#FAFAFA] mb-1">Work email</label>
             <input
               type="email"
               name="email"
@@ -164,18 +164,18 @@ const EmployeeForm = ({ initialData, onSuccess, onCancel }) => {
           </div>
           {!isEditMode && (
             <div>
-              <label className="block font-medium text-[#18181B] mb-1">Initial password</label>
+              <label className="block font-medium text-[#18181B] dark:text-[#FAFAFA] mb-1">Initial password</label>
               <input type="password" name="password" required placeholder="••••••••" minLength={8} />
             </div>
           )}
           {isEditMode && (
             <div>
-              <label className="block font-medium text-[#18181B] mb-1">Change password (optional)</label>
+              <label className="block font-medium text-[#18181B] dark:text-[#FAFAFA] mb-1">Change password (optional)</label>
               <input type="password" name="password" placeholder="Leave blank to keep" minLength={8} />
             </div>
           )}
           <div>
-            <label className="block font-medium text-[#18181B] mb-1">Role</label>
+            <label className="block font-medium text-[#18181B] dark:text-[#FAFAFA] mb-1">Role</label>
             <select name="role" defaultValue={initialData?.user?.role || 'EMPLOYEE'}>
               <option value="EMPLOYEE">Employee</option>
               <option value="ADMIN">Administrator</option>
@@ -185,7 +185,7 @@ const EmployeeForm = ({ initialData, onSuccess, onCancel }) => {
       </div>
 
       {/* Footer Actions */}
-      <div className="flex items-center justify-end gap-2 pt-4 border-t border-[#E4E4E7]">
+      <div className="flex items-center justify-end gap-2 pt-4 border-t border-[#E4E4E7] dark:border-[#27272A]">
         <button
           type="button"
           className="btn-secondary"

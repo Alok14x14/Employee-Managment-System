@@ -38,20 +38,20 @@ const ChangePasswordModal = ({ open, onClose }) => {
     return (
         <div
             onClick={onClose}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 dark:bg-black/60"
         >
             <div
-                className="relative bg-white border border-zinc-200 rounded-[6px] shadow-lg w-full max-w-md"
+                className="relative bg-white dark:bg-[#18181B] border border-zinc-200 dark:border-zinc-800 rounded-[6px] shadow-lg w-full max-w-md"
                 onClick={(e) => e.stopPropagation()}
             >
-                <div className="flex items-center justify-between p-5 pb-4 border-b border-zinc-200">
-                    <h2 className="text-base font-semibold text-zinc-900 flex items-center gap-2">
-                        <LockIcon className="w-4 h-4 text-zinc-400" />
+                <div className="flex items-center justify-between p-5 pb-4 border-b border-zinc-200 dark:border-zinc-800">
+                    <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                        <LockIcon className="w-4 h-4 text-zinc-400 dark:text-zinc-500" />
                         <span>Change Password</span>
                     </h2>
                     <button
                         onClick={onClose}
-                        className="p-1 rounded-[6px] hover:bg-zinc-100 transition-colors text-zinc-400 hover:text-zinc-600"
+                        className="p-1 rounded-[6px] hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
                         aria-label="Close dialog"
                     >
                         <X className="w-4 h-4" />
@@ -63,20 +63,20 @@ const ChangePasswordModal = ({ open, onClose }) => {
                         <div
                             className={`p-3 rounded-[4px] text-xs flex items-center gap-2 border ${
                                 message.type === 'success'
-                                     ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                                     : 'bg-rose-50 text-rose-800 border-rose-200'
+                                     ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900'
+                                     : 'bg-rose-50 dark:bg-rose-950/30 text-rose-800 dark:text-rose-300 border-rose-200 dark:border-rose-900'
                             }`}
                         >
                             <span
                                 className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                                    message.type === 'success' ? 'bg-emerald-600' : 'bg-rose-600'
+                                    message.type === 'success' ? 'bg-emerald-600 dark:bg-emerald-400' : 'bg-rose-600 dark:bg-rose-400'
                                 }`}
                             />
                             <span>{message.text}</span>
                         </div>
                     )}
                     <div>
-                        <label className="block text-xs font-medium text-zinc-700 mb-1.5">Current Password</label>
+                        <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Current Password</label>
                         <input
                             type="password"
                             name="currentPassword"
@@ -87,7 +87,7 @@ const ChangePasswordModal = ({ open, onClose }) => {
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-medium text-zinc-700 mb-1.5">New Password</label>
+                        <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">New Password</label>
                         <input
                             type="password"
                             name="newPassword"
@@ -98,7 +98,7 @@ const ChangePasswordModal = ({ open, onClose }) => {
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-medium text-zinc-700 mb-1.5">Confirm New Password</label>
+                        <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Confirm New Password</label>
                         <input
                             type="password"
                             name="confirmPassword"
@@ -108,7 +108,7 @@ const ChangePasswordModal = ({ open, onClose }) => {
                             placeholder="••••••••"
                         />
                     </div>
-                    <div className="flex justify-end gap-2.5 pt-3 border-t border-zinc-200">
+                    <div className="flex justify-end gap-2.5 pt-3 border-t border-zinc-200 dark:border-zinc-800">
                         <button type="button" onClick={onClose} className="btn-secondary text-xs">
                             Cancel
                         </button>
@@ -127,4 +127,4 @@ const ChangePasswordModal = ({ open, onClose }) => {
     );
 };
 
-export default ChangePasswordModal;
+export default ChangePasswordModal;

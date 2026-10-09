@@ -38,9 +38,9 @@ const LeaveHistory = ({ leaves = [], isAdmin, onUpdate }) => {
 
   return (
     <div className="card overflow-hidden">
-      <div className="px-4 py-3 border-b border-[#E4E4E7] flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-[#18181B]">Leave applications</h3>
-        <span className="text-xs text-[#71717A] tabular-nums">{leaves.length} records</span>
+      <div className="px-4 py-3 border-b border-[#E4E4E7] dark:border-[#27272A] flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-[#18181B] dark:text-[#FAFAFA]">Leave applications</h3>
+        <span className="text-xs text-[#71717A] dark:text-[#A1A1AA] tabular-nums">{leaves.length} records</span>
       </div>
       <div className="overflow-x-auto">
         <table className="data-table">
@@ -57,7 +57,7 @@ const LeaveHistory = ({ leaves = [], isAdmin, onUpdate }) => {
           <tbody>
             {leaves.length === 0 ? (
               <tr>
-                <td colSpan={isAdmin ? 6 : 4} className="text-center py-14 text-xs text-[#71717A]">
+                <td colSpan={isAdmin ? 6 : 4} className="text-center py-14 text-xs text-[#71717A] dark:text-[#A1A1AA]">
                   No leave requests found.
                 </td>
               </tr>
@@ -67,17 +67,17 @@ const LeaveHistory = ({ leaves = [], isAdmin, onUpdate }) => {
                 return (
                   <tr key={leaveId}>
                     {isAdmin && (
-                      <td className="font-medium text-[#18181B] text-xs">
+                      <td className="font-medium text-[#18181B] dark:text-[#FAFAFA] text-xs">
                         {leave.employee?.firstName} {leave.employee?.lastName}
                       </td>
                     )}
                     <td>
                       <span className="badge badge-neutral">{leave.type}</span>
                     </td>
-                    <td className="text-xs text-[#52525B] tabular-nums">
+                    <td className="text-xs text-[#52525B] dark:text-[#A1A1AA] tabular-nums">
                       {formatDate(leave.startDate)} – {formatDate(leave.endDate)}
                     </td>
-                    <td className="max-w-xs truncate text-xs text-[#71717A]" title={leave.reason}>
+                    <td className="max-w-xs truncate text-xs text-[#71717A] dark:text-[#A1A1AA]" title={leave.reason}>
                       {leave.reason || '—'}
                     </td>
                     <td>
@@ -100,7 +100,7 @@ const LeaveHistory = ({ leaves = [], isAdmin, onUpdate }) => {
                             <button
                               disabled={Boolean(processing)}
                               onClick={() => handleStatusUpdate(leaveId, 'APPROVED')}
-                              className="p-1.5 rounded-[5px] text-[#16A34A] hover:bg-[#F0FDF4] transition-colors"
+                              className="p-1.5 rounded-[5px] text-[#16A34A] dark:text-emerald-400 hover:bg-[#F0FDF4] dark:hover:bg-emerald-950/30 transition-colors"
                               title="Approve request"
                               aria-label="Approve leave"
                             >
@@ -115,7 +115,7 @@ const LeaveHistory = ({ leaves = [], isAdmin, onUpdate }) => {
                               onClick={() =>
                                 setRejectModal({ open: true, leaveId, reason: '' })
                               }
-                              className="p-1.5 rounded-[5px] text-[#DC2626] hover:bg-[#FEF2F2] transition-colors"
+                              className="p-1.5 rounded-[5px] text-[#DC2626] dark:text-rose-400 hover:bg-[#FEF2F2] dark:hover:bg-rose-950/30 transition-colors"
                               title="Reject request"
                               aria-label="Reject leave"
                             >
@@ -127,7 +127,7 @@ const LeaveHistory = ({ leaves = [], isAdmin, onUpdate }) => {
                             </button>
                           </div>
                         ) : (
-                          <span className="text-xs text-[#A1A1AA]">—</span>
+                          <span className="text-xs text-[#A1A1AA] dark:text-[#71717A]">—</span>
                         )}
                       </td>
                     )}
@@ -142,18 +142,18 @@ const LeaveHistory = ({ leaves = [], isAdmin, onUpdate }) => {
       {/* Rejection Reason Modal */}
       {rejectModal.open && (
         <div
-          className="fixed inset-0 bg-black/25 flex items-center justify-center p-4 z-50"
+          className="fixed inset-0 bg-black/25 dark:bg-black/60 flex items-center justify-center p-4 z-50"
           onClick={() => setRejectModal({ open: false, leaveId: null, reason: '' })}
         >
           <div
             className="card p-6 max-w-md w-full shadow-[0_4px_12px_rgba(0,0,0,0.05)]"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-3 border-b border-[#E4E4E7] mb-4">
-              <h2 className="text-sm font-semibold text-[#18181B]">Reject leave request</h2>
+            <div className="flex items-center justify-between pb-3 border-b border-[#E4E4E7] dark:border-[#27272A] mb-4">
+              <h2 className="text-sm font-semibold text-[#18181B] dark:text-[#FAFAFA]">Reject leave request</h2>
               <button
                 onClick={() => setRejectModal({ open: false, leaveId: null, reason: '' })}
-                className="p-1 text-[#71717A] hover:text-[#18181B] rounded-[4px]"
+                className="p-1 text-[#71717A] dark:text-[#A1A1AA] hover:text-[#18181B] dark:hover:text-[#FAFAFA] rounded-[4px]"
                 aria-label="Close dialog"
               >
                 <X className="size-4" />
@@ -161,7 +161,7 @@ const LeaveHistory = ({ leaves = [], isAdmin, onUpdate }) => {
             </div>
             <form onSubmit={handleRejectSubmit} className="space-y-4 text-xs">
               <div>
-                <label className="block font-medium text-[#18181B] mb-1">
+                <label className="block font-medium text-[#18181B] dark:text-[#FAFAFA] mb-1">
                   Reason for rejection
                 </label>
                 <textarea
@@ -175,7 +175,7 @@ const LeaveHistory = ({ leaves = [], isAdmin, onUpdate }) => {
                   }
                 />
               </div>
-              <div className="flex justify-end gap-2 pt-3 border-t border-[#E4E4E7]">
+              <div className="flex justify-end gap-2 pt-3 border-t border-[#E4E4E7] dark:border-[#27272A]">
                 <button
                   type="button"
                   onClick={() => setRejectModal({ open: false, leaveId: null, reason: '' })}

@@ -71,14 +71,14 @@ const CheckInButton = ({ todayRecord, onAction }) => {
       <div className="card p-4 sm:p-5 mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <p className="text-xs font-medium text-[#71717A]">{formattedDate}</p>
-            <p className="text-sm font-semibold text-[#18181B] mt-0.5">
+            <p className="text-xs font-medium text-[#71717A] dark:text-[#A1A1AA]">{formattedDate}</p>
+            <p className="text-sm font-semibold text-[#18181B] dark:text-[#FAFAFA] mt-0.5">
               Shift completed. Total: {getWorkingHoursDisplay(todayRecord)}
             </p>
-            <div className="flex items-center gap-3 text-xs text-[#71717A] mt-1 tabular-nums">
-              <span>Check in: <strong className="font-medium text-[#18181B]">{formatTime(todayRecord.checkIn)}</strong></span>
+            <div className="flex items-center gap-3 text-xs text-[#71717A] dark:text-[#A1A1AA] mt-1 tabular-nums">
+              <span>Check in: <strong className="font-medium text-[#18181B] dark:text-[#FAFAFA]">{formatTime(todayRecord.checkIn)}</strong></span>
               <span>•</span>
-              <span>Check out: <strong className="font-medium text-[#18181B]">{formatTime(todayRecord.checkOut)}</strong></span>
+              <span>Check out: <strong className="font-medium text-[#18181B] dark:text-[#FAFAFA]">{formatTime(todayRecord.checkOut)}</strong></span>
             </div>
           </div>
           <span className="badge badge-success self-start sm:self-auto">Completed</span>
@@ -93,30 +93,30 @@ const CheckInButton = ({ todayRecord, onAction }) => {
         {/* Date, Live clock (24px), Timestamps */}
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-[#71717A]">{formattedDate}</span>
+            <span className="text-xs font-medium text-[#71717A] dark:text-[#A1A1AA]">{formattedDate}</span>
             {isCheckedIn && (
               <span className="badge badge-accent">
-                <span className="size-1.5 rounded-full bg-[#2563EB]" />
+                <span className="size-1.5 rounded-full bg-[#2563EB] dark:bg-blue-400" />
                 Clocked in
               </span>
             )}
           </div>
 
           <div className="flex items-baseline gap-3 mt-1">
-            <h2 className="text-2xl font-semibold tracking-tight text-[#18181B] font-mono tabular-nums">
+            <h2 className="text-2xl font-semibold tracking-tight text-[#18181B] dark:text-[#FAFAFA] font-mono tabular-nums">
               {formattedLiveTime}
             </h2>
             {isCheckedIn && (
-              <span className="text-xs text-[#71717A]">
-                Elapsed: <span className="font-mono font-medium text-[#18181B]">{elapsedTime}</span>
+              <span className="text-xs text-[#71717A] dark:text-[#A1A1AA]">
+                Elapsed: <span className="font-mono font-medium text-[#18181B] dark:text-[#FAFAFA]">{elapsedTime}</span>
               </span>
             )}
           </div>
 
-          <div className="flex items-center gap-3 text-xs text-[#71717A] mt-1">
+          <div className="flex items-center gap-3 text-xs text-[#71717A] dark:text-[#A1A1AA] mt-1">
             {todayRecord?.checkIn ? (
               <span>
-                Today's check-in: <strong className="font-medium text-[#18181B] font-mono">{formatTime(todayRecord.checkIn)}</strong>
+                Today's check-in: <strong className="font-medium text-[#18181B] dark:text-[#FAFAFA] font-mono">{formatTime(todayRecord.checkIn)}</strong>
               </span>
             ) : (
               <span>Not clocked in today</span>

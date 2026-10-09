@@ -37,17 +37,17 @@ const GeneratePayslipForm = ({ employees, onSuccess }) => {
     };
 
     return (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-            <div className="bg-white border border-zinc-200 rounded-[6px] shadow-lg max-w-lg w-full p-6">
-                <div className="flex justify-between items-center pb-4 border-b border-zinc-200">
+        <div className="fixed inset-0 bg-black/40 dark:bg-black/60 z-50 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-[#18181B] border border-zinc-200 dark:border-zinc-800 rounded-[6px] shadow-lg max-w-lg w-full p-6">
+                <div className="flex justify-between items-center pb-4 border-b border-zinc-200 dark:border-zinc-800">
                     <div>
-                        <h2 className="text-base font-semibold text-zinc-900">Generate Monthly Payslip</h2>
-                        <p className="text-xs text-zinc-500 mt-0.5">Calculate and register payroll for an employee</p>
+                        <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">Generate Monthly Payslip</h2>
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">Calculate and register payroll for an employee</p>
                     </div>
                     <button
                         type="button"
                         onClick={() => setIsOpen(false)}
-                        className="text-zinc-400 hover:text-zinc-600 p-1 rounded-[6px] transition-colors"
+                        className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-1 rounded-[6px] transition-colors"
                         aria-label="Close dialog"
                     >
                         <X size={18} />
@@ -56,7 +56,7 @@ const GeneratePayslipForm = ({ employees, onSuccess }) => {
 
                 <form onSubmit={handleSubmit} className="space-y-4 pt-4">
                     <div>
-                        <label className="block text-xs font-medium text-zinc-700 mb-1.5">Employee</label>
+                        <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Employee</label>
                         <select name="employeeId" required defaultValue="" className="w-full text-xs">
                             <option value="" disabled>Select employee</option>
                             {employees.map((e) => (
@@ -69,7 +69,7 @@ const GeneratePayslipForm = ({ employees, onSuccess }) => {
 
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="block text-xs font-medium text-zinc-700 mb-1.5">Month</label>
+                            <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Month</label>
                             <select name="month" defaultValue={new Date().getMonth() + 1} className="w-full text-xs">
                                 {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
                                     <option key={m} value={m}>
@@ -79,7 +79,7 @@ const GeneratePayslipForm = ({ employees, onSuccess }) => {
                             </select>
                         </div>
                         <div>
-                            <label className="block text-xs font-medium text-zinc-700 mb-1.5">Year</label>
+                            <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Year</label>
                             <input
                                 type="number"
                                 name="year"
@@ -90,7 +90,7 @@ const GeneratePayslipForm = ({ employees, onSuccess }) => {
                     </div>
 
                     <div>
-                        <label className="block text-xs font-medium text-zinc-700 mb-1.5">Basic Salary (₹)</label>
+                        <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Basic Salary (₹)</label>
                         <input
                             type="number"
                             name="basicSalary"
@@ -102,7 +102,7 @@ const GeneratePayslipForm = ({ employees, onSuccess }) => {
 
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <label className="block text-xs font-medium text-zinc-700 mb-1.5">Allowances (₹)</label>
+                            <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Allowances (₹)</label>
                             <input
                                 type="number"
                                 name="allowances"
@@ -111,7 +111,7 @@ const GeneratePayslipForm = ({ employees, onSuccess }) => {
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-medium text-zinc-700 mb-1.5">Deductions (₹)</label>
+                            <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">Deductions (₹)</label>
                             <input
                                 type="number"
                                 name="deductions"
@@ -121,7 +121,7 @@ const GeneratePayslipForm = ({ employees, onSuccess }) => {
                         </div>
                     </div>
 
-                    <div className="flex justify-end items-center gap-2.5 pt-4 border-t border-zinc-200">
+                    <div className="flex justify-end items-center gap-2.5 pt-4 border-t border-zinc-200 dark:border-zinc-800">
                         <button
                             onClick={() => setIsOpen(false)}
                             type="button"
@@ -144,4 +144,4 @@ const GeneratePayslipForm = ({ employees, onSuccess }) => {
     );
 };
 
-export default GeneratePayslipForm;
+export default GeneratePayslipForm;

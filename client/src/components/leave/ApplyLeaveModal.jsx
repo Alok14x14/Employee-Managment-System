@@ -34,7 +34,7 @@ const ApplyLeaveModal = ({ open, onClose, onSuccess }) => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/25"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/25 dark:bg-black/60"
       onClick={onClose}
     >
       <div
@@ -42,14 +42,14 @@ const ApplyLeaveModal = ({ open, onClose, onSuccess }) => {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-[#E4E4E7] mb-4">
+        <div className="flex items-center justify-between pb-3 border-b border-[#E4E4E7] dark:border-[#27272A] mb-4">
           <div>
-            <h2 className="text-sm font-semibold text-[#18181B]">Apply for leave</h2>
-            <p className="text-xs text-[#71717A] mt-0.5">Submit a formal time-off request for review</p>
+            <h2 className="text-sm font-semibold text-[#18181B] dark:text-[#FAFAFA]">Apply for leave</h2>
+            <p className="text-xs text-[#71717A] dark:text-[#A1A1AA] mt-0.5">Submit a formal time-off request for review</p>
           </div>
           <button
             onClick={onClose}
-            className="p-1 text-[#71717A] hover:text-[#18181B] rounded-[4px]"
+            className="p-1 text-[#71717A] dark:text-[#A1A1AA] hover:text-[#18181B] dark:hover:text-[#FAFAFA] rounded-[4px]"
             aria-label="Close dialog"
           >
             <X className="size-4" />
@@ -59,7 +59,7 @@ const ApplyLeaveModal = ({ open, onClose, onSuccess }) => {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4 text-xs">
           <div>
-            <label className="block font-medium text-[#18181B] mb-1">Leave category</label>
+            <label className="block font-medium text-[#18181B] dark:text-[#FAFAFA] mb-1">Leave category</label>
             <select name="type" required>
               <option value="SICK">Sick leave</option>
               <option value="CASUAL">Casual leave</option>
@@ -69,7 +69,7 @@ const ApplyLeaveModal = ({ open, onClose, onSuccess }) => {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-medium text-[#18181B] mb-1">Start date</label>
+              <label className="block font-medium text-[#18181B] dark:text-[#FAFAFA] mb-1">Start date</label>
               <input
                 type="date"
                 name="startDate"
@@ -80,7 +80,7 @@ const ApplyLeaveModal = ({ open, onClose, onSuccess }) => {
               />
             </div>
             <div>
-              <label className="block font-medium text-[#18181B] mb-1">End date</label>
+              <label className="block font-medium text-[#18181B] dark:text-[#FAFAFA] mb-1">End date</label>
               <input
                 type="date"
                 name="endDate"
@@ -91,7 +91,7 @@ const ApplyLeaveModal = ({ open, onClose, onSuccess }) => {
           </div>
 
           <div>
-            <label className="block font-medium text-[#18181B] mb-1">Reason for request</label>
+            <label className="block font-medium text-[#18181B] dark:text-[#FAFAFA] mb-1">Reason for request</label>
             <textarea
               name="reason"
               required
@@ -102,7 +102,7 @@ const ApplyLeaveModal = ({ open, onClose, onSuccess }) => {
           </div>
 
           {/* Footer */}
-          <div className="flex justify-end gap-2 pt-3 border-t border-[#E4E4E7]">
+          <div className="flex justify-end gap-2 pt-3 border-t border-[#E4E4E7] dark:border-[#27272A]">
             <button
               onClick={onClose}
               type="button"

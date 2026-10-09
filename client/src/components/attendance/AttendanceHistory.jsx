@@ -4,9 +4,9 @@ import { formatDate, formatTime } from '../../utils/formatters'
 const AttendanceHistory = ({ history = [] }) => {
   return (
     <div className="card overflow-hidden">
-      <div className="px-4 py-3 border-b border-[#E4E4E7] flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-[#18181B]">Attendance activity</h3>
-        <span className="text-xs text-[#71717A] tabular-nums">{history.length} records</span>
+      <div className="px-4 py-3 border-b border-[#E4E4E7] dark:border-[#27272A] flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-[#18181B] dark:text-[#FAFAFA]">Attendance activity</h3>
+        <span className="text-xs text-[#71717A] dark:text-[#A1A1AA] tabular-nums">{history.length} records</span>
       </div>
       <div className="overflow-x-auto">
         <table className="data-table">
@@ -23,7 +23,7 @@ const AttendanceHistory = ({ history = [] }) => {
           <tbody>
             {history.length === 0 ? (
               <tr>
-                <td colSpan={6} className="text-center py-12 text-xs text-[#71717A]">
+                <td colSpan={6} className="text-center py-12 text-xs text-[#71717A] dark:text-[#A1A1AA]">
                   No attendance records found
                 </td>
               </tr>
@@ -34,13 +34,13 @@ const AttendanceHistory = ({ history = [] }) => {
 
                 return (
                   <tr key={record._id || record.id}>
-                    <td className="text-xs font-medium text-[#18181B]">
+                    <td className="text-xs font-medium text-[#18181B] dark:text-[#FAFAFA]">
                       {formatDate(record.date)}
                     </td>
-                    <td className="text-xs text-[#52525B]">
+                    <td className="text-xs text-[#52525B] dark:text-[#A1A1AA]">
                       {formatTime(record.checkIn)}
                     </td>
-                    <td className="text-xs text-[#52525B]">
+                    <td className="text-xs text-[#52525B] dark:text-[#A1A1AA]">
                       <span className="inline-flex items-center gap-1.5">
                         {formatTime(record.checkOut)}
                         {record.autoCheckedOut && (
@@ -50,14 +50,14 @@ const AttendanceHistory = ({ history = [] }) => {
                         )}
                       </span>
                     </td>
-                    <td className="text-xs text-[#52525B] font-medium tabular-nums">
+                    <td className="text-xs text-[#52525B] dark:text-[#A1A1AA] font-medium tabular-nums">
                       {getWorkingHoursDisplay(record)}
                     </td>
                     <td className="text-xs">
                       {hasValidDayType ? (
                         <span className={`badge ${dayType.className}`}>{dayType.label}</span>
                       ) : (
-                        <span className="text-[#A1A1AA]">—</span>
+                        <span className="text-[#A1A1AA] dark:text-[#71717A]">—</span>
                       )}
                     </td>
                     <td className="text-xs">

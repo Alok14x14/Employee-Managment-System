@@ -13,6 +13,7 @@ import PrintPayslip from "./pages/PrintPayslip"
 import LoginForm from "./components/LoginForm"
 import RequireRole from "./components/RequireRole"
 import { useAuth } from "./context/AuthContext"
+import { useTheme } from "./context/ThemeContext"
 
 const RedirectIfAuth = ({ children }) => {
   const { user, loading } = useAuth()
@@ -22,6 +23,9 @@ const RedirectIfAuth = ({ children }) => {
 }
 
 const App = () => {
+  const { theme } = useTheme()
+  const isDark = theme === "dark"
+
   return (
     <>
       <Toaster
@@ -29,13 +33,25 @@ const App = () => {
         toastOptions={{
           duration: 3500,
           style: {
-            background: "#FFFFFF",
-            color: "#18181B",
-            border: "1px solid #E4E4E7",
+            background: isDark ? "#18181B" : "#FFFFFF",
+            color: isDark ? "#FAFAFA" : "#18181B",
+            border: isDark ? "1px solid #27272A" : "1px solid #E4E4E7",
             borderRadius: "6px",
             fontSize: "13px",
             padding: "10px 14px",
-            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
+            boxShadow: isDark ? "0 4px 12px rgba(0, 0, 0, 0.4)" : "0 4px 12px rgba(0, 0, 0, 0.05)",
+          },
+          success: {
+            iconTheme: {
+              primary: "#16A34A",
+              secondary: isDark ? "#18181B" : "#FFFFFF",
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: "#DC2626",
+              secondary: isDark ? "#18181B" : "#FFFFFF",
+            },
           },
         }}
       />

@@ -45,16 +45,16 @@ const Attendance = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-zinc-200">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-zinc-200 dark:border-zinc-800">
         <div>
-          <h1 className="text-xl font-semibold text-zinc-900 tracking-tight">Attendance</h1>
-          <p className="text-sm text-zinc-500 mt-1">Track daily shifts, check-in timestamps, and attendance records.</p>
+          <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight">Attendance</h1>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Track daily shifts, check-in timestamps, and attendance records.</p>
         </div>
       </div>
 
       {isDeleted ? (
-        <div className="p-4 bg-rose-50 border border-rose-200 rounded-[6px] text-center">
-          <p className="text-xs text-rose-700">
+        <div className="p-4 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900 rounded-[6px] text-center">
+          <p className="text-xs text-rose-700 dark:text-rose-400">
             Attendance logging is disabled because this employee record has been marked as inactive.
           </p>
         </div>
@@ -68,29 +68,29 @@ const Attendance = () => {
 
       {/* View Switcher Controls */}
       <div className="flex items-center justify-between gap-4">
-        <div className="inline-flex p-0.5 bg-zinc-100 rounded-[6px] border border-zinc-200">
+        <div className="inline-flex p-0.5 bg-zinc-100 dark:bg-zinc-800 rounded-[6px] border border-zinc-200 dark:border-zinc-700">
           <button
             type="button"
             onClick={() => setViewMode("calendar")}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-xs font-medium transition-colors ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-xs font-medium transition-colors cursor-pointer ${
               viewMode === "calendar"
-                ? "bg-white text-zinc-900 shadow-xs"
-                : "text-zinc-600 hover:text-zinc-900"
+                ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-xs"
+                : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
             }`}
           >
-            <Calendar className="w-3.5 h-3.5 text-zinc-500" />
+            <Calendar className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
             <span>Monthly Calendar</span>
           </button>
           <button
             type="button"
             onClick={() => setViewMode("table")}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-xs font-medium transition-colors ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[4px] text-xs font-medium transition-colors cursor-pointer ${
               viewMode === "table"
-                ? "bg-white text-zinc-900 shadow-xs"
-                : "text-zinc-600 hover:text-zinc-900"
+                ? "bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-xs"
+                : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100"
             }`}
           >
-            <List className="w-3.5 h-3.5 text-zinc-500" />
+            <List className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
             <span>Attendance Log</span>
           </button>
         </div>

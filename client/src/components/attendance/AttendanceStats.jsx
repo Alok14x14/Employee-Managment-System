@@ -17,12 +17,12 @@ const AttendanceStats = ({ history = [] }) => {
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
       {stats.map((s) => (
         <div key={s.label} className="card p-4">
-          <p className="text-xs font-medium text-[#71717A]">{s.label}</p>
-          <p className="text-2xl font-semibold text-[#18181B] mt-1 tabular-nums tracking-tight">
+          <p className="text-xs font-medium text-[#71717A] dark:text-[#A1A1AA]">{s.label}</p>
+          <p className="text-2xl font-semibold text-[#18181B] dark:text-[#FAFAFA] mt-1 tabular-nums tracking-tight">
             {s.value}
           </p>
           {s.helper && (
-            <p className="text-[11px] text-[#A1A1AA] mt-1 truncate">{s.helper}</p>
+            <p className="text-[11px] text-[#A1A1AA] dark:text-[#71717A] mt-1 truncate">{s.helper}</p>
           )}
         </div>
       ))}

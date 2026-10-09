@@ -6,7 +6,6 @@ import { useAuth } from "../context/AuthContext";
 import api from "../api/axios";
 import toast from "react-hot-toast";
 
-
 const Payslips = () => {
   const [payslips, setPayslips] = useState([])
   const [employees, setEmployees] = useState([])
@@ -38,10 +37,10 @@ const Payslips = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-zinc-200">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-zinc-200 dark:border-zinc-800">
         <div>
-          <h1 className="text-xl font-semibold text-zinc-900 tracking-tight">Payslips</h1>
-          <p className="text-sm text-zinc-500 mt-1">
+          <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight">Payslips</h1>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
             {isAdmin ? "Generate, review, and issue employee compensation records." : "Review and download issued payroll records."}
           </p>
         </div>
@@ -52,4 +51,4 @@ const Payslips = () => {
   );
 };
 
-export default Payslips;
+export default Payslips;
