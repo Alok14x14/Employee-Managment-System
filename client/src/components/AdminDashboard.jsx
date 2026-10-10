@@ -60,7 +60,7 @@ const AdminDashboard = ({ data }) => {
       label: "Today's attendance",
       value: data.todayAttendance ?? 0,
       description: 'Checked-in staff today',
-      link: null,
+      link: '/admin/attendance',
     },
     {
       label: 'Pending leaves',

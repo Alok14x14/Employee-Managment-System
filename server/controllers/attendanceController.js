@@ -2,7 +2,7 @@ import { inngest } from "../inngest/index.js";
 import Attendance from "../models/Attendance.js";
 import Employee from "../models/Employee.js";
 import LeaveApplication from "../models/LeaveApplication.js";
-import { istDayStart, isLate, isWeekend } from "../utils/time.js";
+import { istParts, istDayStart, istDayEnd, isLate, isWeekend } from "../utils/time.js";
 
 // Clock in/out for employee
 // POST /api/attendance
@@ -241,4 +241,95 @@ export const getAttendance = async (req, res) => {
         console.error("getAttendance error:", error);
         return res.status(500).json({ error: "Failed to fetch attendance" });
     }
-}
+}
+
+// Get today's attendance for admin overview
+// GET /api/attendance/admin/today?department=
+export const getTodayAttendanceAdmin = async (req, res) => {
+    try {
+        const { department } = req.query;
+
+        // Query active, non-deleted employees with optional department filter
+        const empQuery = {
+            isDeleted: false,
+            employmentStatus: "ACTIVE",
+        };
+        if (department) {
+            empQuery.department = department;
+        }
+
+        const employees = await Employee.find(empQuery)
+            .select("_id firstName lastName email department position")
+            .lean();
+
+        // Query today's attendance records in IST where checkIn is not null and status != "ABSENT"
+        const todayStart = istDayStart();
+        const todayEnd = istDayEnd();
+
+        const attendanceRecords = await Attendance.find({
+            date: { $gte: todayStart, $lt: todayEnd },
+            checkIn: { $ne: null },
+            status: { $ne: "ABSENT" },
+        }).lean();
+
+        // Map matching active employees by id
+        const empMap = new Map();
+        for (const emp of employees) {
+            empMap.set(emp._id.toString(), emp);
+        }
+
+        // Merge in memory
+        const data = [];
+        for (const att of attendanceRecords) {
+            const emp = empMap.get(att.employeeId.toString());
+            if (emp) {
+                data.push({
+                    employee: {
+                        id: emp._id,
+                        firstName: emp.firstName,
+                        lastName: emp.lastName,
+                        email: emp.email,
+                        department: emp.department,
+                        position: emp.position,
+                    },
+                    checkIn: att.checkIn,
+                    checkOut: att.checkOut,
+                    status: att.status,
+                    workingHours: att.workingHours,
+                    dayType: att.dayType,
+                    autoCheckedOut: att.autoCheckedOut ?? false,
+                });
+            }
+        }
+
+        // Sort data by checkIn ascending
+        data.sort((a, b) => new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime());
+
+        // Calculate summary counts
+        const totalActive = employees.length;
+        const present = data.length;
+        const late = data.filter((d) => d.status === "LATE").length;
+        const stillWorking = data.filter((d) => d.checkIn && !d.checkOut).length;
+        const checkedOut = data.filter((d) => d.checkIn && d.checkOut).length;
+        const notCheckedIn = Math.max(0, totalActive - present);
+
+        const { year, month, day } = istParts();
+        const dateStr = `${year}-${month}-${day}`;
+
+        return res.json({
+            date: dateStr,
+            summary: {
+                totalActive,
+                present,
+                late,
+                stillWorking,
+                checkedOut,
+                notCheckedIn,
+            },
+            data,
+        });
+    } catch (error) {
+        console.error("getTodayAttendanceAdmin error:", error);
+        return res.status(500).json({ error: "Failed to fetch today's attendance" });
+    }
+};
