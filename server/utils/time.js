@@ -17,7 +17,11 @@ export const istParts = (d = new Date()) =>
   );
 
 export const istDayStart = (d = new Date()) => {
-  const { year, month, day } = istParts(d);
+  if (typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d)) {
+    return new Date(`${d}T00:00:00+05:30`);
+  }
+  const dateObj = d instanceof Date ? d : new Date(d);
+  const { year, month, day } = istParts(dateObj);
   return new Date(`${year}-${month}-${day}T00:00:00+05:30`);
 };
 
@@ -35,6 +39,11 @@ export const isWeekend = (d = new Date()) => {
   return weekday === "Sat" || weekday === "Sun";
 };
 
+export const isHoliday = (d = new Date(), holidaySet) => {
+  if (!holidaySet || typeof holidaySet.has !== "function") return false;
+  return holidaySet.has(istDayStart(d).getTime());
+};
+
 export default {
   TZ,
   istParts,
@@ -42,4 +51,5 @@ export default {
   istDayEnd,
   isLate,
   isWeekend,
+  isHoliday,
 };

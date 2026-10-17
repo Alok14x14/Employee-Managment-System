@@ -2,7 +2,8 @@ import { inngest } from "../inngest/index.js";
 import Attendance from "../models/Attendance.js";
 import Employee from "../models/Employee.js";
 import LeaveApplication from "../models/LeaveApplication.js";
-import { istParts, istDayStart, istDayEnd, isLate, isWeekend } from "../utils/time.js";
+import { istParts, istDayStart, istDayEnd, isLate, isWeekend, isHoliday } from "../utils/time.js";
+import { loadHolidaySet } from "../utils/holidays.js";
 
 // Clock in/out for employee
 // POST /api/attendance
@@ -157,21 +158,23 @@ export const getAttendance = async (req, res) => {
         const effectiveEnd = new Date(Math.min(endDate.getTime(), today.getTime())); // only past days before today
 
         if (effectiveStart < effectiveEnd) {
-            const existingRecords = await Attendance.find({
-                employeeId: employee._id,
-                date: { $gte: effectiveStart, $lt: effectiveEnd }
-            }).select("date status").lean();
+            const [existingRecords, approvedLeaves, holidaySet] = await Promise.all([
+                Attendance.find({
+                    employeeId: employee._id,
+                    date: { $gte: effectiveStart, $lt: effectiveEnd }
+                }).select("date status").lean(),
+                LeaveApplication.find({
+                    employeeId: employee._id,
+                    status: "APPROVED",
+                    startDate: { $lt: effectiveEnd },
+                    endDate: { $gte: effectiveStart }
+                }).select("startDate endDate").lean(),
+                loadHolidaySet(effectiveStart, effectiveEnd)
+            ]);
 
             const existingDates = new Set(
                 existingRecords.map(r => istDayStart(new Date(r.date)).getTime())
             );
-
-            const approvedLeaves = await LeaveApplication.find({
-                employeeId: employee._id,
-                status: "APPROVED",
-                startDate: { $lt: effectiveEnd },
-                endDate: { $gte: effectiveStart }
-            }).select("startDate endDate").lean();
 
             const isCoveredByLeave = (dayDate) => {
                 const dStart = dayDate.getTime();
@@ -186,7 +189,7 @@ export const getAttendance = async (req, res) => {
             const absentDocs = [];
             for (let d = new Date(effectiveStart); d < effectiveEnd; d.setDate(d.getDate() + 1)) {
                 const day = istDayStart(d);
-                if (isWeekend(day)) continue;
+                if (isWeekend(day) || holidaySet.has(day.getTime())) continue;
                 if (existingDates.has(day.getTime())) continue;
                 if (isCoveredByLeave(day)) continue;
 

@@ -51,6 +51,7 @@ const LeaveHistory = ({ leaves = [], isAdmin, onUpdate, loading = false }) => {
               {isAdmin && <th>Employee</th>}
               <th>Type</th>
               <th>Period</th>
+              <th>Days</th>
               <th>Reason</th>
               <th>Status</th>
               {isAdmin && <th className="text-right">Actions</th>}
@@ -67,6 +68,7 @@ const LeaveHistory = ({ leaves = [], isAdmin, onUpdate, loading = false }) => {
                   )}
                   <td><div className="h-4 w-16 skeleton" /></td>
                   <td><div className="h-3.5 w-32 skeleton" /></td>
+                  <td><div className="h-3.5 w-10 skeleton" /></td>
                   <td><div className="h-3.5 w-44 skeleton" /></td>
                   <td><div className="h-4 w-16 skeleton" /></td>
                   {isAdmin && <td className="text-right"><div className="h-4 w-14 skeleton ml-auto" /></td>}
@@ -74,7 +76,7 @@ const LeaveHistory = ({ leaves = [], isAdmin, onUpdate, loading = false }) => {
               ))
             ) : leaves.length === 0 ? (
               <tr>
-                <td colSpan={isAdmin ? 6 : 4} className="text-center py-14 text-xs text-[#71717A] dark:text-[#A1A1AA]">
+                <td colSpan={isAdmin ? 7 : 5} className="text-center py-14 text-xs text-[#71717A] dark:text-[#A1A1AA]">
                   No leave requests found.
                 </td>
               </tr>
@@ -93,6 +95,9 @@ const LeaveHistory = ({ leaves = [], isAdmin, onUpdate, loading = false }) => {
                     </td>
                     <td className="text-xs text-[#52525B] dark:text-[#A1A1AA] tabular-nums">
                       {formatDate(leave.startDate)} – {formatDate(leave.endDate)}
+                    </td>
+                    <td className="text-xs text-[#52525B] dark:text-[#A1A1AA] tabular-nums font-medium">
+                      {leave.workingDays != null ? `${leave.workingDays}d` : '—'}
                     </td>
                     <td className="max-w-xs truncate text-xs text-[#71717A] dark:text-[#A1A1AA]" title={leave.reason}>
                       {leave.reason || '—'}

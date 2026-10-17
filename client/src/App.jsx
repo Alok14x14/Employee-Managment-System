@@ -14,6 +14,7 @@ import ForgotPassword from "./pages/ForgotPassword"
 import ResetPassword from "./pages/ResetPassword"
 import ForceChangePassword from "./pages/ForceChangePassword"
 import AdminAttendance from "./pages/AdminAttendance"
+import Holidays from "./pages/Holidays"
 import LoginForm from "./components/LoginForm"
 import RequireRole from "./components/RequireRole"
 import { useAuth } from "./context/AuthContext"
@@ -129,6 +130,14 @@ const App = () => {
             element={
               <RequireRole role="ADMIN">
                 <AdminAttendance />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="/holidays"
+            element={
+              <RequireRole role="ADMIN">
+                <Holidays />
               </RequireRole>
             }
           />

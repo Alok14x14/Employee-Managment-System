@@ -6,7 +6,8 @@
   "scripts": {
     "server": "nodemon server.js",
     "start": "node server.js",
-    "seed": "node seed.js"
+    "seed": "node seed.js",
+    "backfill:leave-days": "node scripts/backfillLeaveDays.js"
   },
   "keywords": [],
   "author": "",

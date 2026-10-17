@@ -8,6 +8,7 @@ const leaveApplicationSchema = new mongoose.Schema({
     reason: {type: String, required: true },
     status: {type: String, enum: ["PENDING", "APPROVED", "REJECTED"], default: "PENDING" },
     rejectReason: {type: String},
+    workingDays: {type: Number, default: 0},
 }, {timestamps: true})
 
 leaveApplicationSchema.index({ employeeId: 1, status: 1 });

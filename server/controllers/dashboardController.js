@@ -3,7 +3,8 @@ import Attendance from "../models/Attendance.js";
 import Employee from "../models/Employee.js";
 import LeaveApplication from "../models/LeaveApplication.js";
 import Payslip from "../models/Payslip.js";
-import { istDayStart, istDayEnd, istParts } from "../utils/time.js";
+import { istDayStart, istDayEnd, istParts, isWeekend, isHoliday } from "../utils/time.js";
+import { loadHolidaySet } from "../utils/holidays.js";
 
 // Get dashboard for employee and admin
 // GET /api/dashboard
@@ -60,7 +61,8 @@ export const getDashboard  = async (req, res) => {
                     status: "APPROVED",
                     startDate: { $lt: todayEnd },
                     endDate: { $gte: fiveDaysAgo }
-                }).select("employeeId startDate endDate").lean()
+                }).select("employeeId startDate endDate").lean(),
+                loadHolidaySet(fiveDaysAgo, todayEnd)
             ])
 
             const trendMap = new Map();
@@ -91,7 +93,8 @@ export const getDashboard  = async (req, res) => {
                 });
 
                 const onLeave = onLeaveSet.size;
-                const absent = Math.max(0, totalEmployees - present - onLeave);
+                const isOffDay = isWeekend(day) || isHoliday(day, holidaySet);
+                const absent = isOffDay ? 0 : Math.max(0, totalEmployees - present - onLeave);
 
                 return {
                     name: day.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'Asia/Kolkata' }),

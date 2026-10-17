@@ -7,7 +7,8 @@ import {
     sendLeaveApplicationAdminReminder, 
     sendAttendanceReminderEmail 
 } from "../utils/emailService.js";
-import { istDayStart, istDayEnd, isWeekend } from "../utils/time.js";
+import { istDayStart, istDayEnd, isWeekend, isHoliday } from "../utils/time.js";
+import { loadHolidaySet } from "../utils/holidays.js";
 
 // Create a client to send and receive events
 export const inngest = new Inngest({ id: "fullstack-ems" });
@@ -93,6 +94,16 @@ const attendanceReminderCron = inngest.createFunction(
             return { skipped: "Weekend - no attendance reminders sent" };
         }
 
+        // Step 1b: Skip if today is a holiday in IST
+        const isHolidayToday = await step.run("check-holiday", async () => {
+            const todayStart = istDayStart();
+            const holidaySet = await loadHolidaySet(todayStart, todayStart);
+            return isHoliday(todayStart, holidaySet);
+        });
+        if (isHolidayToday) {
+            return { skipped: "Holiday - no attendance reminders sent" };
+        }
+
         // Step 2: Get today's date range (IST)
         const today = await step.run("get-today-date", ()=>{
             const startUTC = istDayStart();
@@ -164,6 +175,15 @@ const markAbsentCron = inngest.createFunction(
     const isWeekendToday = await step.run("check-weekend", () => isWeekend());
     if (isWeekendToday) {
       return { skipped: "Weekend - no absent records marked" };
+    }
+
+    const isHolidayToday = await step.run("check-holiday", async () => {
+      const todayStart = istDayStart();
+      const holidaySet = await loadHolidaySet(todayStart, todayStart);
+      return isHoliday(todayStart, holidaySet);
+    });
+    if (isHolidayToday) {
+      return { skipped: "Holiday - no absent records marked" };
     }
 
     const today = await step.run("get-today-date", () => {

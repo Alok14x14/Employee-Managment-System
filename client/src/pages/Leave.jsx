@@ -9,7 +9,9 @@ import toast from 'react-hot-toast'
 const Leave = () => {
   const { user } = useAuth()
   const [leaves, setLeaves] = useState([])
+  const [balances, setBalances] = useState([])
   const [loading, setLoading] = useState(true)
+  const [balanceLoading, setBalanceLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [isDeleted, setIsDeleted] = useState(false)
   const isAdmin = user?.role === 'ADMIN'
@@ -26,29 +28,35 @@ const Leave = () => {
     }
   }, [])
 
+  const fetchBalances = useCallback(async () => {
+    if (isAdmin) return
+    try {
+      const res = await api.get('/leave/balance')
+      setBalances(res.data.data || [])
+    } catch (error) {
+      console.error('Failed to fetch leave balance:', error)
+    } finally {
+      setBalanceLoading(false)
+    }
+  }, [isAdmin])
+
+  const refreshAll = useCallback(async () => {
+    fetchLeaves()
+    if (!isAdmin) fetchBalances()
+  }, [fetchLeaves, fetchBalances, isAdmin])
+
   useEffect(() => {
     fetchLeaves()
-  }, [fetchLeaves])
+    if (!isAdmin) fetchBalances()
+  }, [fetchLeaves, fetchBalances, isAdmin])
 
-  const approvedLeaves = leaves.filter((l) => l.status === 'APPROVED')
-  const countDays = (items) =>
-    items.reduce((sum, l) => {
-      const start = new Date(l.startDate)
-      const end = new Date(l.endDate)
-      const diffMs = end.getTime() - start.getTime()
-      const days = Math.round(diffMs / (1000 * 60 * 60 * 24)) + 1
-      return sum + (days > 0 ? days : 1)
-    }, 0)
-
-  const sickCount = countDays(approvedLeaves.filter((l) => l.type === 'SICK'))
-  const casualCount = countDays(approvedLeaves.filter((l) => l.type === 'CASUAL'))
-  const annualCount = countDays(approvedLeaves.filter((l) => l.type === 'ANNUAL'))
-
-  const leaveStats = [
-    { label: 'Sick leave', value: sickCount, helper: 'Days approved' },
-    { label: 'Casual leave', value: casualCount, helper: 'Days approved' },
-    { label: 'Annual leave', value: annualCount, helper: 'Days approved' },
+  const defaultBalances = [
+    { type: 'SICK', quota: 12, used: 0, pending: 0, remaining: 12 },
+    { type: 'CASUAL', quota: 12, used: 0, pending: 0, remaining: 12 },
+    { type: 'ANNUAL', quota: 18, used: 0, pending: 0, remaining: 18 },
   ]
+
+  const activeBalances = balances.length > 0 ? balances : defaultBalances
 
   return (
     <div className="space-y-6">
@@ -78,26 +86,49 @@ const Leave = () => {
       {/* Stat Cards (Employee view) */}
       {!isAdmin && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {leaveStats.map((s) => (
-            <div key={s.label} className="card p-4">
-              <p className="text-xs font-medium text-[#71717A] dark:text-[#A1A1AA]">{s.label}</p>
-              <p className="text-2xl font-semibold text-[#18181B] dark:text-[#FAFAFA] mt-1 tabular-nums tracking-tight">
-                {loading ? '—' : s.value}
-              </p>
-              <p className="text-[11px] text-[#A1A1AA] dark:text-[#71717A] mt-1">{s.helper}</p>
-            </div>
-          ))}
+          {activeBalances.map((b) => {
+            const label =
+              b.type === 'SICK'
+                ? 'Sick leave'
+                : b.type === 'CASUAL'
+                ? 'Casual leave'
+                : 'Annual leave'
+            return (
+              <div key={b.type} className="card p-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-medium text-[#71717A] dark:text-[#A1A1AA]">{label}</p>
+                  <span className="text-[11px] font-medium text-[#2563EB] dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded-[4px] tabular-nums">
+                    {balanceLoading ? '—' : `${b.remaining} remaining`}
+                  </span>
+                </div>
+                <div className="mt-2 flex items-baseline gap-1.5">
+                  <p className="text-2xl font-semibold text-[#18181B] dark:text-[#FAFAFA] tabular-nums tracking-tight">
+                    {balanceLoading ? '—' : b.remaining}
+                  </p>
+                  <span className="text-xs text-[#71717A] dark:text-[#A1A1AA] tabular-nums">
+                    of {b.quota} days quota
+                  </span>
+                </div>
+                <div className="mt-3 pt-2.5 border-t border-[#E4E4E7] dark:border-[#27272A] flex items-center justify-between text-[11px] text-[#71717A] dark:text-[#A1A1AA] tabular-nums">
+                  <span>Used: <strong className="font-medium text-[#18181B] dark:text-[#FAFAFA]">{b.used}</strong></span>
+                  <span>Pending: <strong className="font-medium text-[#18181B] dark:text-[#FAFAFA]">{b.pending}</strong></span>
+                  <span>Quota: <strong className="font-medium text-[#18181B] dark:text-[#FAFAFA]">{b.quota}</strong></span>
+                </div>
+              </div>
+            )
+          })}
         </div>
       )}
 
       {/* Leave History Table */}
-      <LeaveHistory leaves={leaves} isAdmin={isAdmin} onUpdate={fetchLeaves} loading={loading} />
+      <LeaveHistory leaves={leaves} isAdmin={isAdmin} onUpdate={refreshAll} loading={loading} />
 
       {/* Apply Leave Modal */}
       <ApplyLeaveModal
         open={showModal}
         onClose={() => setShowModal(false)}
-        onSuccess={fetchLeaves}
+        onSuccess={refreshAll}
+        balances={activeBalances}
       />
     </div>
   )

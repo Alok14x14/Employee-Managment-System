@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   format,
   startOfMonth,
@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { getWorkingHoursDisplay } from '../../utils/attendance'
 import { formatTime, formatISTDate, istDayKey } from '../../utils/formatters'
+import api from '../../api/axios'
 
 const AttendanceCalendar = ({
   history = [],
@@ -27,6 +28,23 @@ const AttendanceCalendar = ({
   const [internalMonth, setInternalMonth] = useState(new Date())
   const currentMonth = controlledMonth || internalMonth
   const [selectedDayRecord, setSelectedDayRecord] = useState(null)
+  const [holidays, setHolidays] = useState([])
+
+  const calYear = currentMonth.getFullYear()
+
+  useEffect(() => {
+    api.get(`/holidays?year=${calYear}`)
+      .then((res) => setHolidays(res.data.data || []))
+      .catch(() => {})
+  }, [calYear])
+
+  const holidayMap = useMemo(() => {
+    const map = new Map()
+    holidays.forEach((h) => {
+      map.set(istDayKey(h.date), h.name)
+    })
+    return map
+  }, [holidays])
 
   const handleMonthChange = (newMonth) => {
     if (onMonthChange) {
@@ -63,7 +81,7 @@ const AttendanceCalendar = ({
           <h2 className="text-sm font-semibold text-[#18181B] dark:text-[#FAFAFA]">
             {format(currentMonth, 'MMMM yyyy')}
           </h2>
-          <div className="flex items-center gap-4 text-xs text-[#71717A] dark:text-[#A1A1AA] mt-1">
+          <div className="flex items-center gap-4 text-xs text-[#71717A] dark:text-[#A1A1AA] mt-1 flex-wrap">
             <span className="flex items-center gap-1.5">
               <span className="size-1.5 rounded-full bg-[#16A34A] dark:bg-emerald-400" />
               Present ({presentCount})
@@ -75,6 +93,10 @@ const AttendanceCalendar = ({
             <span className="flex items-center gap-1.5">
               <span className="size-1.5 rounded-full bg-[#DC2626] dark:bg-rose-500" />
               Absent ({absentCount})
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="size-1.5 rounded-full bg-purple-600 dark:bg-purple-400" />
+              Holiday
             </span>
           </div>
         </div>
@@ -119,10 +141,13 @@ const AttendanceCalendar = ({
         {days.map((day) => {
           const isCurrMonth = isSameMonth(day, currentMonth)
           const isCurrDay = isToday(day)
-          const record = history.find((r) => istDayKey(r.date) === format(day, 'yyyy-MM-dd'))
+          const dayKey = format(day, 'yyyy-MM-dd')
+          const holidayName = holidayMap.get(dayKey)
 
           let dotColor = null
-          if (record) {
+          if (holidayName) {
+            dotColor = 'bg-purple-600 dark:bg-purple-400'
+          } else if (record) {
             if (record.status === 'PRESENT') dotColor = 'bg-[#16A34A] dark:bg-emerald-400'
             else if (record.status === 'LATE') dotColor = 'bg-[#D97706] dark:bg-amber-400'
             else if (record.status === 'ABSENT') dotColor = 'bg-[#DC2626] dark:bg-rose-500'
@@ -132,7 +157,13 @@ const AttendanceCalendar = ({
             <button
               type="button"
               key={day.toISOString()}
-              onClick={() => record && setSelectedDayRecord({ day, record })}
+              onClick={() => {
+                if (record) {
+                  setSelectedDayRecord({ day, record, holidayName })
+                } else if (holidayName) {
+                  setSelectedDayRecord({ day, record: { status: 'HOLIDAY' }, holidayName })
+                }
+              }}
               className={`min-h-[72px] sm:min-h-[80px] p-2 text-left transition-colors relative flex flex-col justify-between cursor-pointer ${
                 !isCurrMonth
                   ? 'bg-[#FAFAFA] dark:bg-[#111113] text-[#A1A1AA] dark:text-[#52525B]'
@@ -159,9 +190,13 @@ const AttendanceCalendar = ({
                 )}
               </div>
 
-              {/* Working Hours Text */}
+              {/* Working Hours or Holiday Text */}
               <div className="mt-auto">
-                {record?.workingHours != null && record.workingHours > 0 ? (
+                {holidayName ? (
+                  <span className="text-[11px] text-purple-600 dark:text-purple-400 font-medium truncate block" title={holidayName}>
+                    {holidayName}
+                  </span>
+                ) : record?.workingHours != null && record.workingHours > 0 ? (
                   <span className="text-xs text-[#71717A] dark:text-[#A1A1AA] tabular-nums truncate block">
                     {record.workingHours}h
                   </span>
@@ -195,8 +230,13 @@ const AttendanceCalendar = ({
                 <h3 className="text-sm font-semibold text-[#18181B] dark:text-[#FAFAFA]">
                   {formatISTDate(selectedDayRecord.record?.date || selectedDayRecord.day, { weekday: 'long', day: '2-digit', month: 'short', year: 'numeric' })}
                 </h3>
+                {selectedDayRecord.holidayName && (
+                  <p className="text-xs text-purple-600 dark:text-purple-400 font-medium">
+                    Holiday: {selectedDayRecord.holidayName}
+                  </p>
+                )}
                 <p className="text-xs text-[#71717A] dark:text-[#A1A1AA] capitalize">
-                  Status: {selectedDayRecord.record.status?.toLowerCase() || 'unspecified'}
+                  Status: {selectedDayRecord.record.status === 'HOLIDAY' ? 'Public Holiday' : selectedDayRecord.record.status?.toLowerCase() || 'unspecified'}
                 </p>
               </div>
               <button

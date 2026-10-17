@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
     CalendarIcon,
+    CalendarDaysIcon,
     DollarSignIcon,
     FileTextIcon,
     LayoutGridIcon,
@@ -39,7 +40,8 @@ const Sidebar = () => {
         ...(role === 'ADMIN' ? [
             { name: 'Employees', href: '/employees', icon: UserIcon },
             { name: 'Departments', href: '/departments', icon: Building2Icon },
-            { name: 'Attendance', href: '/admin/attendance', icon: CalendarIcon }
+            { name: 'Attendance', href: '/admin/attendance', icon: CalendarIcon },
+            { name: 'Holidays', href: '/holidays', icon: CalendarDaysIcon }
         ] : [
             { name: 'Attendance', href: '/attendance', icon: CalendarIcon }
         ]),
