@@ -4,7 +4,7 @@ import { formatDate } from '../../utils/formatters'
 import api from '../../api/axios'
 import toast from 'react-hot-toast'
 
-const LeaveHistory = ({ leaves = [], isAdmin, onUpdate }) => {
+const LeaveHistory = ({ leaves = [], isAdmin, onUpdate, loading = false }) => {
   const [processing, setProcessing] = useState(null)
   const [rejectModal, setRejectModal] = useState({ open: false, leaveId: null, reason: '' })
 
@@ -40,7 +40,9 @@ const LeaveHistory = ({ leaves = [], isAdmin, onUpdate }) => {
     <div className="card overflow-hidden">
       <div className="px-4 py-3 border-b border-[#E4E4E7] dark:border-[#27272A] flex items-center justify-between">
         <h3 className="text-sm font-semibold text-[#18181B] dark:text-[#FAFAFA]">Leave applications</h3>
-        <span className="text-xs text-[#71717A] dark:text-[#A1A1AA] tabular-nums">{leaves.length} records</span>
+        <span className="text-xs text-[#71717A] dark:text-[#A1A1AA] tabular-nums">
+          {loading ? '—' : `${leaves.length} records`}
+        </span>
       </div>
       <div className="overflow-x-auto">
         <table className="data-table">
@@ -55,7 +57,22 @@ const LeaveHistory = ({ leaves = [], isAdmin, onUpdate }) => {
             </tr>
           </thead>
           <tbody>
-            {leaves.length === 0 ? (
+            {loading ? (
+              Array.from({ length: 5 }).map((_, idx) => (
+                <tr key={idx}>
+                  {isAdmin && (
+                    <td>
+                      <div className="h-3.5 w-32 skeleton" />
+                    </td>
+                  )}
+                  <td><div className="h-4 w-16 skeleton" /></td>
+                  <td><div className="h-3.5 w-32 skeleton" /></td>
+                  <td><div className="h-3.5 w-44 skeleton" /></td>
+                  <td><div className="h-4 w-16 skeleton" /></td>
+                  {isAdmin && <td className="text-right"><div className="h-4 w-14 skeleton ml-auto" /></td>}
+                </tr>
+              ))
+            ) : leaves.length === 0 ? (
               <tr>
                 <td colSpan={isAdmin ? 6 : 4} className="text-center py-14 text-xs text-[#71717A] dark:text-[#A1A1AA]">
                   No leave requests found.

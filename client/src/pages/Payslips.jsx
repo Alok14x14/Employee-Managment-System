@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "react"
-import Loading from "../components/Loading";
 import PayslipList from "../components/payslip/PayslipList";
 import GeneratePayslipForm from "../components/payslip/GeneratePayslipForm";
 import { useAuth } from "../context/AuthContext";
@@ -33,8 +32,6 @@ const Payslips = () => {
     if(isAdmin) api.get("/employees").then((res)=> setEmployees(res.data.filter((e)=> !e.isDeleted))).catch(()=>{})
   },[isAdmin])
 
-  if (loading) return <Loading />;
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-zinc-200 dark:border-zinc-800">
@@ -46,7 +43,7 @@ const Payslips = () => {
         </div>
         {isAdmin && <GeneratePayslipForm employees={employees} onSuccess={fetchPayslips} />}
       </div>
-      <PayslipList payslips={payslips} isAdmin={isAdmin} />
+      <PayslipList payslips={payslips} isAdmin={isAdmin} loading={loading} />
     </div>
   );
 };

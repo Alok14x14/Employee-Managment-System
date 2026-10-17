@@ -1,12 +1,14 @@
 import { getDayTypeDisplay, getWorkingHoursDisplay } from '../../utils/attendance'
 import { formatDate, formatTime } from '../../utils/formatters'
 
-const AttendanceHistory = ({ history = [] }) => {
+const AttendanceHistory = ({ history = [], loading = false }) => {
   return (
     <div className="card overflow-hidden">
       <div className="px-4 py-3 border-b border-[#E4E4E7] dark:border-[#27272A] flex items-center justify-between">
         <h3 className="text-sm font-semibold text-[#18181B] dark:text-[#FAFAFA]">Attendance activity</h3>
-        <span className="text-xs text-[#71717A] dark:text-[#A1A1AA] tabular-nums">{history.length} records</span>
+        <span className="text-xs text-[#71717A] dark:text-[#A1A1AA] tabular-nums">
+          {loading ? '—' : `${history.length} records`}
+        </span>
       </div>
       <div className="overflow-x-auto">
         <table className="data-table">
@@ -21,7 +23,18 @@ const AttendanceHistory = ({ history = [] }) => {
             </tr>
           </thead>
           <tbody>
-            {history.length === 0 ? (
+            {loading ? (
+              Array.from({ length: 5 }).map((_, idx) => (
+                <tr key={idx}>
+                  <td><div className="h-3.5 w-24 skeleton" /></td>
+                  <td><div className="h-3.5 w-16 skeleton" /></td>
+                  <td><div className="h-3.5 w-16 skeleton" /></td>
+                  <td><div className="h-3.5 w-16 skeleton" /></td>
+                  <td><div className="h-4 w-20 skeleton" /></td>
+                  <td><div className="h-4 w-16 skeleton" /></td>
+                </tr>
+              ))
+            ) : history.length === 0 ? (
               <tr>
                 <td colSpan={6} className="text-center py-12 text-xs text-[#71717A] dark:text-[#A1A1AA]">
                   No attendance records found

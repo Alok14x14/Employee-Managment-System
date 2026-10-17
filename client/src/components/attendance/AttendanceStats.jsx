@@ -1,4 +1,4 @@
-const AttendanceStats = ({ history = [] }) => {
+const AttendanceStats = ({ history = [], loading = false }) => {
   const totalPresent = history.filter((h) => h.status === 'PRESENT' || h.status === 'LATE').length
   const totalLate = history.filter((h) => h.status === 'LATE').length
 
@@ -19,7 +19,7 @@ const AttendanceStats = ({ history = [] }) => {
         <div key={s.label} className="card p-4">
           <p className="text-xs font-medium text-[#71717A] dark:text-[#A1A1AA]">{s.label}</p>
           <p className="text-2xl font-semibold text-[#18181B] dark:text-[#FAFAFA] mt-1 tabular-nums tracking-tight">
-            {s.value}
+            {loading ? '—' : s.value}
           </p>
           {s.helper && (
             <p className="text-[11px] text-[#A1A1AA] dark:text-[#71717A] mt-1 truncate">{s.helper}</p>

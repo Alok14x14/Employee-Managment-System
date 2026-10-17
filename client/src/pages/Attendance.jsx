@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "react";
-import Loading from "../components/Loading";
 import CheckInButton from "../components/attendance/CheckInButton";
 import AttendanceStats from "../components/attendance/AttendanceStats";
 import AttendanceHistory from "../components/attendance/AttendanceHistory";
@@ -41,8 +40,6 @@ const Attendance = () => {
     fetchData(currentMonth, viewMode);
   }, [currentMonth, viewMode, fetchData]);
 
-  if (loading && history.length === 0) return <Loading />;
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-zinc-200 dark:border-zinc-800">
@@ -64,7 +61,7 @@ const Attendance = () => {
         </div>
       )}
 
-      <AttendanceStats history={history} />
+      <AttendanceStats history={history} loading={loading} />
 
       {/* View Switcher Controls */}
       <div className="flex items-center justify-between gap-4">
@@ -104,7 +101,7 @@ const Attendance = () => {
           onMonthChange={setCurrentMonth}
         />
       ) : (
-        <AttendanceHistory history={history} />
+        <AttendanceHistory history={history} loading={loading} />
       )}
     </div>
   );

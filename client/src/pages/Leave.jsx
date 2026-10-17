@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react'
-import Loading from '../components/Loading'
 import { PlusIcon } from 'lucide-react'
 import LeaveHistory from '../components/leave/LeaveHistory'
 import ApplyLeaveModal from '../components/leave/ApplyLeaveModal'
@@ -30,8 +29,6 @@ const Leave = () => {
   useEffect(() => {
     fetchLeaves()
   }, [fetchLeaves])
-
-  if (loading) return <Loading />
 
   const approvedLeaves = leaves.filter((l) => l.status === 'APPROVED')
   const countDays = (items) =>
@@ -85,7 +82,7 @@ const Leave = () => {
             <div key={s.label} className="card p-4">
               <p className="text-xs font-medium text-[#71717A] dark:text-[#A1A1AA]">{s.label}</p>
               <p className="text-2xl font-semibold text-[#18181B] dark:text-[#FAFAFA] mt-1 tabular-nums tracking-tight">
-                {s.value}
+                {loading ? '—' : s.value}
               </p>
               <p className="text-[11px] text-[#A1A1AA] dark:text-[#71717A] mt-1">{s.helper}</p>
             </div>
@@ -94,7 +91,7 @@ const Leave = () => {
       )}
 
       {/* Leave History Table */}
-      <LeaveHistory leaves={leaves} isAdmin={isAdmin} onUpdate={fetchLeaves} />
+      <LeaveHistory leaves={leaves} isAdmin={isAdmin} onUpdate={fetchLeaves} loading={loading} />
 
       {/* Apply Leave Modal */}
       <ApplyLeaveModal

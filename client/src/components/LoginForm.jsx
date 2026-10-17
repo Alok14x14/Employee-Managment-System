@@ -123,12 +123,7 @@ const LoginForm = ({ role = 'admin' }) => {
                 <label className="block text-xs font-medium text-[#18181B] dark:text-[#FAFAFA]">
                   Password
                 </label>
-                <Link
-                  to="/forgot-password"
-                  className="text-xs font-medium text-[#2563EB] dark:text-[#3B82F6] hover:underline"
-                >
-                  Forgot password?
-                </Link>
+                
               </div>
               <div className="relative">
                 <input
@@ -164,8 +159,16 @@ const LoginForm = ({ role = 'admin' }) => {
             </button>
           </form>
 
-          <p className="mt-8 text-center text-[11px] text-[#A1A1AA] dark:text-[#71717A]">
-            Protected internal tooling. Authorized access only.
+          <div className='mt-2 text-center d-flex justify-content-end'>
+          <Link
+                  to="/forgot-password"
+                  className="text-xs font-medium text-[#2563EB] dark:text-[#3B82F6] hover:underline"
+                >
+                  Forgot password?
+                </Link>
+          </div>
+          <p className="mt-4 text-center text-[11px] text-[#A1A1AA] dark:text-[#71717A]">
+            © StaffFlow {new Date().getFullYear()}. All rights reserved.
           </p>
         </div>
       </div>

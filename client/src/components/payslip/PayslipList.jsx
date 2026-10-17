@@ -1,7 +1,7 @@
 import { Download } from 'lucide-react';
 import { formatCurrency, formatISTDate } from '../../utils/formatters';
 
-const PayslipList = ({ payslips, isAdmin }) => {
+const PayslipList = ({ payslips, isAdmin, loading = false }) => {
   return (
     <div className="bg-white dark:bg-[#18181B] border border-zinc-200 dark:border-zinc-800 rounded-[6px] overflow-hidden">
       <div className="overflow-x-auto">
@@ -28,7 +28,21 @@ const PayslipList = ({ payslips, isAdmin }) => {
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-            {payslips.length === 0 ? (
+            {loading ? (
+              Array.from({ length: 5 }).map((_, idx) => (
+                <tr key={idx}>
+                  {isAdmin && (
+                    <td className="px-3.5 py-2.5">
+                      <div className="h-3.5 w-32 skeleton" />
+                    </td>
+                  )}
+                  <td className="px-3.5 py-2.5"><div className="h-3.5 w-24 skeleton" /></td>
+                  <td className="px-3.5 py-2.5 text-right"><div className="h-3.5 w-20 skeleton ml-auto" /></td>
+                  <td className="px-3.5 py-2.5 text-right"><div className="h-3.5 w-20 skeleton ml-auto" /></td>
+                  <td className="px-3.5 py-2.5 text-right"><div className="h-4 w-16 skeleton ml-auto" /></td>
+                </tr>
+              ))
+            ) : payslips.length === 0 ? (
               <tr>
                 <td
                   colSpan={isAdmin ? 5 : 4}
