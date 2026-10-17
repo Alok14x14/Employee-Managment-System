@@ -4,7 +4,6 @@ import { Link, useNavigate } from 'react-router-dom'
 import { EyeIcon, EyeOffIcon, Loader2Icon, MoonIcon, SunIcon } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
-import toast from 'react-hot-toast'
 
 const LoginForm = ({ role = 'admin' }) => {
   const [currentRole, setCurrentRole] = useState(role || 'admin')
@@ -27,7 +26,6 @@ const LoginForm = ({ role = 'admin' }) => {
     } catch (err) {
       const msg = err.response?.data?.error || err.message || 'Authentication failed'
       setError(msg)
-      toast.error(msg)
     } finally {
       setLoading(false)
     }
