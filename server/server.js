@@ -54,7 +54,8 @@ app.use("/api/holidays", holidayRouter)
 app.use("/api/inngest", serve({ client: inngest, functions }));
 
 if (!process.env.VERCEL) {
-    app.listen(PORT, ()=> console.log(`Server running on port ${PORT}`));
+    connectDB().catch((err) => console.error("Database connection error:", err));
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 }
 
 export default app;
