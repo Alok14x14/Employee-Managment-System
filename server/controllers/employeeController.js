@@ -99,8 +99,11 @@ export const createEmployee = async (req, res)=>{
         }
 
         // Send welcome email
-        sendWelcomeEmail(email, firstName, parsedJoin)
-            .catch(err => console.error("Failed to send welcome email:", err));
+        try {
+            await sendWelcomeEmail(email, firstName, parsedJoin);
+        } catch (err) {
+            console.error("Failed to send welcome email:", err);
+        }
 
         return res.status(201).json({success: true, employee})
     } catch (error) {

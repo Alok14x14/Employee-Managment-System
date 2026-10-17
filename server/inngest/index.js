@@ -2,6 +2,7 @@ import { Inngest } from "inngest";
 import Attendance from "../models/Attendance.js";
 import Employee from "../models/Employee.js";
 import LeaveApplication from "../models/LeaveApplication.js";
+import User from "../models/User.js";
 import { 
     sendCheckOutReminderEmail, 
     sendLeaveApplicationAdminReminder, 
@@ -111,14 +112,26 @@ const attendanceReminderCron = inngest.createFunction(
             return {startUTC: startUTC.toISOString(), endUTC: endUTC.toISOString()}
         })
 
-        // Step 3: Get all active, non-deleted employees
-        const activeEmployees = await step.run("get-active-employees", async ()=>{
+        // Step 3: Get all active, non-deleted employees (excluding admins)
+        const activeEmployees = await step.run("get-active-employees", async () => {
+            const adminUsers = await User.find({ role: "ADMIN" }).select("_id").lean();
+            const adminUserIds = adminUsers.map((u) => u._id);
+
             const employees = await Employee.find({
-                isDeleted: false,
+                isDeleted: { $ne: true },
                 employmentStatus: "ACTIVE",
-            }).lean();
-            return employees.map((e)=>({_id: e._id.toString(),firstName: e.firstName, lastName: e.lastName, email: e.email, department: e.department}))
-        })
+                userId: { $nin: adminUserIds },
+            }).select("_id firstName lastName email department joinDate createdAt").lean();
+            return employees.map((e) => ({
+                _id: e._id.toString(),
+                firstName: e.firstName,
+                lastName: e.lastName,
+                email: e.email,
+                department: e.department,
+                joinDate: e.joinDate ? new Date(e.joinDate).toISOString() : null,
+                createdAt: e.createdAt ? new Date(e.createdAt).toISOString() : null,
+            }));
+        });
 
         // Step 4: Get employee IDs on approved leave today
         const onLeaveIds = await step.run("get-on-leave-ids", async () => {
@@ -138,8 +151,12 @@ const attendanceReminderCron = inngest.createFunction(
             return attendances.map((a)=> a.employeeId.toString())
         })
 
-        // Step 6: Filter absent employees (not on leave & not checked in)
-        const absentEmployees = activeEmployees.filter((emp)=> !onLeaveIds.includes(emp._id) && !checkedInIds.includes(emp._id))
+        // Step 6: Filter absent employees (not on leave & not checked in, and joined on or before today)
+        const absentEmployees = activeEmployees.filter((emp) => {
+            const id = emp._id.toString();
+            const join = istDayStart(emp.joinDate || emp.createdAt || new Date(0));
+            return join <= new Date(today.startUTC) && !onLeaveIds.includes(id) && !checkedInIds.includes(id);
+        });
 
         // Step 7: Send reminder emails
         if(absentEmployees.length > 0){
@@ -193,10 +210,20 @@ const markAbsentCron = inngest.createFunction(
     });
 
     const activeEmployees = await step.run("get-active-employees", async () => {
-      return Employee.find({
-        isDeleted: false,
+      const adminUsers = await User.find({ role: "ADMIN" }).select("_id").lean();
+      const adminUserIds = adminUsers.map((u) => u._id);
+
+      const employees = await Employee.find({
+        isDeleted: { $ne: true },
         employmentStatus: "ACTIVE",
+        userId: { $nin: adminUserIds },
       }).select("_id joinDate createdAt").lean();
+
+      return employees.map((emp) => ({
+        _id: emp._id.toString(),
+        joinDate: emp.joinDate ? new Date(emp.joinDate).toISOString() : null,
+        createdAt: emp.createdAt ? new Date(emp.createdAt).toISOString() : null,
+      }));
     });
 
     const onLeaveIds = await step.run("get-on-leave-ids", async () => {

@@ -3,6 +3,7 @@ import Attendance from "../models/Attendance.js";
 import Employee from "../models/Employee.js";
 import LeaveApplication from "../models/LeaveApplication.js";
 import Payslip from "../models/Payslip.js";
+import User from "../models/User.js";
 import { istDayStart, istDayEnd, istParts, isWeekend, isHoliday } from "../utils/time.js";
 import { loadHolidaySet } from "../utils/holidays.js";
 
@@ -16,9 +17,20 @@ export const getDashboard  = async (req, res) => {
             const todayEnd = istDayEnd();
             const fiveDaysAgo = new Date(todayStart.getTime() - 4 * 24 * 60 * 60 * 1000);
 
-            const [totalEmployees, todayAttendance, pendingLeaves, recentLeaves, recentEmployees, deptHeadcount, leaveDistribution, fiveDayTrend, approvedLeavesFiveDays, holidaySet] = await Promise.all([
-                Employee.countDocuments({isDeleted: { $ne: true }}),
+            // Exclude employees whose linked User has role "ADMIN"
+            const adminUsers = await User.find({ role: "ADMIN" }).select("_id").lean();
+            const adminUserIds = adminUsers.map((u) => u._id);
+
+            const nonAdminEmployees = await Employee.find({
+                isDeleted: { $ne: true },
+                userId: { $nin: adminUserIds },
+            }).select("_id joinDate createdAt employmentStatus department").lean();
+            const nonAdminEmployeeIds = nonAdminEmployees.map((e) => e._id);
+            const totalEmployees = nonAdminEmployees.length;
+
+            const [todayAttendance, pendingLeaves, recentLeaves, recentEmployees, deptHeadcount, leaveDistribution, fiveDayTrend, approvedLeavesFiveDays, holidaySet] = await Promise.all([
                 Attendance.countDocuments({
+                    employeeId: { $in: nonAdminEmployeeIds },
                     date: {
                         $gte: todayStart,
                         $lt: todayEnd,
@@ -27,9 +39,9 @@ export const getDashboard  = async (req, res) => {
                 }),
                 LeaveApplication.countDocuments({status: "PENDING" }),
                 LeaveApplication.find().populate("employeeId", "firstName lastName department").sort({createdAt: -1}).limit(5).lean(),
-                Employee.find({isDeleted: { $ne: true }}).sort({createdAt: -1}).limit(5).lean(),
+                Employee.find({isDeleted: { $ne: true }, userId: { $nin: adminUserIds }}).sort({createdAt: -1}).limit(5).lean(),
                 Employee.aggregate([
-                    { $match: { isDeleted: { $ne: true } } },
+                    { $match: { isDeleted: { $ne: true }, userId: { $nin: adminUserIds } } },
                     { $group: { _id: "$department", headcount: { $sum: 1 } } },
                     { $project: { name: "$_id", headcount: 1, _id: 0 } }
                 ]),
@@ -40,6 +52,7 @@ export const getDashboard  = async (req, res) => {
                 Attendance.aggregate([
                     {
                         $match: {
+                            employeeId: { $in: nonAdminEmployeeIds },
                             date: { $gte: fiveDaysAgo, $lt: todayEnd },
                             status: { $ne: "ABSENT" }
                         }
@@ -76,11 +89,28 @@ export const getDashboard  = async (req, res) => {
             });
 
             const attendanceData = past5Days.map((day) => {
-                const { year, month, day: d } = istParts(day);
+                const dayStart = istDayStart(day);
+                const { year, month, day: d } = istParts(dayStart);
                 const dateKey = `${year}-${month}-${d}`;
                 const present = trendMap.get(dateKey) || 0;
 
-                const dayStartTime = day.getTime();
+                // Skip weekends: return actual present data and absent: 0
+                if (isWeekend(dayStart)) {
+                    return {
+                        name: dayStart.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'Asia/Kolkata' }),
+                        present,
+                        absent: 0
+                    };
+                }
+
+                // Compute eligible headcount per day as active, non-deleted employees whose joinDate is on or before that day
+                const eligibleHeadcount = nonAdminEmployees.filter((emp) => {
+                    if (emp.employmentStatus !== "ACTIVE") return false;
+                    const join = istDayStart(emp.joinDate || emp.createdAt || new Date(0));
+                    return join <= dayStart;
+                }).length;
+
+                const dayStartTime = dayStart.getTime();
                 const dayEndTime = dayStartTime + 24 * 60 * 60 * 1000;
 
                 const onLeaveSet = new Set();
@@ -93,11 +123,11 @@ export const getDashboard  = async (req, res) => {
                 });
 
                 const onLeave = onLeaveSet.size;
-                const isOffDay = isWeekend(day) || isHoliday(day, holidaySet);
-                const absent = isOffDay ? 0 : Math.max(0, totalEmployees - present - onLeave);
+                const isHolidayDay = isHoliday(dayStart, holidaySet);
+                const absent = isHolidayDay ? 0 : Math.max(0, eligibleHeadcount - present - onLeave);
 
                 return {
-                    name: day.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'Asia/Kolkata' }),
+                    name: dayStart.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'Asia/Kolkata' }),
                     present,
                     absent
                 };
@@ -151,7 +181,8 @@ export const getDashboard  = async (req, res) => {
                     date: {
                         $gte: startOfMonth,
                         $lt: startOfNextMonth,
-                    }
+                    },
+                    status: { $ne: "ABSENT" }
                 }),
                 LeaveApplication.countDocuments({
                     employeeId: employee._id,

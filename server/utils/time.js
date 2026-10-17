@@ -1,8 +1,15 @@
 // server/utils/time.js
 const TZ = "Asia/Kolkata";
 
-export const istParts = (d = new Date()) =>
-  Object.fromEntries(
+export const istParts = (d = new Date()) => {
+  if (d === null || d === "") {
+    throw new Error(`Invalid date passed to istParts: ${d}`);
+  }
+  const dateObj = d instanceof Date ? d : new Date(d);
+  if (isNaN(dateObj.getTime())) {
+    throw new Error(`Invalid date passed to istParts: ${d}`);
+  }
+  return Object.fromEntries(
     new Intl.DateTimeFormat("en-GB", {
       timeZone: TZ,
       hourCycle: "h23",
@@ -12,16 +19,16 @@ export const istParts = (d = new Date()) =>
       hour: "2-digit",
       minute: "2-digit",
     })
-      .formatToParts(d)
+      .formatToParts(dateObj)
       .map((p) => [p.type, p.value])
   );
+};
 
 export const istDayStart = (d = new Date()) => {
   if (typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d)) {
     return new Date(`${d}T00:00:00+05:30`);
   }
-  const dateObj = d instanceof Date ? d : new Date(d);
-  const { year, month, day } = istParts(dateObj);
+  const { year, month, day } = istParts(d);
   return new Date(`${year}-${month}-${day}T00:00:00+05:30`);
 };
 
@@ -35,7 +42,14 @@ export const isLate = (d = new Date()) => {
 };
 
 export const isWeekend = (d = new Date()) => {
-  const weekday = new Intl.DateTimeFormat("en-US", { timeZone: TZ, weekday: "short" }).format(d);
+  if (d === null || d === "") {
+    throw new Error(`Invalid date passed to isWeekend: ${d}`);
+  }
+  const dateObj = d instanceof Date ? d : new Date(d);
+  if (isNaN(dateObj.getTime())) {
+    throw new Error(`Invalid date passed to isWeekend: ${d}`);
+  }
+  const weekday = new Intl.DateTimeFormat("en-US", { timeZone: TZ, weekday: "short" }).format(dateObj);
   return weekday === "Sat" || weekday === "Sun";
 };
 

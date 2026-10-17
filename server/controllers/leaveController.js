@@ -263,7 +263,7 @@ export const updateLeaveStatus = async (req, res) => {
         }
 
         if (leave.status !== "PENDING") {
-            return res.status(400).json({ error: "Leave status can only be updated from PENDING" });
+            return res.status(409).json({ error: "Leave was already processed" });
         }
 
         if (status === "REJECTED" && !rejectReason) {
@@ -333,22 +333,39 @@ export const updateLeaveStatus = async (req, res) => {
             updateOps.$unset = { rejectReason: "" };
         }
 
-        const updatedLeave = await LeaveApplication.findByIdAndUpdate(id, updateOps, { returnDocument: "after" });
+        // Atomic update guarding against concurrent updates
+        const updatedLeave = await LeaveApplication.findOneAndUpdate(
+            { _id: id, status: "PENDING" },
+            updateOps,
+            { returnDocument: "after" }
+        );
 
-        // Send email notification for approved/rejected leaves
-        if (updatedLeave && ["APPROVED", "REJECTED"].includes(status)) {
-            const employee = await Employee.findById(updatedLeave.employeeId);
-            if (employee && employee.email) {
-                sendLeaveStatusEmail(
-                    employee.email,
-                    employee.firstName,
-                    status,
-                    updatedLeave.type,
-                    updatedLeave.startDate,
-                    updatedLeave.endDate,
-                    updatedLeave.reason,
-                    updatedLeave.rejectReason
-                ).catch((err) => console.error("Failed to send leave status email:", err));
+        if (!updatedLeave) {
+            const exists = await LeaveApplication.exists({ _id: id });
+            if (!exists) {
+                return res.status(404).json({ error: "Leave not found" });
+            }
+            return res.status(409).json({ error: "Leave was already processed" });
+        }
+
+        // Send email notification for approved/rejected leaves (awaited inside try/catch)
+        if (["APPROVED", "REJECTED"].includes(status)) {
+            try {
+                const employee = await Employee.findById(updatedLeave.employeeId);
+                if (employee && employee.email) {
+                    await sendLeaveStatusEmail(
+                        employee.email,
+                        employee.firstName,
+                        status,
+                        updatedLeave.type,
+                        updatedLeave.startDate,
+                        updatedLeave.endDate,
+                        updatedLeave.reason,
+                        updatedLeave.rejectReason
+                    );
+                }
+            } catch (err) {
+                console.error("Failed to send leave status email:", err);
             }
         }
 
