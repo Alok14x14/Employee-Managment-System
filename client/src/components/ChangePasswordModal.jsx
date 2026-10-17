@@ -27,7 +27,7 @@ const ChangePasswordModal = ({ open, onClose }) => {
             const { data } = await api.post('/auth/change-password', { currentPassword, newPassword });
             if (!data.success) throw new Error(data.error || 'Failed');
             if (data.token) {
-                updateToken(data.token);
+                updateToken(data.token, data.user);
             }
             setMessage({ type: 'success', text: 'Password updated successfully' });
             e.target.reset();

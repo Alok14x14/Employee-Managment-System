@@ -16,11 +16,16 @@ export const protect = async (req, res, next) => {
         }
 
         const [user, emp] = await Promise.all([
-            User.findById(session.userId).select("role email passwordChangedAt mustChangePassword").lean(),
+            User.findById(session.userId).select("role email passwordChangedAt mustChangePassword tokenVersion").lean(),
             Employee.findOne({ userId: session.userId }).select("isDeleted").lean()
         ]);
 
         if (!user) {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
+
+        const userTokenVersion = user.tokenVersion ?? 0;
+        if (session.tokenVersion !== userTokenVersion) {
             return res.status(401).json({ error: "Unauthorized" });
         }
 

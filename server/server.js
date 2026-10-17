@@ -17,12 +17,16 @@ import dns from "dns"
 import { serve } from "inngest/express";
 import { inngest, functions } from "./inngest/index.js"
 
+import helmet from "helmet";
+
 dns.setServers(['8.8.8.8', '1.1.1.1']); // Force DNS to Google's servers.
 
 const app = express()
 const PORT = process.env.PORT || 4000;
 
 app.set("trust proxy", 1);
+
+app.use(helmet());
 
 
 // Middleware

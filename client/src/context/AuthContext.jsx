@@ -47,10 +47,14 @@ export function AuthProvider({ children }) {
         setUser(null);
     }, []);
 
-    const updateToken = useCallback((newToken) => {
+    const updateToken = useCallback((newToken, updatedUser) => {
         localStorage.setItem("token", newToken);
         setToken(newToken);
-        setUser((prev) => (prev ? { ...prev, mustChangePassword: false } : null));
+        if (updatedUser) {
+            setUser(updatedUser);
+        } else {
+            setUser((prev) => (prev ? { ...prev, mustChangePassword: false } : null));
+        }
     }, []);
 
     const value = useMemo(

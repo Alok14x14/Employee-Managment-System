@@ -56,11 +56,16 @@ export const createEmployee = async (req, res)=>{
     try {
         const {firstName, lastName, email, phone, position, department, basicSalary, allowances, deductions, joinDate, password, role, bio} = req.body;
 
-        if(!email || !password || !firstName || !lastName){
+        if(!email || !password || !firstName || !lastName || typeof email !== "string" || typeof password !== "string"){
             return res.status(400).json({ error: "Missing required fields" });
         }
 
-        if (typeof password !== "string" || password.length < 8) {
+        const normalizedEmail = email.trim().toLowerCase();
+        if (!normalizedEmail) {
+            return res.status(400).json({ error: "Missing required fields" });
+        }
+
+        if (password.length < 8) {
             return res.status(400).json({ error: "Password must be at least 8 characters" });
         }
 
@@ -71,10 +76,11 @@ export const createEmployee = async (req, res)=>{
 
         const hashed = await bcrypt.hash(password, 10)
         const user = await User.create({
-            email,
+            email: normalizedEmail,
             password: hashed,
             role: role || "EMPLOYEE",
             mustChangePassword: true,
+            tokenVersion: 0,
         })
 
         let employee;
@@ -83,7 +89,7 @@ export const createEmployee = async (req, res)=>{
                 userId: user._id,
                 firstName,
                 lastName,
-                email,
+                email: normalizedEmail,
                 phone,
                 position,
                 department: department || "Engineering",
@@ -100,7 +106,7 @@ export const createEmployee = async (req, res)=>{
 
         // Send welcome email
         try {
-            await sendWelcomeEmail(email, firstName, parsedJoin);
+            await sendWelcomeEmail(normalizedEmail, firstName, parsedJoin);
         } catch (err) {
             console.error("Failed to send welcome email:", err);
         }
@@ -138,6 +144,14 @@ export const updateEmployee = async (req, res)=>{
 
         const {firstName, lastName, email, phone, position, department, basicSalary, allowances, deductions, password, role, bio, employmentStatus, joinDate} = req.body;
 
+        let normalizedEmail;
+        if (email !== undefined) {
+            if (typeof email !== "string" || !email.trim()) {
+                return res.status(400).json({ error: "Valid email is required" });
+            }
+            normalizedEmail = email.trim().toLowerCase();
+        }
+
         if (password !== undefined) {
             if (typeof password !== "string" || password.length < 8) {
                 return res.status(400).json({ error: "Password must be at least 8 characters" });
@@ -146,12 +160,18 @@ export const updateEmployee = async (req, res)=>{
 
         // Update user record FIRST
         const userUpdate = {};
-        if (email !== undefined) userUpdate.email = email;
-        if (role !== undefined) userUpdate.role = role;
+        const setFields = {};
+        if (normalizedEmail !== undefined) setFields.email = normalizedEmail;
+        if (role !== undefined) setFields.role = role;
         if (password !== undefined) {
-            userUpdate.password = await bcrypt.hash(password, 10);
-            userUpdate.mustChangePassword = true;
-            userUpdate.passwordChangedAt = new Date();
+            setFields.password = await bcrypt.hash(password, 10);
+            setFields.mustChangePassword = true;
+            setFields.passwordChangedAt = new Date();
+            userUpdate.$inc = { tokenVersion: 1 };
+        }
+
+        if (Object.keys(setFields).length > 0) {
+            userUpdate.$set = setFields;
         }
 
         if (Object.keys(userUpdate).length > 0) {
@@ -169,7 +189,7 @@ export const updateEmployee = async (req, res)=>{
         const employeeUpdate = {};
         if (firstName !== undefined) employeeUpdate.firstName = firstName;
         if (lastName !== undefined) employeeUpdate.lastName = lastName;
-        if (email !== undefined) employeeUpdate.email = email;
+        if (normalizedEmail !== undefined) employeeUpdate.email = normalizedEmail;
         if (phone !== undefined) employeeUpdate.phone = phone;
         if (position !== undefined) employeeUpdate.position = position;
         if (department !== undefined) employeeUpdate.department = department;
