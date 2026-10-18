@@ -143,6 +143,7 @@ const AttendanceCalendar = ({
           const isCurrDay = isToday(day)
           const dayKey = format(day, 'yyyy-MM-dd')
           const holidayName = holidayMap.get(dayKey)
+          const record = history.find((r) => istDayKey(r.date) === dayKey)
 
           let dotColor = null
           if (holidayName) {
