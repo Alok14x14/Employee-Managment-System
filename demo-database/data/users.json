@@ -1,0 +1,101 @@
+[
+  {
+    "_id": "66f000000000000000000001",
+    "email": "admin@example.com",
+    "password": "$2b$10$olf4hj4CmB8qk4w6NuVEtefiZpzN3mU85aR4MrmhYEUJmrMJSY/XK",
+    "role": "ADMIN",
+    "bio": "System Administrator & HR Operations Lead",
+    "mustChangePassword": false,
+    "tokenVersion": 0
+  },
+  {
+    "_id": "66f000000000000000000002",
+    "email": "sarah.jenkins@example.com",
+    "password": "$2b$10$KylaFRMp.W2ABuxIl9Inq.7ZHOB5WMB32it1r8AZiOu/hlAw11rz.",
+    "role": "EMPLOYEE",
+    "bio": "Full stack architect specializing in React, Node.js, and cloud systems.",
+    "mustChangePassword": false,
+    "tokenVersion": 0
+  },
+  {
+    "_id": "66f000000000000000000003",
+    "email": "john.doe@example.com",
+    "password": "$2b$10$KylaFRMp.W2ABuxIl9Inq.7ZHOB5WMB32it1r8AZiOu/hlAw11rz.",
+    "role": "EMPLOYEE",
+    "bio": "Product strategist focused on user experience and data-driven product lifecycle.",
+    "mustChangePassword": false,
+    "tokenVersion": 0
+  },
+  {
+    "_id": "66f000000000000000000004",
+    "email": "emily.watson@example.com",
+    "password": "$2b$10$KylaFRMp.W2ABuxIl9Inq.7ZHOB5WMB32it1r8AZiOu/hlAw11rz.",
+    "role": "EMPLOYEE",
+    "bio": "Championing employee wellbeing, talent acquisition, and positive workplace culture.",
+    "mustChangePassword": false,
+    "tokenVersion": 0
+  },
+  {
+    "_id": "66f000000000000000000005",
+    "email": "michael.chang@example.com",
+    "password": "$2b$10$KylaFRMp.W2ABuxIl9Inq.7ZHOB5WMB32it1r8AZiOu/hlAw11rz.",
+    "role": "EMPLOYEE",
+    "bio": "Crafting seamless, human-centered UI/UX design systems and interactive prototypes.",
+    "mustChangePassword": false,
+    "tokenVersion": 0
+  },
+  {
+    "_id": "66f000000000000000000006",
+    "email": "priya.patel@example.com",
+    "password": "$2b$10$KylaFRMp.W2ABuxIl9Inq.7ZHOB5WMB32it1r8AZiOu/hlAw11rz.",
+    "role": "EMPLOYEE",
+    "bio": "Leading multi-channel growth marketing campaigns and brand positioning.",
+    "mustChangePassword": false,
+    "tokenVersion": 0
+  },
+  {
+    "_id": "66f000000000000000000007",
+    "email": "david.miller@example.com",
+    "password": "$2b$10$KylaFRMp.W2ABuxIl9Inq.7ZHOB5WMB32it1r8AZiOu/hlAw11rz.",
+    "role": "EMPLOYEE",
+    "bio": "Overseeing financial planning, quarterly forecasts, and corporate budget models.",
+    "mustChangePassword": false,
+    "tokenVersion": 0
+  },
+  {
+    "_id": "66f000000000000000000008",
+    "email": "jessica.taylor@example.com",
+    "password": "$2b$10$KylaFRMp.W2ABuxIl9Inq.7ZHOB5WMB32it1r8AZiOu/hlAw11rz.",
+    "role": "EMPLOYEE",
+    "bio": "Dedicated to client onboarding excellence, retention, and customer satisfaction.",
+    "mustChangePassword": false,
+    "tokenVersion": 0
+  },
+  {
+    "_id": "66f000000000000000000009",
+    "email": "alex.rivera@example.com",
+    "password": "$2b$10$KylaFRMp.W2ABuxIl9Inq.7ZHOB5WMB32it1r8AZiOu/hlAw11rz.",
+    "role": "EMPLOYEE",
+    "bio": "Infrastructure engineer managing CI/CD pipelines, Kubernetes, and cloud security.",
+    "mustChangePassword": false,
+    "tokenVersion": 0
+  },
+  {
+    "_id": "66f00000000000000000000a",
+    "email": "liam.wilson@example.com",
+    "password": "$2b$10$KylaFRMp.W2ABuxIl9Inq.7ZHOB5WMB32it1r8AZiOu/hlAw11rz.",
+    "role": "EMPLOYEE",
+    "bio": "Driving enterprise client relationships, renewals, and revenue acceleration.",
+    "mustChangePassword": false,
+    "tokenVersion": 0
+  },
+  {
+    "_id": "66f00000000000000000000b",
+    "email": "sophia.martinez@example.com",
+    "password": "$2b$10$KylaFRMp.W2ABuxIl9Inq.7ZHOB5WMB32it1r8AZiOu/hlAw11rz.",
+    "role": "EMPLOYEE",
+    "bio": "Streamlining organizational workflows and supply chain efficiency.",
+    "mustChangePassword": false,
+    "tokenVersion": 0
+  }
+]

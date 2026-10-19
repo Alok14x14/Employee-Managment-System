@@ -1,0 +1,83 @@
+[
+  {
+    "_id": "66c000000000000000000001",
+    "employeeId": "66e000000000000000000001",
+    "type": "ANNUAL",
+    "startDate": "2026-10-22T00:00:00.000Z",
+    "endDate": "2026-10-24T00:00:00.000Z",
+    "reason": "Attending annual full-stack engineering conference and personal development.",
+    "status": "PENDING",
+    "workingDays": 3
+  },
+  {
+    "_id": "66c000000000000000000002",
+    "employeeId": "66e000000000000000000005",
+    "type": "CASUAL",
+    "startDate": "2026-10-23T00:00:00.000Z",
+    "endDate": "2026-10-24T00:00:00.000Z",
+    "reason": "Family gathering and cousin wedding ceremony.",
+    "status": "PENDING",
+    "workingDays": 2
+  },
+  {
+    "_id": "66c000000000000000000003",
+    "employeeId": "66e000000000000000000002",
+    "type": "SICK",
+    "startDate": "2026-10-12T00:00:00.000Z",
+    "endDate": "2026-10-13T00:00:00.000Z",
+    "reason": "Viral fever and doctor-advised rest.",
+    "status": "APPROVED",
+    "workingDays": 2
+  },
+  {
+    "_id": "66c000000000000000000004",
+    "employeeId": "66e000000000000000000004",
+    "type": "ANNUAL",
+    "startDate": "2026-09-14T00:00:00.000Z",
+    "endDate": "2026-09-18T00:00:00.000Z",
+    "reason": "Annual family vacation travel.",
+    "status": "APPROVED",
+    "workingDays": 5
+  },
+  {
+    "_id": "66c000000000000000000005",
+    "employeeId": "66e000000000000000000006",
+    "type": "CASUAL",
+    "startDate": "2026-10-05T00:00:00.000Z",
+    "endDate": "2026-10-05T00:00:00.000Z",
+    "reason": "Home relocation and bank documentation errand.",
+    "status": "APPROVED",
+    "workingDays": 1
+  },
+  {
+    "_id": "66c000000000000000000006",
+    "employeeId": "66e00000000000000000000a",
+    "type": "SICK",
+    "startDate": "2026-10-08T00:00:00.000Z",
+    "endDate": "2026-10-08T00:00:00.000Z",
+    "reason": "Dental surgery and recovery.",
+    "status": "APPROVED",
+    "workingDays": 1
+  },
+  {
+    "_id": "66c000000000000000000007",
+    "employeeId": "66e000000000000000000009",
+    "type": "ANNUAL",
+    "startDate": "2026-09-28T00:00:00.000Z",
+    "endDate": "2026-10-02T00:00:00.000Z",
+    "reason": "Extended personal leave for overseas trip.",
+    "status": "REJECTED",
+    "rejectReason": "Critical quarter-end sales closing deliverables during this period.",
+    "workingDays": 5
+  },
+  {
+    "_id": "66c000000000000000000008",
+    "employeeId": "66e000000000000000000008",
+    "type": "CASUAL",
+    "startDate": "2026-10-16T00:00:00.000Z",
+    "endDate": "2026-10-16T00:00:00.000Z",
+    "reason": "Car inspection and urgent licensing work.",
+    "status": "APPROVED",
+    "workingDays": 1
+  }
+]

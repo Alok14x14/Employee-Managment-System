@@ -1,0 +1,123 @@
+[
+  {
+    "_id": "66b000000000000000000001",
+    "employeeId": "66e000000000000000000001",
+    "month": 9,
+    "year": 2026,
+    "basicSalary": 95000,
+    "allowances": 8000,
+    "deductions": 4500,
+    "netSalary": 98500,
+    "createdAt": "2026-10-01T04:30:00.000Z"
+  },
+  {
+    "_id": "66b000000000000000000002",
+    "employeeId": "66e000000000000000000001",
+    "month": 8,
+    "year": 2026,
+    "basicSalary": 95000,
+    "allowances": 8000,
+    "deductions": 4500,
+    "netSalary": 98500,
+    "createdAt": "2026-09-01T04:30:00.000Z"
+  },
+  {
+    "_id": "66b000000000000000000003",
+    "employeeId": "66e000000000000000000002",
+    "month": 9,
+    "year": 2026,
+    "basicSalary": 90000,
+    "allowances": 7500,
+    "deductions": 4000,
+    "netSalary": 93500,
+    "createdAt": "2026-10-01T04:30:00.000Z"
+  },
+  {
+    "_id": "66b000000000000000000004",
+    "employeeId": "66e000000000000000000003",
+    "month": 9,
+    "year": 2026,
+    "basicSalary": 72000,
+    "allowances": 5000,
+    "deductions": 3000,
+    "netSalary": 74000,
+    "createdAt": "2026-10-01T04:30:00.000Z"
+  },
+  {
+    "_id": "66b000000000000000000005",
+    "employeeId": "66e000000000000000000004",
+    "month": 9,
+    "year": 2026,
+    "basicSalary": 82000,
+    "allowances": 6000,
+    "deductions": 3500,
+    "netSalary": 84500,
+    "createdAt": "2026-10-01T04:30:00.000Z"
+  },
+  {
+    "_id": "66b000000000000000000006",
+    "employeeId": "66e000000000000000000005",
+    "month": 9,
+    "year": 2026,
+    "basicSalary": 78000,
+    "allowances": 5500,
+    "deductions": 3200,
+    "netSalary": 80300,
+    "createdAt": "2026-10-01T04:30:00.000Z"
+  },
+  {
+    "_id": "66b000000000000000000007",
+    "employeeId": "66e000000000000000000006",
+    "month": 9,
+    "year": 2026,
+    "basicSalary": 85000,
+    "allowances": 6500,
+    "deductions": 3800,
+    "netSalary": 87700,
+    "createdAt": "2026-10-01T04:30:00.000Z"
+  },
+  {
+    "_id": "66b000000000000000000008",
+    "employeeId": "66e000000000000000000007",
+    "month": 9,
+    "year": 2026,
+    "basicSalary": 64000,
+    "allowances": 4500,
+    "deductions": 2800,
+    "netSalary": 65700,
+    "createdAt": "2026-10-01T04:30:00.000Z"
+  },
+  {
+    "_id": "66b000000000000000000009",
+    "employeeId": "66e000000000000000000008",
+    "month": 9,
+    "year": 2026,
+    "basicSalary": 92000,
+    "allowances": 7000,
+    "deductions": 4200,
+    "netSalary": 94800,
+    "createdAt": "2026-10-01T04:30:00.000Z"
+  },
+  {
+    "_id": "66b00000000000000000000a",
+    "employeeId": "66e000000000000000000009",
+    "month": 9,
+    "year": 2026,
+    "basicSalary": 70000,
+    "allowances": 9000,
+    "deductions": 3500,
+    "netSalary": 75500,
+    "createdAt": "2026-10-01T04:30:00.000Z"
+  },
+  {
+    "_id": "66b00000000000000000000b",
+    "employeeId": "66e00000000000000000000a",
+    "month": 9,
+    "year": 2026,
+    "basicSalary": 76000,
+    "allowances": 5000,
+    "deductions": 3100,
+    "netSalary": 77900,
+    "createdAt": "2026-10-01T04:30:00.000Z"
+  }
+]

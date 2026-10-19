@@ -1,0 +1,19 @@
+{
+  "name": "ems-demo-database",
+  "version": "1.0.0",
+  "description": "Demo database seed data and scripts for Employee Management System",
+  "type": "module",
+  "scripts": {
+    "seed": "node seed.js",
+    "seed:static": "node seed.js --static",
+    "seed:force": "node seed.js --force",
+    "clear": "node clear.js"
+  },
+  "keywords": [
+    "ems",
+    "demo-data",
+    "seed",
+    "database"
+  ],
+  "license": "ISC"
+}
