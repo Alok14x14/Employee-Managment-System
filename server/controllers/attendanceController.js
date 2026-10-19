@@ -2,6 +2,7 @@ import { inngest } from "../inngest/index.js";
 import Attendance from "../models/Attendance.js";
 import Employee from "../models/Employee.js";
 import LeaveApplication from "../models/LeaveApplication.js";
+import Holiday from "../models/Holiday.js";
 import { istParts, istDayStart, istDayEnd, isLate, isWeekend, isHoliday } from "../utils/time.js";
 import { loadHolidaySet } from "../utils/holidays.js";
 
@@ -26,6 +27,32 @@ export const clockInOut = async (req, res) => {
         const now = new Date();
 
         if(!existing || existing.status === "ABSENT"){
+            // Validation: Employees cannot clock in on weekends, public holidays, or during approved leave
+            if (isWeekend(today)) {
+                return res.status(400).json({ error: "Cannot clock in on weekends." });
+            }
+
+            const holiday = await Holiday.findOne({ date: today }).select("name").lean();
+            if (holiday) {
+                return res.status(400).json({
+                    error: `Cannot clock in on a public holiday (${holiday.name}).`,
+                });
+            }
+
+            const approvedLeave = await LeaveApplication.findOne({
+                employeeId: employee._id,
+                status: "APPROVED",
+                startDate: { $lte: today },
+                endDate: { $gte: today },
+            }).select("type").lean();
+
+            if (approvedLeave) {
+                const leaveType = approvedLeave.type.charAt(0) + approvedLeave.type.slice(1).toLowerCase();
+                return res.status(400).json({
+                    error: `Cannot clock in while on approved ${leaveType} leave.`,
+                });
+            }
+
             let attendance = existing;
             if (attendance) {
                 attendance.checkIn = now;
@@ -248,15 +275,36 @@ export const getAttendance = async (req, res) => {
         }
         const history = await historyQuery;
 
-        const todayRecord = await Attendance.findOne({
-            employeeId: employee._id,
-            date: today
-        }).lean();
+        const [todayRecord, isWeekendToday, holidayToday, approvedLeaveToday] = await Promise.all([
+            Attendance.findOne({
+                employeeId: employee._id,
+                date: today
+            }).lean(),
+            isWeekend(today),
+            Holiday.findOne({ date: today }).select("name").lean(),
+            LeaveApplication.findOne({
+                employeeId: employee._id,
+                status: "APPROVED",
+                startDate: { $lte: today },
+                endDate: { $gte: today },
+            }).select("type").lean(),
+        ]);
+
+        let restriction = null;
+        if (isWeekendToday) {
+            restriction = "Weekend (Non-working day)";
+        } else if (holidayToday) {
+            restriction = `Public Holiday (${holidayToday.name})`;
+        } else if (approvedLeaveToday) {
+            const leaveType = approvedLeaveToday.type.charAt(0) + approvedLeaveToday.type.slice(1).toLowerCase();
+            restriction = `On Approved ${leaveType} Leave`;
+        }
 
         return res.json({
             data: history,
             todayRecord: todayRecord || null,
-            employee: { isDeleted: employee.isDeleted }
+            employee: { isDeleted: employee.isDeleted },
+            restriction,
         });
     } catch (error) {
         console.error("getAttendance error:", error);

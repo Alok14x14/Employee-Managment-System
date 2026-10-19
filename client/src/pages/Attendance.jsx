@@ -12,6 +12,7 @@ import { format } from "date-fns";
 const Attendance = () => {
   const [history, setHistory] = useState([]);
   const [todayRecord, setTodayRecord] = useState(null);
+  const [restriction, setRestriction] = useState(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [loading, setLoading] = useState(true);
   const [isDeleted, setIsDeleted] = useState(false);
@@ -28,6 +29,7 @@ const Attendance = () => {
       if (json.todayRecord !== undefined) {
         setTodayRecord(json.todayRecord);
       }
+      setRestriction(json.restriction || null);
       if (json.employee?.isDeleted) setIsDeleted(true);
     } catch (error) {
       toast.error(error?.response?.data?.error || error?.message);
@@ -57,7 +59,7 @@ const Attendance = () => {
         </div>
       ) : (
         <div>
-          <CheckInButton todayRecord={todayRecord} onAction={fetchData} />
+          <CheckInButton todayRecord={todayRecord} onAction={fetchData} restriction={restriction} />
         </div>
       )}
 

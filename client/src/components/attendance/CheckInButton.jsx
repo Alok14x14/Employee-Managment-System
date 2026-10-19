@@ -5,7 +5,7 @@ import toast from 'react-hot-toast'
 import { formatTime } from '../../utils/formatters'
 import { getWorkingHoursDisplay } from '../../utils/attendance'
 
-const CheckInButton = ({ todayRecord, onAction }) => {
+const CheckInButton = ({ todayRecord, onAction, restriction }) => {
   const [loading, setLoading] = useState(false)
   const [currentTime, setCurrentTime] = useState(new Date())
   const [elapsedTime, setElapsedTime] = useState('00:00:00')
@@ -87,19 +87,26 @@ const CheckInButton = ({ todayRecord, onAction }) => {
     )
   }
 
+  const isClockInDisabled = !isCheckedIn && Boolean(restriction)
+
   return (
     <div className="card p-4 sm:p-5 mb-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         {/* Date, Live clock (24px), Timestamps */}
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs font-medium text-[#71717A] dark:text-[#A1A1AA]">{formattedDate}</span>
-            {isCheckedIn && (
+            {isCheckedIn ? (
               <span className="badge badge-accent">
                 <span className="size-1.5 rounded-full bg-[#2563EB] dark:bg-blue-400" />
                 Clocked in
               </span>
-            )}
+            ) : restriction ? (
+              <span className="badge badge-warning">
+                <span className="size-1.5 rounded-full bg-[#D97706] dark:bg-amber-400" />
+                {restriction}
+              </span>
+            ) : null}
           </div>
 
           <div className="flex items-baseline gap-3 mt-1">
@@ -118,6 +125,10 @@ const CheckInButton = ({ todayRecord, onAction }) => {
               <span>
                 Today's check-in: <strong className="font-medium text-[#18181B] dark:text-[#FAFAFA] font-mono">{formatTime(todayRecord.checkIn)}</strong>
               </span>
+            ) : restriction ? (
+              <span className="text-amber-600 dark:text-amber-400 font-medium">
+                Clock-in is unavailable: {restriction}
+              </span>
             ) : (
               <span>Not clocked in today</span>
             )}
@@ -128,8 +139,15 @@ const CheckInButton = ({ todayRecord, onAction }) => {
         <div className="self-start sm:self-auto">
           <button
             onClick={handleAttendance}
-            disabled={loading}
-            className={isCheckedIn ? 'btn-danger' : 'btn-primary'}
+            disabled={loading || isClockInDisabled}
+            title={isClockInDisabled ? restriction : undefined}
+            className={
+              isCheckedIn
+                ? 'btn-danger'
+                : isClockInDisabled
+                ? 'btn-secondary opacity-60 cursor-not-allowed'
+                : 'btn-primary'
+            }
           >
             {loading ? (
               <Loader2Icon className="size-3.5 animate-spin" />
