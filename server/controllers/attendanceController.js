@@ -312,31 +312,83 @@ export const getAttendance = async (req, res) => {
     }
 }
 
-// Get today's attendance for admin overview
-// GET /api/attendance/admin/today?department=
+// Get today's or past date's attendance for admin overview
+// GET /api/attendance/admin/today?department=&date=YYYY-MM-DD
 export const getTodayAttendanceAdmin = async (req, res) => {
     try {
-        const { department } = req.query;
+        const { department, date } = req.query;
 
-        // Query active, non-deleted employees with optional department filter
+        // Current today in IST
+        const currentTodayStart = istDayStart();
+        const { year: curY, month: curM, day: curD } = istParts();
+        const todayStr = `${curY}-${curM}-${curD}`;
+
+        let dateStr = todayStr;
+        let targetStart = currentTodayStart;
+
+        // Validate date parameter if supplied
+        if (date) {
+            if (typeof date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+                return res.status(400).json({ error: "Invalid date format. Expected YYYY-MM-DD" });
+            }
+
+            const [y, m, d] = date.split("-").map(Number);
+            const parsedCheck = new Date(Date.UTC(y, m - 1, d));
+            if (
+                isNaN(parsedCheck.getTime()) ||
+                parsedCheck.getUTCFullYear() !== y ||
+                parsedCheck.getUTCMonth() !== m - 1 ||
+                parsedCheck.getUTCDate() !== d
+            ) {
+                return res.status(400).json({ error: "Invalid calendar date" });
+            }
+
+            targetStart = istDayStart(date);
+            if (targetStart.getTime() > currentTodayStart.getTime()) {
+                return res.status(400).json({ error: "Date cannot be in the future" });
+            }
+            dateStr = date;
+        }
+
+        const isToday = targetStart.getTime() === currentTodayStart.getTime();
+        const targetEnd = istDayEnd(targetStart);
+
+        // Determine dayInfo: WORKING, WEEKEND, or HOLIDAY
+        let dayInfo = { type: "WORKING" };
+        if (isWeekend(targetStart)) {
+            dayInfo = { type: "WEEKEND" };
+        } else {
+            const holiday = await Holiday.findOne({
+                date: { $gte: targetStart, $lt: targetEnd },
+            }).select("name").lean();
+            if (holiday) {
+                dayInfo = { type: "HOLIDAY", holidayName: holiday.name };
+            }
+        }
+
+        // Query employees: non-deleted, joined on or before targetStart, optional department filter
         const empQuery = {
             isDeleted: false,
-            employmentStatus: "ACTIVE",
         };
+        if (isToday) {
+            empQuery.employmentStatus = "ACTIVE";
+        }
         if (department) {
             empQuery.department = department;
         }
 
-        const employees = await Employee.find(empQuery)
-            .select("_id firstName lastName email department position")
+        const allMatchingEmployees = await Employee.find(empQuery)
+            .select("_id firstName lastName email department position joinDate createdAt")
             .lean();
 
-        // Query today's attendance records in IST where checkIn is not null and status != "ABSENT"
-        const todayStart = istDayStart();
-        const todayEnd = istDayEnd();
+        const employees = allMatchingEmployees.filter((emp) => {
+            const join = istDayStart(emp.joinDate || emp.createdAt || new Date(0));
+            return join.getTime() <= targetStart.getTime();
+        });
 
+        // Query attendance records for the target day in IST
         const attendanceRecords = await Attendance.find({
-            date: { $gte: todayStart, $lt: todayEnd },
+            date: { $gte: targetStart, $lt: targetEnd },
             checkIn: { $ne: null },
             status: { $ne: "ABSENT" },
         }).lean();
@@ -347,11 +399,13 @@ export const getTodayAttendanceAdmin = async (req, res) => {
             empMap.set(emp._id.toString(), emp);
         }
 
-        // Merge in memory
+        // Merge check-in data in memory
         const data = [];
+        const checkedInEmpIds = new Set();
         for (const att of attendanceRecords) {
             const emp = empMap.get(att.employeeId.toString());
             if (emp) {
+                checkedInEmpIds.add(emp._id.toString());
                 data.push({
                     employee: {
                         id: emp._id,
@@ -371,22 +425,99 @@ export const getTodayAttendanceAdmin = async (req, res) => {
             }
         }
 
-        // Sort data by checkIn ascending
-        data.sort((a, b) => new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime());
+        // Query approved leaves covering that date
+        const employeeIds = Array.from(empMap.keys());
+        const approvedLeaves = await LeaveApplication.find({
+            employeeId: { $in: employeeIds },
+            status: "APPROVED",
+            startDate: { $lte: targetEnd },
+            endDate: { $gte: targetStart },
+        }).select("employeeId type").lean();
+
+        const leaveMap = new Map();
+        for (const l of approvedLeaves) {
+            leaveMap.set(l.employeeId.toString(), l);
+        }
+
+        // Include onLeave employees as rows in data
+        for (const emp of employees) {
+            const empId = emp._id.toString();
+            if (!checkedInEmpIds.has(empId) && leaveMap.has(empId)) {
+                const leave = leaveMap.get(empId);
+                data.push({
+                    employee: {
+                        id: emp._id,
+                        firstName: emp.firstName,
+                        lastName: emp.lastName,
+                        email: emp.email,
+                        department: emp.department,
+                        position: emp.position,
+                    },
+                    checkIn: null,
+                    checkOut: null,
+                    status: "ON_LEAVE",
+                    leaveType: leave.type,
+                    workingHours: null,
+                    dayType: null,
+                    autoCheckedOut: false,
+                });
+            }
+        }
+
+        // Include absent employees as rows in data
+        for (const emp of employees) {
+            const empId = emp._id.toString();
+            if (!checkedInEmpIds.has(empId) && !leaveMap.has(empId)) {
+                data.push({
+                    employee: {
+                        id: emp._id,
+                        firstName: emp.firstName,
+                        lastName: emp.lastName,
+                        email: emp.email,
+                        department: emp.department,
+                        position: emp.position,
+                    },
+                    checkIn: null,
+                    checkOut: null,
+                    status: "ABSENT",
+                    leaveType: null,
+                    workingHours: null,
+                    dayType: null,
+                    autoCheckedOut: false,
+                });
+            }
+        }
+
+        // Sort data: checked-in rows by checkIn ascending, then ON_LEAVE, then ABSENT alphabetically by name
+        data.sort((a, b) => {
+            if (a.checkIn && b.checkIn) {
+                return new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime();
+            }
+            if (a.checkIn) return -1;
+            if (b.checkIn) return 1;
+
+            if (a.status === "ON_LEAVE" && b.status !== "ON_LEAVE") return -1;
+            if (b.status === "ON_LEAVE" && a.status !== "ON_LEAVE") return 1;
+
+            const nameA = `${a.employee?.firstName || ''} ${a.employee?.lastName || ''}`;
+            const nameB = `${b.employee?.firstName || ''} ${b.employee?.lastName || ''}`;
+            return nameA.localeCompare(nameB);
+        });
 
         // Calculate summary counts
         const totalActive = employees.length;
-        const present = data.length;
+        const present = checkedInEmpIds.size;
         const late = data.filter((d) => d.status === "LATE").length;
         const stillWorking = data.filter((d) => d.checkIn && !d.checkOut).length;
         const checkedOut = data.filter((d) => d.checkIn && d.checkOut).length;
+        const onLeave = leaveMap.size;
         const notCheckedIn = Math.max(0, totalActive - present);
-
-        const { year, month, day } = istParts();
-        const dateStr = `${year}-${month}-${day}`;
+        const absent = Math.max(0, totalActive - present - onLeave);
 
         return res.json({
             date: dateStr,
+            isToday,
+            dayInfo,
             summary: {
                 totalActive,
                 present,
@@ -394,11 +525,13 @@ export const getTodayAttendanceAdmin = async (req, res) => {
                 stillWorking,
                 checkedOut,
                 notCheckedIn,
+                onLeave,
+                absent,
             },
             data,
         });
     } catch (error) {
         console.error("getTodayAttendanceAdmin error:", error);
-        return res.status(500).json({ error: "Failed to fetch today's attendance" });
+        return res.status(500).json({ error: "Failed to fetch attendance" });
     }
 };
