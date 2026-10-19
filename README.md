@@ -3,6 +3,7 @@
 A full-stack MERN application for workforce operations: employee records, attendance tracking, leave management with quota rules, and payroll/payslips. It has separate Admin and Employee portals, background jobs for automation, and IST-aware date handling throughout.
 
 **Live demo:** https://employee-managment-system-6ohy.vercel.app/login
+
 **Source:** https://github.com/Alok14x14/Employee-Managment-System
 
 ![StaffFlow dashboard](docs/screenshots/admin-dashboard.png)
