@@ -6,10 +6,12 @@ import User from "../models/User.js";
 import { 
     sendCheckOutReminderEmail, 
     sendLeaveApplicationAdminReminder, 
-    sendAttendanceReminderEmail 
+    sendAttendanceReminderEmail,
+    sendLeaveStatusEmail
 } from "../utils/emailService.js";
 import { istDayStart, istDayEnd, isWeekend, isHoliday } from "../utils/time.js";
 import { loadHolidaySet } from "../utils/holidays.js";
+import { autoRejectExpiredLeaves } from "../utils/leaveAutoReject.js";
 
 // Create a client to send and receive events
 export const inngest = new Inngest({ id: "fullstack-ems" });
@@ -86,6 +88,53 @@ const leaveApplicationReminder = inngest.createFunction(
          }
 
     }
+);
+
+// Auto-reject leave application when its start date and time passes
+const autoRejectLeave = inngest.createFunction(
+  { id: "auto-reject-leave", triggers: [{ event: "leave/pending" }] },
+  async ({ event, step }) => {
+    const { leaveApplicationId } = event.data;
+    const leave = await LeaveApplication.findById(leaveApplicationId);
+    if (!leave || leave.status !== "PENDING") return;
+
+    const start = new Date(leave.startDate);
+    const created = new Date(leave.createdAt || leave.startDate);
+    const isSameDayApplication = istDayStart(start).getTime() === istDayStart(created).getTime();
+    const expiryDate = isSameDayApplication ? istDayEnd(start) : start;
+
+    if (expiryDate.getTime() > Date.now()) {
+      await step.sleepUntil("wait-until-start-time", expiryDate);
+    }
+
+    await step.run("auto-reject-if-pending", async () => {
+      const currentLeave = await LeaveApplication.findById(leaveApplicationId);
+      if (!currentLeave || currentLeave.status !== "PENDING") return;
+
+      currentLeave.status = "REJECTED";
+      currentLeave.autoRejected = true;
+      currentLeave.rejectReason = "Auto Rejected";
+      await currentLeave.save();
+
+      try {
+        const emp = await Employee.findById(currentLeave.employeeId);
+        if (emp && emp.email) {
+          await sendLeaveStatusEmail(
+            emp.email,
+            emp.firstName,
+            "REJECTED",
+            currentLeave.type,
+            currentLeave.startDate,
+            currentLeave.endDate,
+            currentLeave.reason,
+            "Auto Rejected"
+          );
+        }
+      } catch (mailErr) {
+        console.error("Failed to send auto-reject email in Inngest:", mailErr);
+      }
+    });
+  }
 );
 
 
@@ -286,7 +335,23 @@ const markAbsentCron = inngest.createFunction(
       return unclosed.length;
     });
 
+    // Auto-reject any pending leaves whose start date and time has passed
+    await step.run("auto-reject-expired-leaves", async () => {
+      return await autoRejectExpiredLeaves();
+    });
+
     return { markedAbsent: absentEmployees.length, autoClosed: autoClosedCount };
+  }
+);
+
+// Cron: Hourly auto-reject for any pending leaves whose start date has passed
+const autoRejectLeavesCron = inngest.createFunction(
+  { id: "auto-reject-leaves-cron", triggers: [{ cron: "TZ=Asia/Kolkata 0 * * * *" }] },
+  async ({ step }) => {
+    const count = await step.run("auto-reject-expired-leaves", async () => {
+      return await autoRejectExpiredLeaves();
+    });
+    return { autoRejected: count };
   }
 );
 
@@ -294,6 +359,8 @@ const markAbsentCron = inngest.createFunction(
 export const functions = [
     autoCheckOut, 
     leaveApplicationReminder,
+    autoRejectLeave,
+    autoRejectLeavesCron,
     attendanceReminderCron,
     markAbsentCron
 ];

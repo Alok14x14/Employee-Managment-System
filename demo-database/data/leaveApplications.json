@@ -79,5 +79,17 @@
     "reason": "Car inspection and urgent licensing work.",
     "status": "APPROVED",
     "workingDays": 1
+  },
+  {
+    "_id": "66c000000000000000000009",
+    "employeeId": "66e000000000000000000007",
+    "type": "CASUAL",
+    "startDate": "2026-10-14T00:00:00.000Z",
+    "endDate": "2026-10-15T00:00:00.000Z",
+    "reason": "Urgent family event and travel.",
+    "status": "REJECTED",
+    "rejectReason": "Auto Rejected",
+    "autoRejected": true,
+    "workingDays": 2
   }
 ]

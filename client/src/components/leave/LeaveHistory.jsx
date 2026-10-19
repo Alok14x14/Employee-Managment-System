@@ -99,21 +99,38 @@ const LeaveHistory = ({ leaves = [], isAdmin, onUpdate, loading = false }) => {
                     <td className="text-xs text-[#52525B] dark:text-[#A1A1AA] tabular-nums font-medium">
                       {leave.workingDays != null ? `${leave.workingDays}d` : '—'}
                     </td>
-                    <td className="max-w-xs truncate text-xs text-[#71717A] dark:text-[#A1A1AA]" title={leave.reason}>
+                    <td
+                      className="max-w-xs truncate text-xs text-[#71717A] dark:text-[#A1A1AA]"
+                      title={
+                        leave.status === 'REJECTED' && leave.rejectReason
+                          ? `${leave.reason || ''} (Reason for rejection: ${leave.rejectReason})`
+                          : leave.reason
+                      }
+                    >
                       {leave.reason || '—'}
                     </td>
                     <td>
-                      <span
-                        className={`badge ${
-                          leave.status === 'APPROVED'
-                            ? 'badge-success'
-                            : leave.status === 'REJECTED'
-                            ? 'badge-danger'
-                            : 'badge-warning'
-                        }`}
-                      >
-                        {leave.status?.toLowerCase()}
-                      </span>
+                      <div className="inline-flex items-center gap-1.5 flex-wrap">
+                        <span
+                          className={`badge ${
+                            leave.status === 'APPROVED'
+                              ? 'badge-success'
+                              : leave.status === 'REJECTED'
+                              ? 'badge-danger'
+                              : 'badge-warning'
+                          }`}
+                        >
+                          {leave.status?.toLowerCase()}
+                        </span>
+                        {(leave.autoRejected || leave.rejectReason === 'Auto Rejected') && (
+                          <span
+                            className="badge badge-neutral text-[10px] py-0.5 px-1.5 font-normal"
+                            title="Auto Rejected: start date and time passed before approval"
+                          >
+                            Auto Rejected
+                          </span>
+                        )}
+                      </div>
                     </td>
                     {isAdmin && (
                       <td className="text-right">

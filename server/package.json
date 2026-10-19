@@ -9,7 +9,8 @@
     "seed": "node seed.js",
     "backfill:leave-days": "node scripts/backfillLeaveDays.js",
     "lowercase:emails": "node scripts/lowercaseEmails.js",
-    "close:unclosed-attendance": "node scripts/closeUnfinishedAttendances.js"
+    "close:unclosed-attendance": "node scripts/closeUnfinishedAttendances.js",
+    "reject:expired-leaves": "node scripts/autoRejectExpiredLeaves.js"
   },
   "keywords": [],
   "author": "",

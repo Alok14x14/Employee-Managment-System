@@ -214,6 +214,7 @@ async function seed() {
         reason: l.reason,
         status: l.status,
         rejectReason: l.rejectReason || undefined,
+        autoRejected: l.autoRejected || false,
         workingDays: l.workingDays || 1,
         updatedAt: new Date(),
       };

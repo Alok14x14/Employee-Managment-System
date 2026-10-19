@@ -283,17 +283,27 @@ const AdminDashboard = ({ data }) => {
                         <span className="badge badge-neutral">{leave.type}</span>
                       </td>
                       <td>
-                        <span
-                          className={`badge ${
-                            leave.status === 'APPROVED'
-                              ? 'badge-success'
-                              : leave.status === 'REJECTED'
-                              ? 'badge-danger'
-                              : 'badge-warning'
-                          }`}
-                        >
-                          {leave.status?.toLowerCase()}
-                        </span>
+                        <div className="inline-flex items-center gap-1.5 flex-wrap">
+                          <span
+                            className={`badge ${
+                              leave.status === 'APPROVED'
+                                ? 'badge-success'
+                                : leave.status === 'REJECTED'
+                                ? 'badge-danger'
+                                : 'badge-warning'
+                            }`}
+                          >
+                            {leave.status?.toLowerCase()}
+                          </span>
+                          {(leave.autoRejected || leave.rejectReason === 'Auto Rejected') && (
+                            <span
+                              className="badge badge-neutral text-[10px] py-0.5 px-1.5 font-normal"
+                              title="Auto Rejected"
+                            >
+                              Auto Rejected
+                            </span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))

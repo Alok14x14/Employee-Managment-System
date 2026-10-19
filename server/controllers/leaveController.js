@@ -7,6 +7,7 @@ import { loadHolidaySet } from "../utils/holidays.js";
 import { countWorkingDays, splitDaysByYear } from "../utils/leaveDays.js";
 import { istDayStart, istParts } from "../utils/time.js";
 import { isValidObjectId, parseDate } from "../utils/validate.js";
+import { autoRejectExpiredLeaves, isLeavePassed } from "../utils/leaveAutoReject.js";
 
 // Create leave
 // POST /api/leave
@@ -151,6 +152,9 @@ export const getLeaveBalance = async (req, res) => {
         const employee = await Employee.findOne({ userId: session.userId });
         if (!employee) return res.status(404).json({ error: "Employee not found" });
 
+        // Auto-reject any expired pending leaves for this employee before computing balance
+        await autoRejectExpiredLeaves(employee._id);
+
         const rawYear = req.query.year;
         let year = parseInt(rawYear, 10);
         if (isNaN(year) || year < 1970 || year > 2100) {
@@ -209,6 +213,10 @@ export const getLeaves = async (req, res) => {
     try {
         const session = req.session;
         const isAdmin = session.role === "ADMIN";
+
+        // Auto-reject any expired pending leaves before returning
+        await autoRejectExpiredLeaves();
+
         if (isAdmin) {
             const status = req.query.status;
             const where = status ? { status } : {};
@@ -221,6 +229,7 @@ export const getLeaves = async (req, res) => {
                     employee: obj.employeeId,
                     employeeId: obj.employeeId?._id?.toString(),
                     workingDays: obj.workingDays,
+                    autoRejected: obj.autoRejected ?? false,
                 };
             });
             return res.json({ data });
@@ -264,6 +273,17 @@ export const updateLeaveStatus = async (req, res) => {
 
         if (leave.status !== "PENDING") {
             return res.status(409).json({ error: "Leave was already processed" });
+        }
+
+        // Auto-reject if start date and time has already passed
+        if (isLeavePassed(leave)) {
+            leave.status = "REJECTED";
+            leave.autoRejected = true;
+            leave.rejectReason = "Auto Rejected";
+            await leave.save();
+            return res.status(400).json({
+                error: "Cannot process leave: start date has already passed. Request has been auto-rejected.",
+            });
         }
 
         if (status === "REJECTED" && !rejectReason) {

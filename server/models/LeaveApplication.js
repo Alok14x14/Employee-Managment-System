@@ -8,11 +8,13 @@ const leaveApplicationSchema = new mongoose.Schema({
     reason: {type: String, required: true },
     status: {type: String, enum: ["PENDING", "APPROVED", "REJECTED"], default: "PENDING" },
     rejectReason: {type: String},
+    autoRejected: {type: Boolean, default: false},
     workingDays: {type: Number, default: 0},
 }, {timestamps: true})
 
 leaveApplicationSchema.index({ employeeId: 1, status: 1 });
 leaveApplicationSchema.index({ status: 1, createdAt: -1 });
+leaveApplicationSchema.index({ status: 1, startDate: 1 });
 
 const LeaveApplication = mongoose.models.LeaveApplication || mongoose.model("LeaveApplication", leaveApplicationSchema);
 
