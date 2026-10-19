@@ -6,8 +6,6 @@ A full-stack MERN application for workforce operations: employee records, attend
 
 **Source:** https://github.com/Alok14x14/Employee-Managment-System
 
-![StaffFlow dashboard](docs/screenshots/admin-dashboard.png)
-
 ---
 
 ## Demo credentials
