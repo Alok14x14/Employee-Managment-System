@@ -4,13 +4,23 @@ export function getWorkingHoursDisplay(record) {
     const mins = Math.round((record.workingHours - hrs) * 60);
     return `${hrs}h ${mins}m`;
   }
-  // If still checked in (no checkout), compute live hours
+  // If still checked in (no checkout), compute live hours only if it's for today
   if (record?.checkIn && !record?.checkOut) {
-    const diffMs = Date.now() - new Date(record.checkIn).getTime();
-    const diffHours = diffMs / (1000 * 60 * 60);
-    const hrs = Math.floor(diffHours);
-    const mins = Math.round((diffHours - hrs) * 60);
-    return `${hrs}h ${mins}m (ongoing)`;
+    const recordDate = new Date(record.date || record.checkIn);
+    const now = new Date();
+    const isRecordToday =
+      recordDate.getFullYear() === now.getFullYear() &&
+      recordDate.getMonth() === now.getMonth() &&
+      recordDate.getDate() === now.getDate();
+
+    if (isRecordToday) {
+      const diffMs = Date.now() - new Date(record.checkIn).getTime();
+      const diffHours = diffMs / (1000 * 60 * 60);
+      const hrs = Math.floor(diffHours);
+      const mins = Math.round((diffHours - hrs) * 60);
+      return `${hrs}h ${mins}m (ongoing)`;
+    }
+    return "Not checked out";
   }
   return "—";
 }
@@ -29,7 +39,17 @@ export function getDayTypeDisplay(record) {
     };
   }
   if (record?.checkIn && !record?.checkOut) {
-    return { label: "In Progress", className: "badge-accent" };
+    const recordDate = new Date(record.date || record.checkIn);
+    const now = new Date();
+    const isRecordToday =
+      recordDate.getFullYear() === now.getFullYear() &&
+      recordDate.getMonth() === now.getMonth() &&
+      recordDate.getDate() === now.getDate();
+
+    return {
+      label: isRecordToday ? "In Progress" : "Unclosed",
+      className: isRecordToday ? "badge-accent" : "badge-warning",
+    };
   }
   return { label: "—", className: "" };
 }

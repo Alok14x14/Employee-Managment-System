@@ -152,6 +152,24 @@ export const getAttendance = async (req, res) => {
             endDate = new Date(today.getTime() + 24 * 60 * 60 * 1000);
         }
 
+        // Auto-close any past unclosed shifts for this employee (prior to today)
+        const unclosedPastRecords = await Attendance.find({
+            employeeId: employee._id,
+            date: { $lt: today },
+            checkIn: { $ne: null },
+            checkOut: null,
+        });
+
+        if (unclosedPastRecords.length > 0) {
+            for (const record of unclosedPastRecords) {
+                record.checkOut = new Date(new Date(record.checkIn).getTime() + 4 * 60 * 60 * 1000);
+                record.workingHours = 4;
+                record.dayType = "Half Day";
+                record.autoCheckedOut = true;
+                await record.save();
+            }
+        }
+
         // Fill in missing ABSENT records for past working days
         const joinDate = istDayStart(employee.joinDate || employee.createdAt || new Date(0));
         const effectiveStart = new Date(Math.max(startDate.getTime(), joinDate.getTime()));

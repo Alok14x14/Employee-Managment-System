@@ -202,8 +202,8 @@ const AttendanceCalendar = ({
                     {record.workingHours}h
                   </span>
                 ) : record?.checkIn && !record?.checkOut ? (
-                  <span className="text-xs text-[#2563EB] dark:text-blue-400 truncate block font-medium">
-                    In shift
+                  <span className={`text-xs ${isCurrDay ? 'text-[#2563EB] dark:text-blue-400' : 'text-amber-500 dark:text-amber-400'} truncate block font-medium`}>
+                    {isCurrDay ? 'In shift' : 'Unclosed'}
                   </span>
                 ) : record?.status === 'ABSENT' ? (
                   <span className="text-xs text-[#DC2626] dark:text-rose-400 truncate block font-medium">

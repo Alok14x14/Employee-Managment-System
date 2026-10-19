@@ -31,13 +31,17 @@ const autoCheckOut = inngest.createFunction(
     const employee = await Employee.findById(employeeId);
     if (!employee || employee.isDeleted) return;
 
-    // Send reminder email
-    await sendCheckOutReminderEmail(
-        employee.email, 
-        employee.firstName, 
-        employee.department, 
-        attendance.checkIn
-    );
+    // Send reminder email safely without blocking auto check-out on email transport failure
+    try {
+        await sendCheckOutReminderEmail(
+            employee.email, 
+            employee.firstName, 
+            employee.department, 
+            attendance.checkIn
+        );
+    } catch (emailErr) {
+        console.error("Failed to send check-out reminder email:", emailErr);
+    }
 
     // Wait for 1 hour
     await step.sleep("wait-1-hour", "1h");
@@ -264,7 +268,25 @@ const markAbsentCron = inngest.createFunction(
       });
     }
 
-    return { markedAbsent: absentEmployees.length };
+    // Auto-checkout any employees who clocked in today or earlier but never clocked out
+    const autoClosedCount = await step.run("auto-checkout-unclosed-shifts", async () => {
+      const unclosed = await Attendance.find({
+        date: { $lte: new Date(today.startUTC) },
+        checkIn: { $ne: null },
+        checkOut: null,
+      });
+
+      for (const record of unclosed) {
+        record.checkOut = new Date(new Date(record.checkIn).getTime() + 4 * 60 * 60 * 1000);
+        record.workingHours = 4;
+        record.dayType = "Half Day";
+        record.autoCheckedOut = true;
+        await record.save();
+      }
+      return unclosed.length;
+    });
+
+    return { markedAbsent: absentEmployees.length, autoClosed: autoClosedCount };
   }
 );
 
