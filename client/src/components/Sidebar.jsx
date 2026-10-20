@@ -23,6 +23,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import api from '../api/axios';
 import NotificationCenter from './NotificationCenter';
+import AdminNotificationCenter from './AdminNotificationCenter';
 
 const Sidebar = () => {
     const { pathname } = useLocation();
@@ -69,6 +70,7 @@ const Sidebar = () => {
                 <span className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">StaffFlow</span>
                 <div className="flex items-center gap-1">
                     {role === 'EMPLOYEE' && <NotificationCenter userId={user?.userId || user?.id || 'employee'} />}
+                    {role === 'ADMIN' && <AdminNotificationCenter userId={user?.userId || user?.id || 'admin'} />}
                     <button
                         onClick={() => setMobileOpen(false)}
                         className="lg:hidden text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-1 rounded-[6px]"
