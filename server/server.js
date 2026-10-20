@@ -12,6 +12,7 @@ import payslipRouter from "./routes/payslipsRoutes.js";
 import dashboardRouter from "./routes/dashboardRoutes.js";
 import metaRouter from "./routes/metaRoutes.js";
 import holidayRouter from "./routes/holidayRoutes.js";
+import hrAssistantRouter from "./routes/hrAssistantRoutes.js";
 
 import dns from "dns"
 import { serve } from "inngest/express";
@@ -54,6 +55,7 @@ app.use("/api/payslips", payslipRouter)
 app.use("/api/dashboard", dashboardRouter)
 app.use("/api/meta", metaRouter)
 app.use("/api/holidays", holidayRouter)
+app.use("/api/hr-assistant", hrAssistantRouter)
 
 app.use("/api/inngest", serve({ client: inngest, functions }));
 

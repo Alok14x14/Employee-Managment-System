@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { formatDate, formatTime, formatCurrency, formatISTDate } from '../utils/formatters'
+import { formatDate, formatTime, formatCurrency, formatISTDate, formatStatus } from '../utils/formatters'
 import { getWorkingHoursDisplay } from '../utils/attendance'
 import { useTheme } from '../context/ThemeContext'
 import {
@@ -161,7 +161,7 @@ const EmployeeDashboard = ({ data }) => {
               <h2 className="text-sm font-semibold text-[#18181B] dark:text-[#FAFAFA]">Today's attendance</h2>
               {todayRecord ? (
                 <span className="badge badge-success">
-                  {todayRecord.status?.toLowerCase() || 'present'}
+                  {formatStatus(todayRecord.status, 'Present')}
                 </span>
               ) : (
                 <span className="badge badge-neutral">Not recorded</span>
@@ -247,7 +247,7 @@ const EmployeeDashboard = ({ data }) => {
                               : 'badge-danger'
                           }`}
                         >
-                          {att.status?.toLowerCase()}
+                          {formatStatus(att.status)}
                         </span>
                       </td>
                     </tr>
@@ -302,7 +302,7 @@ const EmployeeDashboard = ({ data }) => {
                                 : 'badge-warning'
                             }`}
                           >
-                            {leave.status?.toLowerCase()}
+                            {formatStatus(leave.status)}
                           </span>
                           {(leave.autoRejected || leave.rejectReason === 'Auto Rejected') && (
                             <span

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Check, Loader2, X } from 'lucide-react'
-import { formatDate } from '../../utils/formatters'
+import { formatDate, formatStatus } from '../../utils/formatters'
 import api from '../../api/axios'
 import toast from 'react-hot-toast'
 
@@ -148,7 +148,7 @@ const LeaveHistory = ({ leaves = [], isAdmin, onUpdate, loading = false }) => {
                               : 'badge-warning'
                           }`}
                         >
-                          {leave.status?.toLowerCase()}
+                          {formatStatus(leave.status)}
                         </span>
                         {(leave.autoRejected || leave.rejectReason === 'Auto Rejected') && (
                           <span
@@ -229,7 +229,7 @@ const LeaveHistory = ({ leaves = [], isAdmin, onUpdate, loading = false }) => {
                   Leave request details
                 </h2>
                 <p className="text-xs text-[#71717A] dark:text-[#A1A1AA] mt-1">
-                  {selectedLeave.type} leave · {selectedLeave.status?.toLowerCase() || 'pending'}
+                  {formatStatus(selectedLeave.type)} leave · {formatStatus(selectedLeave.status, 'Pending')}
                 </p>
               </div>
               <button

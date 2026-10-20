@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
-import { AlertCircle, CheckCircle2, Loader2, X } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Loader2, Sparkles, X } from 'lucide-react'
 import api from '../../api/axios'
 import toast from 'react-hot-toast'
 
 const ApplyLeaveModal = ({ open, onClose, onSuccess, balances = [] }) => {
   const [loading, setLoading] = useState(false)
+  const [drafting, setDrafting] = useState(false)
   const [type, setType] = useState('SICK')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
@@ -89,6 +90,20 @@ const ApplyLeaveModal = ({ open, onClose, onSuccess, balances = [] }) => {
       toast.error(err.response?.data?.error || err?.message || 'Submission failed')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleImproveReason = async () => {
+    if (!reason.trim() || drafting) return
+    setDrafting(true)
+    try {
+      const { data } = await api.post('/hr-assistant/leave-draft', { reason: reason.trim(), leaveType: type })
+      setReason(data.draft)
+      toast.success('AI suggestion added. Review and edit it before submitting.')
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Could not create an AI suggestion right now.')
+    } finally {
+      setDrafting(false)
     }
   }
 
@@ -196,15 +211,30 @@ const ApplyLeaveModal = ({ open, onClose, onSuccess, balances = [] }) => {
           )}
 
           <div>
-            <label className="block font-medium text-[#18181B] dark:text-[#FAFAFA] mb-1">Reason for request</label>
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <label className="block font-medium text-[#18181B] dark:text-[#FAFAFA]">Reason for request</label>
+              <button
+                type="button"
+                onClick={handleImproveReason}
+                disabled={!reason.trim() || drafting || loading}
+                className="inline-flex items-center gap-1.5 rounded-md border border-blue-200 px-2.5 py-1 text-[11px] font-medium text-blue-700 transition-colors hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-blue-900 dark:text-blue-300 dark:hover:bg-blue-950/40"
+              >
+                {drafting ? <Loader2 className="size-3 animate-spin" /> : <Sparkles className="size-3" />}
+                {drafting ? 'Improving…' : 'Improve with AI'}
+              </button>
+            </div>
             <textarea
               required
               rows={3}
+              maxLength={500}
               className="resize-none"
               placeholder="State the context or purpose of time off..."
               value={reason}
               onChange={(e) => setReason(e.target.value)}
             />
+            <p className="mt-1 text-[10px] text-[#71717A] dark:text-[#A1A1AA]">
+              AI suggestions use the text you enter. Avoid sensitive medical details; review and edit the suggestion before submitting.
+            </p>
           </div>
 
           {/* Footer */}

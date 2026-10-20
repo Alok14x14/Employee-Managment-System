@@ -62,3 +62,10 @@ export const protectAdmin = (req, res, next) => {
     }
     next();
 };
+
+export const protectEmployee = (req, res, next) => {
+    if (req?.session?.role !== "EMPLOYEE") {
+        return res.status(403).json({ error: "Employee access required" });
+    }
+    next();
+};

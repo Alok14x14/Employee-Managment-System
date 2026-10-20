@@ -53,6 +53,15 @@ export const formatDate = (date, options = {}) => {
   return formatISTDate(date, options);
 };
 
+export const formatStatus = (status, fallback = "—") => {
+  if (typeof status !== "string" || !status.trim()) return fallback;
+  return status
+    .trim()
+    .toLowerCase()
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+};
+
 export const formatTime = (date, options = {}) => {
   if (!date) return "—";
   try {

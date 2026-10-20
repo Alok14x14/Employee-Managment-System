@@ -17,7 +17,7 @@ import {
   X,
 } from 'lucide-react'
 import { getWorkingHoursDisplay } from '../../utils/attendance'
-import { formatTime, formatISTDate, istDayKey } from '../../utils/formatters'
+import { formatTime, formatISTDate, istDayKey, formatStatus } from '../../utils/formatters'
 import api from '../../api/axios'
 
 const AttendanceCalendar = ({
@@ -237,7 +237,7 @@ const AttendanceCalendar = ({
                   </p>
                 )}
                 <p className="text-xs text-[#71717A] dark:text-[#A1A1AA] capitalize">
-                  Status: {selectedDayRecord.record.status === 'HOLIDAY' ? 'Public Holiday' : selectedDayRecord.record.status?.toLowerCase() || 'unspecified'}
+                  Status: {selectedDayRecord.record.status === 'HOLIDAY' ? 'Public Holiday' : formatStatus(selectedDayRecord.record.status, 'Unspecified')}
                 </p>
               </div>
               <button

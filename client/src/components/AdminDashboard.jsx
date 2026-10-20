@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { formatDate } from '../utils/formatters'
+import { formatDate, formatStatus } from '../utils/formatters'
 import { useTheme } from '../context/ThemeContext'
 import {
   AreaChart,
@@ -293,7 +293,7 @@ const AdminDashboard = ({ data }) => {
                                 : 'badge-warning'
                             }`}
                           >
-                            {leave.status?.toLowerCase()}
+                            {formatStatus(leave.status)}
                           </span>
                           {(leave.autoRejected || leave.rejectReason === 'Auto Rejected') && (
                             <span

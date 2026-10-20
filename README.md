@@ -33,7 +33,9 @@ A full-stack MERN application for workforce operations: employee records, attend
 ### Employee portal
 - **Attendance:** one-click clock in/out with a live clock and elapsed timer, monthly calendar view and log view.
 - **Leave:** apply for Sick (12d), Casual (12d) or Annual (18d) leave with a live working-day and balance calculator.
+- **Leave request writing help:** employees can optionally use AI to make a draft reason clearer; they review and submit it themselves.
 - **Payslips:** view issued payslips and download them as PDF (print-optimized A4 layout with the amount in words, INR format).
+- **HR assistant:** ask questions about leave, attendance, holidays and payslips using the configured StaffFlow rules.
 - **Settings:** edit bio and change password.
 
 ### Platform
@@ -156,6 +158,11 @@ All routes are prefixed with `/api` and use `Authorization: Bearer <token>` unle
 | Holidays | `GET /holidays?year=`, `POST /holidays` (admin), `DELETE /holidays/:id` (admin) |
 | Dashboard | `GET /dashboard` |
 | Meta | `GET /meta/departments` |
+| HR assistant | `POST /hr-assistant/chat`, `POST /hr-assistant/leave-draft` |
+
+### HR assistant setup
+
+Add `OPENROUTER_API_KEY` to the server environment. `OPENROUTER_MODEL` is optional and defaults to `openai/gpt-4o-mini`; set it to any model ID available to your OpenRouter account. `OPENROUTER_SITE_URL` is an optional site URL used for OpenRouter attribution; it defaults to the first `CLIENT_URL` if configured. The key is used only by the server. The assistant answers from the HR guidance included in the server controller and does not access employee records or make leave, payroll, or employment decisions. The leave reason helper sends only the employee-entered draft and leave category to OpenRouter, and its suggestion must be reviewed and submitted by the employee. Set the variables in your local `server/.env` and in the server hosting environment before using these AI features.
 
 ---
 
