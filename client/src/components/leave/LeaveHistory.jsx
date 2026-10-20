@@ -35,6 +35,7 @@ const LeaveHistory = ({ leaves = [], isAdmin, onUpdate, loading = false }) => {
     try {
       await api.patch(`/leave/${id}`, payload)
       toast.success(`Leave ${status.toLowerCase()}`)
+      setSelectedLeave(null)
       onUpdate()
     } catch (error) {
       toast.error(error?.response?.data?.error || error?.message || 'Update failed')
@@ -309,6 +310,34 @@ const LeaveHistory = ({ leaves = [], isAdmin, onUpdate, loading = false }) => {
                 </section>
               )}
             </div>
+
+            {isAdmin && selectedLeave.status === 'PENDING' && (
+              <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-5 mt-5 border-t border-[#E4E4E7] dark:border-[#27272A]">
+                <button
+                  type="button"
+                  className="btn-danger inline-flex items-center justify-center gap-1.5"
+                  disabled={Boolean(processing)}
+                  onClick={() => {
+                    setSelectedLeave(null)
+                    setRejectModal({ open: true, leaveId: selectedLeave._id || selectedLeave.id, reason: '' })
+                  }}
+                >
+                  <X className="size-3.5" />
+                  Reject application
+                </button>
+                <button
+                  type="button"
+                  className="btn-primary inline-flex items-center justify-center gap-1.5"
+                  disabled={Boolean(processing)}
+                  onClick={() => handleStatusUpdate(selectedLeave._id || selectedLeave.id, 'APPROVED')}
+                >
+                  {processing === (selectedLeave._id || selectedLeave.id)
+                    ? <Loader2 className="size-3.5 animate-spin" />
+                    : <Check className="size-3.5" />}
+                  Accept application
+                </button>
+              </div>
+            )}
           </section>
         </div>
       )}
