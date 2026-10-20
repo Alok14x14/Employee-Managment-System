@@ -1,4 +1,5 @@
 import Employee from "../models/Employee.js";
+import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import User from "../models/User.js";
 import { sendWelcomeEmail } from "../utils/emailService.js";
@@ -158,34 +159,7 @@ export const updateEmployee = async (req, res)=>{
             }
         }
 
-        // Update user record FIRST
-        const userUpdate = {};
-        const setFields = {};
-        if (normalizedEmail !== undefined) setFields.email = normalizedEmail;
-        if (role !== undefined) setFields.role = role;
-        if (password !== undefined) {
-            setFields.password = await bcrypt.hash(password, 10);
-            setFields.mustChangePassword = true;
-            setFields.passwordChangedAt = new Date();
-            userUpdate.$inc = { tokenVersion: 1 };
-        }
-
-        if (Object.keys(setFields).length > 0) {
-            userUpdate.$set = setFields;
-        }
-
-        if (Object.keys(userUpdate).length > 0) {
-            try {
-                await User.findByIdAndUpdate(employee.userId, userUpdate, { runValidators: true });
-            } catch (userError) {
-                if (userError.code === 11000) {
-                    return res.status(400).json({ error: "Email already exists" });
-                }
-                throw userError;
-            }
-        }
-
-        // Build employee update object from only present fields (not undefined)
+        // Build and validate both updates before writing either record.
         const employeeUpdate = {};
         if (firstName !== undefined) employeeUpdate.firstName = firstName;
         if (lastName !== undefined) employeeUpdate.lastName = lastName;
@@ -208,8 +182,36 @@ export const updateEmployee = async (req, res)=>{
             employeeUpdate.joinDate = parsedJoinDate;
         }
 
-        if (Object.keys(employeeUpdate).length > 0) {
-            await Employee.findByIdAndUpdate(id, employeeUpdate, { runValidators: true });
+        const userSetFields = {};
+        if (normalizedEmail !== undefined) userSetFields.email = normalizedEmail;
+        if (role !== undefined) userSetFields.role = role;
+        if (password !== undefined) {
+            userSetFields.password = await bcrypt.hash(password, 10);
+            userSetFields.mustChangePassword = true;
+            userSetFields.passwordChangedAt = new Date();
+        }
+
+        const session = await mongoose.startSession();
+        try {
+            await session.withTransaction(async () => {
+                if (Object.keys(userSetFields).length > 0) {
+                    const userUpdate = { $set: userSetFields };
+                    if (password !== undefined) userUpdate.$inc = { tokenVersion: 1 };
+                    await User.findByIdAndUpdate(employee.userId, userUpdate, {
+                        runValidators: true,
+                        session,
+                    });
+                }
+
+                if (Object.keys(employeeUpdate).length > 0) {
+                    await Employee.findByIdAndUpdate(id, employeeUpdate, {
+                        runValidators: true,
+                        session,
+                    });
+                }
+            });
+        } finally {
+            await session.endSession();
         }
 
         return res.json({success: true})

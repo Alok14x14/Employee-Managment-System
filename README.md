@@ -163,7 +163,7 @@ All routes are prefixed with `/api` and use `Authorization: Bearer <token>` unle
 
 ### Prerequisites
 - Node.js >= 20.19
-- A MongoDB database (Atlas or local)
+- A MongoDB replica set with transaction support (Atlas works; local MongoDB must be configured as a replica set)
 - Optional: a Brevo SMTP account (emails) and an Inngest account (background jobs)
 
 ### 1. Clone and install

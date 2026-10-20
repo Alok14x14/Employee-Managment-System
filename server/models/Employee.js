@@ -15,6 +15,7 @@ const employeeSchema = new mongoose.Schema({
     joinDate: {type: Date, required: true },
     isDeleted: { type: Boolean, default: false },
     bio: { type: String, default: "" },
+    leaveApprovalVersion: { type: Number, default: 0, select: false },
     department: {type: String, enum: DEPARTMENTS}
 
 }, {timestamps: true})

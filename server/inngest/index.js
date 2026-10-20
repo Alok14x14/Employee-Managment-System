@@ -54,11 +54,17 @@ const autoCheckOut = inngest.createFunction(
     const employeeCheck = await Employee.findById(employeeId);
     if (!employeeCheck || employeeCheck.isDeleted) return;
 
-    attendance.checkOut = new Date(new Date(attendance.checkIn).getTime() + 4 * 60 * 60 * 1000);
-    attendance.workingHours = 4;
-    attendance.dayType = "Half Day";
-    attendance.autoCheckedOut = true;
-    await attendance.save();
+    await Attendance.findOneAndUpdate(
+      { _id: attendanceId, checkOut: null },
+      {
+        $set: {
+          checkOut: new Date(new Date(attendance.checkIn).getTime() + 4 * 60 * 60 * 1000),
+          workingHours: 4,
+          dayType: "Half Day",
+          autoCheckedOut: true,
+        },
+      }
+    );
   },
 );
 
@@ -108,13 +114,12 @@ const autoRejectLeave = inngest.createFunction(
     }
 
     await step.run("auto-reject-if-pending", async () => {
-      const currentLeave = await LeaveApplication.findById(leaveApplicationId);
-      if (!currentLeave || currentLeave.status !== "PENDING") return;
-
-      currentLeave.status = "REJECTED";
-      currentLeave.autoRejected = true;
-      currentLeave.rejectReason = "Auto Rejected";
-      await currentLeave.save();
+      const currentLeave = await LeaveApplication.findOneAndUpdate(
+        { _id: leaveApplicationId, status: "PENDING" },
+        { $set: { status: "REJECTED", autoRejected: true, rejectReason: "Auto Rejected" } },
+        { returnDocument: "after" }
+      );
+      if (!currentLeave) return;
 
       try {
         const emp = await Employee.findById(currentLeave.employeeId);

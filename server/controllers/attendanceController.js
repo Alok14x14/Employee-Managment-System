@@ -103,8 +103,6 @@ export const clockInOut = async (req, res) => {
             const diffMs = now.getTime() - checkInTime;
             const diffHours = diffMs / (1000 * 60 * 60)
 
-            existing.checkOut = now;
-
             // Compute working hours and day type
             const workingHours = parseFloat(diffHours.toFixed(2))
             let dayType = "Half Day";
@@ -113,11 +111,18 @@ export const clockInOut = async (req, res) => {
             else if (workingHours >= 4) dayType = "Half Day";
             else dayType = "Short Day";
 
-            existing.workingHours = workingHours;
-            existing.dayType = dayType;
+            const checkedOut = await Attendance.findOneAndUpdate(
+                { _id: existing._id, checkOut: null },
+                { $set: { checkOut: now, workingHours, dayType } },
+                { returnDocument: "after" }
+            );
+            if (checkedOut) {
+                return res.json({ success: true, type: "CHECK_OUT", data: checkedOut });
+            }
 
-            await existing.save();
-            return res.json({ success: true, type: "CHECK_OUT", data: existing });
+            // An automatic checkout may have completed while this request was running.
+            const latest = await Attendance.findById(existing._id);
+            return res.json({ success: true, type: "CHECK_OUT", data: latest || existing });
         }else {
             return res.json({ success: true, type: "CHECK_OUT", data: existing });
         }
@@ -464,27 +469,29 @@ export const getTodayAttendanceAdmin = async (req, res) => {
             }
         }
 
-        // Include absent employees as rows in data
-        for (const emp of employees) {
-            const empId = emp._id.toString();
-            if (!checkedInEmpIds.has(empId) && !leaveMap.has(empId)) {
-                data.push({
-                    employee: {
-                        id: emp._id,
-                        firstName: emp.firstName,
-                        lastName: emp.lastName,
-                        email: emp.email,
-                        department: emp.department,
-                        position: emp.position,
-                    },
-                    checkIn: null,
-                    checkOut: null,
-                    status: "ABSENT",
-                    leaveType: null,
-                    workingHours: null,
-                    dayType: null,
-                    autoCheckedOut: false,
-                });
+        // Only show absences on days when employees are expected to work.
+        if (dayInfo.type === "WORKING") {
+            for (const emp of employees) {
+                const empId = emp._id.toString();
+                if (!checkedInEmpIds.has(empId) && !leaveMap.has(empId)) {
+                    data.push({
+                        employee: {
+                            id: emp._id,
+                            firstName: emp.firstName,
+                            lastName: emp.lastName,
+                            email: emp.email,
+                            department: emp.department,
+                            position: emp.position,
+                        },
+                        checkIn: null,
+                        checkOut: null,
+                        status: "ABSENT",
+                        leaveType: null,
+                        workingHours: null,
+                        dayType: null,
+                        autoCheckedOut: false,
+                    });
+                }
             }
         }
 
@@ -512,7 +519,9 @@ export const getTodayAttendanceAdmin = async (req, res) => {
         const checkedOut = data.filter((d) => d.checkIn && d.checkOut).length;
         const onLeave = leaveMap.size;
         const notCheckedIn = Math.max(0, totalActive - present);
-        const absent = Math.max(0, totalActive - present - onLeave);
+        const absent = dayInfo.type === "WORKING"
+            ? Math.max(0, totalActive - present - onLeave)
+            : 0;
 
         return res.json({
             date: dateStr,

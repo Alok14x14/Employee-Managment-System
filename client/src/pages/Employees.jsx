@@ -167,7 +167,11 @@ const Employees = () => {
                     </td>
                     <td className="text-xs text-[#52525B] dark:text-[#A1A1AA]">{emp.position}</td>
                     <td>
-                      {emp.isPresentToday ? (
+                      {emp.isDeleted ? (
+                        <span className="badge badge-neutral">Archived</span>
+                      ) : emp.employmentStatus !== 'ACTIVE' ? (
+                        <span className="badge badge-neutral">Inactive</span>
+                      ) : emp.isPresentToday ? (
                         <span className="badge badge-success">Present</span>
                       ) : (
                         <span className="badge badge-neutral">Absent</span>

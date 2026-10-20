@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Check, Loader2, X } from 'lucide-react'
 import { formatDate } from '../../utils/formatters'
 import api from '../../api/axios'
@@ -7,6 +7,19 @@ import toast from 'react-hot-toast'
 const LeaveHistory = ({ leaves = [], isAdmin, onUpdate, loading = false }) => {
   const [processing, setProcessing] = useState(null)
   const [rejectModal, setRejectModal] = useState({ open: false, leaveId: null, reason: '' })
+  const [selectedLeave, setSelectedLeave] = useState(null)
+
+  useEffect(() => {
+    if (!selectedLeave && !rejectModal.open) return undefined
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setSelectedLeave(null)
+        setRejectModal({ open: false, leaveId: null, reason: '' })
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [selectedLeave, rejectModal.open])
 
   const handleStatusUpdate = async (id, status, reason = '') => {
     const payload = { status }
@@ -84,7 +97,21 @@ const LeaveHistory = ({ leaves = [], isAdmin, onUpdate, loading = false }) => {
               leaves.map((leave) => {
                 const leaveId = leave._id || leave.id
                 return (
-                  <tr key={leaveId}>
+                  <tr
+                    key={leaveId}
+                    tabIndex={0}
+                    aria-label={`View ${leave.type?.toLowerCase() || ''} leave request details`}
+                    title="Open leave request details"
+                    className="cursor-pointer hover:bg-[#FAFAFA] dark:hover:bg-[#202024] focus-visible:outline-2 focus-visible:outline-primary"
+                    onClick={() => setSelectedLeave(leave)}
+                    onKeyDown={(event) => {
+                      if (event.target !== event.currentTarget) return
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        setSelectedLeave(leave)
+                      }
+                    }}
+                  >
                     {isAdmin && (
                       <td className="font-medium text-[#18181B] dark:text-[#FAFAFA] text-xs">
                         {leave.employee?.firstName} {leave.employee?.lastName}
@@ -138,7 +165,10 @@ const LeaveHistory = ({ leaves = [], isAdmin, onUpdate, loading = false }) => {
                           <div className="flex items-center justify-end gap-1">
                             <button
                               disabled={Boolean(processing)}
-                              onClick={() => handleStatusUpdate(leaveId, 'APPROVED')}
+                              onClick={(event) => {
+                                event.stopPropagation()
+                                handleStatusUpdate(leaveId, 'APPROVED')
+                              }}
                               className="p-1.5 rounded-[5px] text-[#16A34A] dark:text-emerald-400 hover:bg-[#F0FDF4] dark:hover:bg-emerald-950/30 transition-colors"
                               title="Approve request"
                               aria-label="Approve leave"
@@ -151,9 +181,10 @@ const LeaveHistory = ({ leaves = [], isAdmin, onUpdate, loading = false }) => {
                             </button>
                             <button
                               disabled={Boolean(processing)}
-                              onClick={() =>
+                              onClick={(event) => {
+                                event.stopPropagation()
                                 setRejectModal({ open: true, leaveId, reason: '' })
-                              }
+                              }}
                               className="p-1.5 rounded-[5px] text-[#DC2626] dark:text-rose-400 hover:bg-[#FEF2F2] dark:hover:bg-rose-950/30 transition-colors"
                               title="Reject request"
                               aria-label="Reject leave"
@@ -177,6 +208,110 @@ const LeaveHistory = ({ leaves = [], isAdmin, onUpdate, loading = false }) => {
           </tbody>
         </table>
       </div>
+
+      {/* Full leave request details */}
+      {selectedLeave && (
+        <div
+          className="fixed inset-0 bg-black/25 dark:bg-black/60 flex items-center justify-center p-4 z-50"
+          onClick={() => setSelectedLeave(null)}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="leave-details-title"
+            className="card p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-[0_4px_12px_rgba(0,0,0,0.05)]"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4 pb-4 border-b border-[#E4E4E7] dark:border-[#27272A] mb-5">
+              <div className="min-w-0">
+                <h2 id="leave-details-title" className="text-base font-semibold text-[#18181B] dark:text-[#FAFAFA]">
+                  Leave request details
+                </h2>
+                <p className="text-xs text-[#71717A] dark:text-[#A1A1AA] mt-1">
+                  {selectedLeave.type} leave · {selectedLeave.status?.toLowerCase() || 'pending'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedLeave(null)}
+                className="p-1.5 shrink-0 text-[#71717A] dark:text-[#A1A1AA] hover:text-[#18181B] dark:hover:text-[#FAFAFA] rounded-[4px]"
+                aria-label="Close leave details"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <div className="space-y-5 text-xs">
+              {isAdmin && (
+                <section className="space-y-2">
+                  <h3 className="text-[11px] font-semibold uppercase tracking-wide text-[#71717A] dark:text-[#A1A1AA]">Employee</h3>
+                  <p className="text-sm font-medium text-[#18181B] dark:text-[#FAFAFA]">
+                    {[selectedLeave.employee?.firstName, selectedLeave.employee?.lastName].filter(Boolean).join(' ') || 'Employee details unavailable'}
+                  </p>
+                  <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-[#52525B] dark:text-[#D4D4D8]">
+                    <div>
+                      <dt className="text-[#71717A] dark:text-[#A1A1AA]">Email</dt>
+                      <dd className="break-all">{selectedLeave.employee?.email || '—'}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-[#71717A] dark:text-[#A1A1AA]">Department</dt>
+                      <dd>{selectedLeave.employee?.department || '—'}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-[#71717A] dark:text-[#A1A1AA]">Position</dt>
+                      <dd>{selectedLeave.employee?.position || '—'}</dd>
+                    </div>
+                  </dl>
+                </section>
+              )}
+
+              <section className="space-y-2">
+                <h3 className="text-[11px] font-semibold uppercase tracking-wide text-[#71717A] dark:text-[#A1A1AA]">Request</h3>
+                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3 text-[#52525B] dark:text-[#D4D4D8]">
+                  <div>
+                    <dt className="text-[#71717A] dark:text-[#A1A1AA]">Leave type</dt>
+                    <dd className="mt-0.5 font-medium text-[#18181B] dark:text-[#FAFAFA]">{selectedLeave.type || '—'}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-[#71717A] dark:text-[#A1A1AA]">Working days</dt>
+                    <dd className="mt-0.5 font-medium text-[#18181B] dark:text-[#FAFAFA]">{selectedLeave.workingDays != null ? `${selectedLeave.workingDays} days` : '—'}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-[#71717A] dark:text-[#A1A1AA]">Start date</dt>
+                    <dd className="mt-0.5">{formatDate(selectedLeave.startDate)}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-[#71717A] dark:text-[#A1A1AA]">End date</dt>
+                    <dd className="mt-0.5">{formatDate(selectedLeave.endDate)}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-[#71717A] dark:text-[#A1A1AA]">Submitted</dt>
+                    <dd className="mt-0.5">{formatDate(selectedLeave.createdAt)}</dd>
+                  </div>
+                </dl>
+              </section>
+
+              <section className="space-y-2">
+                <h3 className="text-[11px] font-semibold uppercase tracking-wide text-[#71717A] dark:text-[#A1A1AA]">Employee reason</h3>
+                <p className="rounded-[6px] border border-[#E4E4E7] dark:border-[#3F3F46] bg-[#FAFAFA] dark:bg-[#111113] p-3 text-[#52525B] dark:text-[#D4D4D8] whitespace-pre-wrap break-words">
+                  {selectedLeave.reason || 'No reason provided.'}
+                </p>
+              </section>
+
+              {(selectedLeave.rejectReason || selectedLeave.autoRejected) && (
+                <section className="space-y-2">
+                  <h3 className="text-[11px] font-semibold uppercase tracking-wide text-[#71717A] dark:text-[#A1A1AA]">
+                    {selectedLeave.autoRejected || selectedLeave.rejectReason === 'Auto Rejected' ? 'Automatic decision' : 'Rejection reason'}
+                  </h3>
+                  <p className="rounded-[6px] border border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-950/20 p-3 text-[#991B1B] dark:text-rose-300 whitespace-pre-wrap break-words">
+                    {selectedLeave.rejectReason || 'Automatically rejected because the leave start date passed before review.'}
+                  </p>
+                </section>
+              )}
+            </div>
+          </section>
+        </div>
+      )}
 
       {/* Rejection Reason Modal */}
       {rejectModal.open && (

@@ -1,6 +1,7 @@
 import { inngest } from "../inngest/index.js";
 import { LEAVE_QUOTAS } from "../constants/leaveQuotas.js";
 import Employee from "../models/Employee.js";
+import mongoose from "mongoose";
 import LeaveApplication from "../models/LeaveApplication.js";
 import { sendLeaveStatusEmail } from "../utils/emailService.js";
 import { loadHolidaySet } from "../utils/holidays.js";
@@ -255,117 +256,129 @@ export const getLeaves = async (req, res) => {
 // Update leave status
 // PATCH /api/leave/:id
 export const updateLeaveStatus = async (req, res) => {
+    let session;
     try {
         const { id } = req.params;
         if (!isValidObjectId(id)) {
             return res.status(400).json({ error: "Invalid ID" });
         }
-
-        const leave = await LeaveApplication.findById(id);
-        if (!leave) {
-            return res.status(404).json({ error: "Leave not found" });
-        }
-
         const { status, rejectReason } = req.body;
         if (!["APPROVED", "REJECTED"].includes(status)) {
             return res.status(400).json({ error: "Invalid status" });
         }
-
-        if (leave.status !== "PENDING") {
-            return res.status(409).json({ error: "Leave was already processed" });
-        }
-
-        // Auto-reject if start date and time has already passed
-        if (isLeavePassed(leave)) {
-            leave.status = "REJECTED";
-            leave.autoRejected = true;
-            leave.rejectReason = "Auto Rejected";
-            await leave.save();
-            return res.status(400).json({
-                error: "Cannot process leave: start date has already passed. Request has been auto-rejected.",
-            });
-        }
-
         if (status === "REJECTED" && !rejectReason) {
             return res.status(400).json({ error: "Rejection reason is required" });
         }
 
-        if (status === "APPROVED") {
-            // Re-check overlap against other APPROVED leaves
-            const conflict = await LeaveApplication.findOne({
-                _id: { $ne: leave._id },
-                employeeId: leave.employeeId,
-                status: "APPROVED",
-                startDate: { $lte: leave.endDate },
-                endDate: { $gte: leave.startDate },
-            });
-
-            if (conflict) {
-                const { year: sy, month: sm, day: sd } = istParts(conflict.startDate);
-                const { year: ey, month: em, day: ed } = istParts(conflict.endDate);
-                return res.status(409).json({
-                    error: `Cannot approve: conflicts with an approved leave from ${sy}-${sm}-${sd} to ${ey}-${em}-${ed}`,
-                });
+        session = await mongoose.startSession();
+        let transactionResult;
+        await session.withTransaction(async () => {
+            const leave = await LeaveApplication.findById(id).session(session);
+            if (!leave) {
+                transactionResult = { httpStatus: 404, error: "Leave not found" };
+                return;
+            }
+            if (leave.status !== "PENDING") {
+                transactionResult = { httpStatus: 409, error: "Leave was already processed" };
+                return;
             }
 
-            // Re-check balance for each year spanned by this leave
-            const holidaySet = await loadHolidaySet(leave.startDate, leave.endDate);
-            const leaveDaysByYear = splitDaysByYear(leave.startDate, leave.endDate, holidaySet);
+            // All approvals for one employee write the same employee document in
+            // this transaction. MongoDB retries conflicting transactions, so the
+            // second approval re-runs its checks against the first one's commit.
+            const approvalLock = await Employee.updateOne(
+                { _id: leave.employeeId },
+                { $inc: { leaveApprovalVersion: 1 } },
+                { session }
+            );
+            if (!approvalLock.matchedCount) {
+                transactionResult = { httpStatus: 404, error: "Employee not found" };
+                return;
+            }
 
-            for (const y of Object.keys(leaveDaysByYear)) {
-                const yStart = new Date(`${y}-01-01T00:00:00+05:30`);
-                const yEnd = new Date(`${y}-12-31T23:59:59.999+05:30`);
-                const yHolidays = await loadHolidaySet(yStart, yEnd);
+            if (isLeavePassed(leave)) {
+                const autoRejected = await LeaveApplication.findOneAndUpdate(
+                    { _id: id, status: "PENDING" },
+                    { $set: { status: "REJECTED", autoRejected: true, rejectReason: "Auto Rejected" } },
+                    { returnDocument: "after", session }
+                );
+                transactionResult = autoRejected
+                    ? { httpStatus: 400, error: "Cannot process leave: start date has already passed. Request has been auto-rejected." }
+                    : { httpStatus: 409, error: "Leave was already processed" };
+                return;
+            }
 
-                const approvedLeavesInYear = await LeaveApplication.find({
+            if (status === "APPROVED") {
+                const conflict = await LeaveApplication.findOne({
                     _id: { $ne: leave._id },
                     employeeId: leave.employeeId,
-                    type: leave.type,
                     status: "APPROVED",
-                    startDate: { $lte: yEnd },
-                    endDate: { $gte: yStart },
-                }).lean();
+                    startDate: { $lte: leave.endDate },
+                    endDate: { $gte: leave.startDate },
+                }).session(session);
 
-                let usedInYear = 0;
-                for (const l of approvedLeavesInYear) {
-                    const dByY = splitDaysByYear(l.startDate, l.endDate, yHolidays);
-                    usedInYear += dByY[y] || 0;
+                if (conflict) {
+                    const { year: sy, month: sm, day: sd } = istParts(conflict.startDate);
+                    const { year: ey, month: em, day: ed } = istParts(conflict.endDate);
+                    transactionResult = {
+                        httpStatus: 409,
+                        error: `Cannot approve: conflicts with an approved leave from ${sy}-${sm}-${sd} to ${ey}-${em}-${ed}`,
+                    };
+                    return;
                 }
 
-                const quota = LEAVE_QUOTAS[leave.type] || 0;
-                const remaining = quota - usedInYear;
-                const needed = leaveDaysByYear[y];
+                const holidaySet = await loadHolidaySet(leave.startDate, leave.endDate);
+                const leaveDaysByYear = splitDaysByYear(leave.startDate, leave.endDate, holidaySet);
+                for (const y of Object.keys(leaveDaysByYear)) {
+                    const yStart = new Date(`${y}-01-01T00:00:00+05:30`);
+                    const yEnd = new Date(`${y}-12-31T23:59:59.999+05:30`);
+                    const yHolidays = await loadHolidaySet(yStart, yEnd);
+                    const approvedLeavesInYear = await LeaveApplication.find({
+                        _id: { $ne: leave._id },
+                        employeeId: leave.employeeId,
+                        type: leave.type,
+                        status: "APPROVED",
+                        startDate: { $lte: yEnd },
+                        endDate: { $gte: yStart },
+                    }).session(session).lean();
 
-                if (needed > remaining) {
-                    return res.status(400).json({
-                        error: `Cannot approve: requires ${needed} days in ${y}, but employee only has ${remaining} remaining for ${leave.type}`,
-                    });
+                    let usedInYear = 0;
+                    for (const existingLeave of approvedLeavesInYear) {
+                        const daysByYear = splitDaysByYear(existingLeave.startDate, existingLeave.endDate, yHolidays);
+                        usedInYear += daysByYear[y] || 0;
+                    }
+                    const remaining = (LEAVE_QUOTAS[leave.type] || 0) - usedInYear;
+                    const needed = leaveDaysByYear[y];
+                    if (needed > remaining) {
+                        transactionResult = {
+                            httpStatus: 400,
+                            error: `Cannot approve: requires ${needed} days in ${y}, but employee only has ${remaining} remaining for ${leave.type}`,
+                        };
+                        return;
+                    }
                 }
             }
+
+            const updateOps = { $set: { status } };
+            if (status === "REJECTED") updateOps.$set.rejectReason = rejectReason;
+            else updateOps.$unset = { rejectReason: "" };
+
+            const updated = await LeaveApplication.findOneAndUpdate(
+                { _id: id, status: "PENDING" },
+                updateOps,
+                { returnDocument: "after", session }
+            );
+            transactionResult = updated
+                ? { updatedLeave: updated }
+                : { httpStatus: 409, error: "Leave was already processed" };
+        });
+
+        if (transactionResult?.httpStatus) {
+            return res.status(transactionResult.httpStatus).json({ error: transactionResult.error });
         }
-
-        const updateOps = {
-            $set: { status },
-        };
-        if (status === "REJECTED") {
-            updateOps.$set.rejectReason = rejectReason;
-        } else {
-            updateOps.$unset = { rejectReason: "" };
-        }
-
-        // Atomic update guarding against concurrent updates
-        const updatedLeave = await LeaveApplication.findOneAndUpdate(
-            { _id: id, status: "PENDING" },
-            updateOps,
-            { returnDocument: "after" }
-        );
-
+        const updatedLeave = transactionResult?.updatedLeave;
         if (!updatedLeave) {
-            const exists = await LeaveApplication.exists({ _id: id });
-            if (!exists) {
-                return res.status(404).json({ error: "Leave not found" });
-            }
-            return res.status(409).json({ error: "Leave was already processed" });
+            return res.status(500).json({ error: "Failed to update leave status" });
         }
 
         // Send email notification for approved/rejected leaves (awaited inside try/catch)
@@ -393,5 +406,7 @@ export const updateLeaveStatus = async (req, res) => {
     } catch (error) {
         console.error("updateLeaveStatus error:", error);
         return res.status(500).json({ error: "Failed to update leave status" });
+    } finally {
+        if (session) await session.endSession();
     }
 };
