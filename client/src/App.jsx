@@ -20,6 +20,7 @@ import Holidays from "./pages/Holidays"
 import Documents from "./pages/Documents"
 import Directory from "./pages/Directory"
 import Announcements from "./pages/Announcements"
+import AdminActivityLog from "./pages/AdminActivityLog"
 import LoginForm from "./components/LoginForm"
 import RequireRole from "./components/RequireRole"
 import { useAuth } from "./context/AuthContext"
@@ -138,6 +139,7 @@ const App = () => {
               </RequireRole>
             }
           />
+          <Route path="/admin/activity" element={<RequireRole role="ADMIN"><AdminActivityLog /></RequireRole>} />
           <Route
             path="/admin/attendance"
             element={

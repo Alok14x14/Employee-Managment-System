@@ -15,6 +15,8 @@ import holidayRouter from "./routes/holidayRoutes.js";
 import hrAssistantRouter from "./routes/hrAssistantRoutes.js";
 import employeeDocumentRouter from "./routes/employeeDocumentRoutes.js";
 import announcementRouter from "./routes/announcementRoutes.js";
+import auditLogRouter from "./routes/auditLogRoutes.js";
+import { auditAdminActions } from "./middleware/auditLog.js";
 
 import dns from "dns"
 import { serve } from "inngest/express";
@@ -66,6 +68,9 @@ app.use(async (req, res, next) => {
     }
 });
 
+// Capture successful admin changes after route authorization has populated req.session.
+app.use(auditAdminActions);
+
 // Routes
 app.get("/", (req, res)=> res.send("Server is running"));
 app.use("/api/documents", employeeDocumentRouter)
@@ -81,6 +86,7 @@ app.use("/api/dashboard", dashboardRouter)
 app.use("/api/meta", metaRouter)
 app.use("/api/holidays", holidayRouter)
 app.use("/api/hr-assistant", hrAssistantRouter)
+app.use("/api/audit-logs", auditLogRouter)
 
 app.use("/api/inngest", serve({ client: inngest, functions }));
 

@@ -257,6 +257,13 @@ export const updateEmployee = async (req, res)=>{
             if (typeof password !== "string" || password.length < 8) {
                 return res.status(400).json({ error: "Password must be at least 8 characters" });
             }
+            if (employee.userId.toString() === req.session.userId) {
+                return res.status(400).json({ error: "An employee password change cannot target the signed-in administrator account" });
+            }
+            const targetUser = await User.findById(employee.userId).select("role").lean();
+            if (!targetUser || targetUser.role !== "EMPLOYEE") {
+                return res.status(400).json({ error: "Only employee accounts can be changed from the employee profile" });
+            }
         }
 
         // Build and validate both updates before writing either record.

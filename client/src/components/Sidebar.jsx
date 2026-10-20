@@ -19,6 +19,7 @@ import {
     UsersRound,
     Megaphone,
     ClipboardCheck,
+    History,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -48,6 +49,7 @@ const Sidebar = () => {
             { name: 'Departments', href: '/departments', icon: Building2Icon },
             { name: 'Attendance', href: '/admin/attendance', icon: CalendarIcon },
             { name: 'Attendance corrections', href: '/admin/attendance/corrections', icon: ClipboardCheck },
+            { name: 'Admin activity', href: '/admin/activity', icon: History },
             { name: 'Holidays', href: '/holidays', icon: CalendarDaysIcon }
         ] : [
             { name: 'Attendance', href: '/attendance', icon: CalendarIcon },
