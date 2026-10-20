@@ -1,14 +1,14 @@
 # 🗄️ StaffFlow - Demo Database
 
-This directory contains pre-configured demo data, seed datasets in JSON format, and seeding scripts for the **FullStack Employee Management System (EMS)**.
+This directory contains pre-configured demo datasets in JSON format, seeding scripts, and cleanup utilities for the **FullStack Employee Management System (StaffFlow)**.
 
-It is designed to give you instant, realistic, and beautiful data across all frontend views and dashboards without modifying any existing application code.
+It is designed to give you instant, realistic, and comprehensive data across all frontend views, dashboards, and portals without modifying any application code.
 
 ---
 
 ## 🚀 Quick Start: How to Seed Demo Data
 
-Make sure your MongoDB server or Atlas cluster is accessible (via `server/.env` `MONGODB_URI` or via command line).
+Make sure your MongoDB server or Atlas cluster is accessible (via `server/.env` `MONGODB_URI` or via command-line argument).
 
 ### Option 1: Run with NPM (from this folder)
 ```bash
@@ -27,7 +27,7 @@ node demo-database/seed.js "mongodb://localhost:27017/EMS"
 ```
 
 > **Tip (Dynamic vs Static dates):**
-> - By default, `node demo-database/seed.js` dynamically anchors attendance, leaves, and today's shift records to **today's date**. This ensures that the Admin Dashboard, 5-day attendance trend, and today's clock-in shift list immediately show active data!
+> - By default, `node demo-database/seed.js` dynamically anchors attendance, leaves, today's shifts, attendance corrections, announcements, and payroll records relative to **today's date**. This ensures that the Admin Dashboard, 5-day attendance trend, today's shift tracker, and notification center immediately show active, fresh data!
 > - If you prefer exact literal dates from the JSON files, run:
 >   ```bash
 >   node demo-database/seed.js --static
@@ -47,7 +47,7 @@ node demo-database/seed.js "mongodb://localhost:27017/EMS"
 | **Email** | `admin@example.com` |
 | **Password** | `admin123` |
 | **Role** | `ADMIN` |
-| **Access** | Full organization dashboard, employee management, salary & payslips, leave approvals, shifts |
+| **Access** | Full organization dashboard, employee management, salary & payslips, leave approvals, attendance correction review, company announcements publisher, document management center |
 
 ---
 
@@ -77,14 +77,17 @@ All raw datasets are stored as clean, structured JSON files in [`data/`](file://
 |---|---|---|
 | [`users.json`](file:///c:/Users/ASUS/Documents/FullStack-EMS/demo-database/data/users.json) | Admin and employee authentication records with bcrypt password hashes. | 11 users |
 | [`employees.json`](file:///c:/Users/ASUS/Documents/FullStack-EMS/demo-database/data/employees.json) | Rich employee profiles across all 10 corporate departments. | 10 profiles |
-| [`attendance.json`](file:///c:/Users/ASUS/Documents/FullStack-EMS/demo-database/data/attendance.json) | Today's active shifts, past 7 days logged hours, and monthly calendars. | 22 records |
-| [`leaveApplications.json`](file:///c:/Users/ASUS/Documents/FullStack-EMS/demo-database/data/leaveApplications.json) | Time-off requests in `PENDING`, `APPROVED`, and `REJECTED` (including `Auto Rejected`) states. | 9 applications |
+| [`attendance.json`](file:///c:/Users/ASUS/Documents/FullStack-EMS/demo-database/data/attendance.json) | Today's active shifts, past 7 days logged hours, and monthly calendars. | 44 records |
+| [`attendanceCorrections.json`](file:///c:/Users/ASUS/Documents/FullStack-EMS/demo-database/data/attendanceCorrections.json) | Correction requests for missed check-in/out times in `PENDING`, `APPROVED`, and `REJECTED` states. | 4 requests |
+| [`announcements.json`](file:///c:/Users/ASUS/Documents/FullStack-EMS/demo-database/data/announcements.json) | Company-wide notices, town halls, and policy updates published by Admin. | 4 notices |
+| [`employeeDocuments.json`](file:///c:/Users/ASUS/Documents/FullStack-EMS/demo-database/data/employeeDocuments.json) | Real valid PDF documents across Policies, Offer Letters, Tax Forms, and Reviews. | 8 documents |
+| [`leaveApplications.json`](file:///c:/Users/ASUS/Documents/FullStack-EMS/demo-database/data/leaveApplications.json) | Time-off requests in `PENDING`, `APPROVED`, and `REJECTED` (including Auto-Rejected) states. | 9 applications |
 | [`payslips.json`](file:///c:/Users/ASUS/Documents/FullStack-EMS/demo-database/data/payslips.json) | Monthly payslips with basic pay, allowances, deductions, and net salary. | 11 payslips |
 | [`holidays.json`](file:///c:/Users/ASUS/Documents/FullStack-EMS/demo-database/data/holidays.json) | National and public holidays across the calendar year. | 10 holidays |
 
 ---
 
-## 🖥️ What You'll See on the Frontend
+## 🖥️ What You'll See Across the Application
 
 Once seeded and connected:
 
@@ -99,23 +102,35 @@ Once seeded and connected:
    - Monthly attendance statistics and latest generated payslip summary.
    - Live clock-in / clock-out button with current shift timer.
 
-3. **Employees Directory (`/employees`)**:
-   - Comprehensive roster of employees across Engineering, Design, HR, Sales, etc.
-   - Department filtering, search by name/position/email, salary and contact info.
+3. **📢 Company Announcements (`/announcements`)**:
+   - Organization-wide notices (All-Hands, Hybrid Work Policy, Benefits Enrollment, IT Maintenance).
+   - Admin view with announcement publishing form and delete actions.
+   - Employee view with rich formatted announcement cards and expiration indicators.
 
-4. **Attendance (`/attendance` & `/admin/attendance`)**:
-   - Real-time today shift tracker: active clocked-in employees, checked-out records, late arrivals, and working hours.
-   - Visual monthly calendar with color-coded day types (Full Day, Half Day, Late, Absent).
+4. **📄 Documents & Company Policies (`/documents`)**:
+   - Filterable document categories: **Company Policy**, **Offer Letter**, **Tax Form**, and **Other**.
+   - Built-in inline PDF previewer modal with download capability.
+   - Admin upload form supporting company-wide policies or employee-assigned documents.
 
-5. **Leave Management (`/leave`)**:
-   - Pending requests ready for Admin approval / rejection.
-   - Historical leave records categorized into Sick, Casual, and Annual leave.
+5. **🕒 Attendance & Correction Requests (`/attendance` & `/admin/attendance`)**:
+   - **Admin Attendance**: Real-time today shift tracker and **Pending Attendance Corrections** review widget with Approve & Reject action buttons.
+   - **Employee Attendance**: Monthly calendar with color-coded day types (Full Day, Half Day, Late, Absent) and **Attendance Corrections** submission & status history.
 
-6. **Payslips (`/payslips`)**:
-   - Generated itemized payslips ready for viewing and printing.
+6. **👥 Employee Directory (`/directory`)**:
+   - Colleague roster with department filtering, instant search by name/position/email, and direct mailto links.
 
-7. **Holidays (`/holidays`)**:
-   - Public holidays listed and displayed on the interactive holiday calendar.
+7. **💬 AI HR Assistant (`HrAssistant.jsx`)**:
+   - Floating HR companion in the bottom right corner of the employee portal to answer policy, quota, and process questions.
+
+8. **🔔 Notification Center**:
+   - Sidebar notification bell displaying badge count and alerts for:
+     - Open attendance checkout reminders
+     - Company announcements
+     - New documents and policy updates
+     - Approved/rejected attendance corrections
+     - Approved/rejected leave requests
+     - Newly issued monthly payslips
+     - Upcoming public holidays within the next 7 days
 
 ---
 

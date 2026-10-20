@@ -12,7 +12,24 @@ const Dashboard = () => {
 
   useEffect(() => {
     api.get('/dashboard')
-      .then((res) => setData(res.data))
+      .then(async (res) => {
+        if (res.data.role !== 'ADMIN') {
+          setData(res.data)
+          return
+        }
+        const [leaveResult, correctionResult] = await Promise.allSettled([
+          api.get('/leave'),
+          api.get('/attendance/corrections?status=PENDING'),
+        ])
+        const leaveRequests = leaveResult.status === 'fulfilled'
+          ? (leaveResult.value.data.data || []).filter((leave) => leave.status === 'PENDING')
+          : []
+        const correctionRequests = correctionResult.status === 'fulfilled'
+          ? (correctionResult.value.data.data || [])
+          : []
+        const reviewErrors = [leaveResult, correctionResult].filter((result) => result.status === 'rejected')
+        setData({ ...res.data, leaveRequests, correctionRequests, reviewErrors })
+      })
       .catch((err) => toast.error(err.response?.data?.error || err?.message))
       .finally(() => setLoading(false))
   }, [])

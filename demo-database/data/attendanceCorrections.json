@@ -1,0 +1,54 @@
+[
+  {
+    "_id": "667000000000000000000001",
+    "employeeId": "66e000000000000000000002",
+    "attendanceId": "66a000000000000000000002",
+    "field": "checkOut",
+    "requestedTime": "2026-10-19T12:30:00.000Z",
+    "reason": "Forgot to tap badge at departure kiosk before leaving for offsite client dinner.",
+    "status": "PENDING",
+    "reviewedBy": null,
+    "reviewedAt": null,
+    "reviewNote": "",
+    "createdAt": "2026-10-19T13:00:00.000Z"
+  },
+  {
+    "_id": "667000000000000000000002",
+    "employeeId": "66e000000000000000000007",
+    "attendanceId": "66a000000000000000000007",
+    "field": "checkOut",
+    "requestedTime": "2026-10-19T13:00:00.000Z",
+    "reason": "Late client onboarding call extended beyond office hours; forgot manual checkout.",
+    "status": "PENDING",
+    "reviewedBy": null,
+    "reviewedAt": null,
+    "reviewNote": "",
+    "createdAt": "2026-10-19T13:30:00.000Z"
+  },
+  {
+    "_id": "667000000000000000000003",
+    "employeeId": "66e000000000000000000001",
+    "attendanceId": "66a000000000000000000012",
+    "field": "checkIn",
+    "requestedTime": "2026-10-14T03:30:00.000Z",
+    "reason": "Badge scanner at North entrance failed to read RFID card; entered via visitor gate.",
+    "status": "APPROVED",
+    "reviewedBy": "66f000000000000000000001",
+    "reviewedAt": "2026-10-15T05:00:00.000Z",
+    "reviewNote": "Verified with security desk check-in log.",
+    "createdAt": "2026-10-14T08:00:00.000Z"
+  },
+  {
+    "_id": "667000000000000000000004",
+    "employeeId": "66e000000000000000000008",
+    "attendanceId": "66a00000000000000000001b",
+    "field": "checkOut",
+    "requestedTime": "2026-10-16T14:30:00.000Z",
+    "reason": "Requested overtime departure time after remote data sync monitoring.",
+    "status": "REJECTED",
+    "reviewedBy": "66f000000000000000000001",
+    "reviewedAt": "2026-10-17T04:30:00.000Z",
+    "reviewNote": "Overtime requires pre-authorization from department manager.",
+    "createdAt": "2026-10-16T15:00:00.000Z"
+  }
+]

@@ -1,5 +1,5 @@
 /**
- * Demo Database Seeder for FullStack-EMS
+ * Demo Database Seeder for FullStack-EMS (StaffFlow)
  * 
  * Usage:
  *   node demo-database/seed.js           # Seeds data with dynamic dates relative to today (recommended for live demo)
@@ -55,6 +55,9 @@ const holidaysData = loadJson("holidays.json");
 const leaveAppsData = loadJson("leaveApplications.json");
 const payslipsData = loadJson("payslips.json");
 const attendanceData = loadJson("attendance.json");
+const announcementsData = loadJson("announcements.json");
+const attendanceCorrectionsData = loadJson("attendanceCorrections.json");
+const employeeDocsData = loadJson("employeeDocuments.json");
 
 // Helper to calculate IST day start
 const getISTDayStart = (date = new Date()) => {
@@ -74,7 +77,7 @@ const getISTDayStart = (date = new Date()) => {
 };
 
 async function seed() {
-  console.log("🌱 Starting Demo Database Seeding for FullStack EMS...");
+  console.log("🌱 Starting Demo Database Seeding for FullStack EMS (StaffFlow)...");
   console.log(`📡 Connecting to MongoDB...`);
 
   try {
@@ -90,10 +93,17 @@ async function seed() {
     const leavesCol = db.collection("leaveapplications");
     const payslipsCol = db.collection("payslips");
     const attendanceCol = db.collection("attendances");
+    const announcementsCol = db.collection("announcements");
+    const employeeDocsCol = db.collection("employeedocuments");
+    const attendanceCorrectionsCol = db.collection("attendancecorrections");
 
     // Demo IDs list for cleanup/upsert
     const demoUserIds = usersData.map((u) => new mongoose.Types.ObjectId(u._id));
     const demoEmployeeIds = employeesData.map((e) => new mongoose.Types.ObjectId(e._id));
+    const demoHolidayNames = holidaysData.map((h) => h.name);
+    const demoAnnouncementIds = announcementsData.map((a) => new mongoose.Types.ObjectId(a._id));
+    const demoDocumentIds = employeeDocsData.map((d) => new mongoose.Types.ObjectId(d._id));
+    const demoCorrectionIds = attendanceCorrectionsData.map((c) => new mongoose.Types.ObjectId(c._id));
 
     if (isForce) {
       console.log("🧹 Cleaning existing demo records (--force)...");
@@ -102,10 +112,15 @@ async function seed() {
       await leavesCol.deleteMany({ employeeId: { $in: demoEmployeeIds } });
       await payslipsCol.deleteMany({ employeeId: { $in: demoEmployeeIds } });
       await attendanceCol.deleteMany({ employeeId: { $in: demoEmployeeIds } });
-      const demoHolidayNames = holidaysData.map((h) => h.name);
       await holidaysCol.deleteMany({ name: { $in: demoHolidayNames } });
+      await announcementsCol.deleteMany({ _id: { $in: demoAnnouncementIds } });
+      await employeeDocsCol.deleteMany({ _id: { $in: demoDocumentIds } });
+      await attendanceCorrectionsCol.deleteMany({ _id: { $in: demoCorrectionIds } });
       console.log("✨ Cleaned prior demo records.\n");
     }
+
+    const today = getISTDayStart();
+    const baseAnchorDate = new Date("2026-10-20T00:00:00.000Z");
 
     // 1. Seed Users
     console.log(`👤 Upserting ${usersData.length} Users...`);
@@ -166,7 +181,11 @@ async function seed() {
     // 3. Seed Holidays
     console.log(`🎉 Upserting ${holidaysData.length} Holidays...`);
     for (const h of holidaysData) {
-      const normalizedDate = getISTDayStart(new Date(h.date));
+      let normalizedDate = getISTDayStart(new Date(h.date));
+      // In dynamic mode, ensure holiday does not accidentally fall exactly on today
+      if (!isStatic && normalizedDate.getTime() === today.getTime()) {
+        normalizedDate = new Date(today.getTime() + 4 * 24 * 60 * 60 * 1000);
+      }
       const existing = await holidaysCol.findOne({
         $or: [{ date: normalizedDate }, { name: h.name }],
       });
@@ -188,7 +207,6 @@ async function seed() {
 
     // 4. Seed Leave Applications
     console.log(`📝 Upserting ${leaveAppsData.length} Leave Applications...`);
-    const today = getISTDayStart();
     for (let i = 0; i < leaveAppsData.length; i++) {
       const l = leaveAppsData[i];
       let startDate = new Date(l.startDate);
@@ -196,10 +214,13 @@ async function seed() {
 
       if (!isStatic) {
         if (l.status === "PENDING") {
-          startDate = new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000);
-          endDate = new Date(today.getTime() + (2 + (l.workingDays - 1)) * 24 * 60 * 60 * 1000);
+          startDate = new Date(today.getTime() + (2 + i) * 24 * 60 * 60 * 1000);
+          endDate = new Date(startDate.getTime() + (l.workingDays - 1) * 24 * 60 * 60 * 1000);
         } else if (l.status === "APPROVED") {
-          startDate = new Date(today.getTime() - (5 + i) * 24 * 60 * 60 * 1000);
+          startDate = new Date(today.getTime() - (5 + i * 2) * 24 * 60 * 60 * 1000);
+          endDate = new Date(startDate.getTime() + (l.workingDays - 1) * 24 * 60 * 60 * 1000);
+        } else if (l.status === "REJECTED") {
+          startDate = new Date(today.getTime() - (8 + i) * 24 * 60 * 60 * 1000);
           endDate = new Date(startDate.getTime() + (l.workingDays - 1) * 24 * 60 * 60 * 1000);
         }
       }
@@ -232,12 +253,25 @@ async function seed() {
 
     // 5. Seed Payslips
     console.log(`💰 Upserting ${payslipsData.length} Payslips...`);
+    const currentMonth = today.getMonth() + 1; // 1-12
+    const currentYear = today.getFullYear();
+    const prevMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+    const prevYear = currentMonth === 1 ? currentYear - 1 : currentYear;
+
     for (const p of payslipsData) {
       const empId = new mongoose.Types.ObjectId(p.employeeId);
+      let targetMonth = Number(p.month);
+      let targetYear = Number(p.year);
+
+      if (!isStatic) {
+        targetMonth = p.month === 8 ? (prevMonth === 1 ? 12 : prevMonth - 1) : prevMonth;
+        targetYear = prevYear;
+      }
+
       const doc = {
         employeeId: empId,
-        month: Number(p.month),
-        year: Number(p.year),
+        month: targetMonth,
+        year: targetYear,
         basicSalary: Number(p.basicSalary),
         allowances: Number(p.allowances || 0),
         deductions: Number(p.deductions || 0),
@@ -263,19 +297,28 @@ async function seed() {
 
     // 6. Seed Attendance
     console.log(`⏱️ Upserting ${attendanceData.length} Attendance Records...`);
+    const seededAttendanceMap = new Map();
+
     for (let i = 0; i < attendanceData.length; i++) {
       const a = attendanceData[i];
       let recDate = new Date(a.date);
       let checkIn = a.checkIn ? new Date(a.checkIn) : null;
       let checkOut = a.checkOut ? new Date(a.checkOut) : null;
 
-      if (!isStatic && i < 10) {
-        recDate = today;
+      if (!isStatic) {
+        // Calculate offset in days from baseAnchorDate (2026-10-20)
+        const daysDiff = Math.round((baseAnchorDate.getTime() - new Date(a.date).getTime()) / (24 * 3600 * 1000));
+        recDate = new Date(today.getTime() - daysDiff * 24 * 60 * 60 * 1000);
+
         if (checkIn) {
-          checkIn = new Date(today.getTime() + (checkIn.getUTCHours() * 3600 + checkIn.getUTCMinutes() * 60) * 1000);
+          const inHours = checkIn.getUTCHours();
+          const inMins = checkIn.getUTCMinutes();
+          checkIn = new Date(recDate.getTime() + (inHours * 3600 + inMins * 60) * 1000);
         }
         if (checkOut) {
-          checkOut = new Date(today.getTime() + (checkOut.getUTCHours() * 3600 + checkOut.getUTCMinutes() * 60) * 1000);
+          const outHours = checkOut.getUTCHours();
+          const outMins = checkOut.getUTCMinutes();
+          checkOut = new Date(recDate.getTime() + (outHours * 3600 + outMins * 60) * 1000);
         }
       }
 
@@ -292,29 +335,141 @@ async function seed() {
         updatedAt: checkOut || checkIn || recDate,
       };
 
+      const attId = new mongoose.Types.ObjectId(a._id);
       const existing = await attendanceCol.findOne({
-        employeeId: doc.employeeId,
-        date: doc.date,
+        $or: [{ _id: attId }, { employeeId: doc.employeeId, date: doc.date }],
       });
 
       if (existing) {
         await attendanceCol.updateOne({ _id: existing._id }, { $set: doc });
+        seededAttendanceMap.set(a._id, { _id: existing._id, date: recDate, checkIn, checkOut });
       } else {
-        doc._id = new mongoose.Types.ObjectId(a._id);
+        doc._id = attId;
         doc.createdAt = recDate;
         await attendanceCol.insertOne(doc);
+        seededAttendanceMap.set(a._id, { _id: attId, date: recDate, checkIn, checkOut });
       }
     }
-    console.log("✅ Attendance records seeded.\n");
+    console.log("✅ Attendance records seeded.");
 
-    // Print summary table
+    // 7. Seed Announcements
+    console.log(`📢 Upserting ${announcementsData.length} Company Announcements...`);
+    for (let i = 0; i < announcementsData.length; i++) {
+      const ann = announcementsData[i];
+      let createdAt = new Date(ann.createdAt);
+      let expiresAt = ann.expiresAt ? new Date(ann.expiresAt) : null;
+
+      if (!isStatic) {
+        createdAt = new Date(today.getTime() - (i + 1) * 24 * 60 * 60 * 1000);
+        if (expiresAt) {
+          expiresAt = new Date(today.getTime() + (14 + i * 7) * 24 * 60 * 60 * 1000);
+        }
+      }
+
+      const annId = new mongoose.Types.ObjectId(ann._id);
+      const doc = {
+        title: ann.title,
+        message: ann.message,
+        createdBy: new mongoose.Types.ObjectId(ann.createdBy),
+        expiresAt,
+        createdAt,
+        updatedAt: createdAt,
+      };
+
+      const existing = await announcementsCol.findOne({ _id: annId });
+      if (existing) {
+        await announcementsCol.updateOne({ _id: annId }, { $set: doc });
+      } else {
+        doc._id = annId;
+        await announcementsCol.insertOne(doc);
+      }
+    }
+    console.log("✅ Announcements seeded.");
+
+    // 8. Seed Employee Documents
+    console.log(`📄 Upserting ${employeeDocsData.length} Employee Documents & Policies...`);
+    for (const d of employeeDocsData) {
+      const docId = new mongoose.Types.ObjectId(d._id);
+      const empId = d.employeeId ? new mongoose.Types.ObjectId(d.employeeId) : null;
+      const pdfBuffer = Buffer.from(d.contentBase64, "base64");
+
+      const doc = {
+        employeeId: empId,
+        audience: d.audience,
+        category: d.category,
+        title: d.title,
+        fileName: d.fileName,
+        fileSize: pdfBuffer.length,
+        content: pdfBuffer,
+        uploadedBy: new mongoose.Types.ObjectId(d.uploadedBy),
+        createdAt: new Date(d.createdAt),
+        updatedAt: new Date(),
+      };
+
+      const existing = await employeeDocsCol.findOne({ _id: docId });
+      if (existing) {
+        await employeeDocsCol.updateOne({ _id: docId }, { $set: doc });
+      } else {
+        doc._id = docId;
+        await employeeDocsCol.insertOne(doc);
+      }
+    }
+    console.log("✅ Employee Documents seeded.");
+
+    // 9. Seed Attendance Corrections
+    console.log(`🕒 Upserting ${attendanceCorrectionsData.length} Attendance Corrections...`);
+    for (const c of attendanceCorrectionsData) {
+      const corrId = new mongoose.Types.ObjectId(c._id);
+      const empId = new mongoose.Types.ObjectId(c.employeeId);
+      const mappedAtt = seededAttendanceMap.get(c.attendanceId);
+      const attId = mappedAtt ? mappedAtt._id : new mongoose.Types.ObjectId(c.attendanceId);
+
+      let requestedTime = new Date(c.requestedTime);
+      let createdAt = new Date(c.createdAt);
+
+      if (!isStatic && mappedAtt) {
+        const origReq = new Date(c.requestedTime);
+        const hours = origReq.getUTCHours();
+        const mins = origReq.getUTCMinutes();
+        requestedTime = new Date(mappedAtt.date.getTime() + (hours * 3600 + mins * 60) * 1000);
+        createdAt = new Date(requestedTime.getTime() + 30 * 60 * 1000);
+      }
+
+      const doc = {
+        employeeId: empId,
+        attendanceId: attId,
+        field: c.field,
+        requestedTime,
+        reason: c.reason,
+        status: c.status,
+        reviewedBy: c.reviewedBy ? new mongoose.Types.ObjectId(c.reviewedBy) : null,
+        reviewedAt: c.reviewedAt ? new Date(c.reviewedAt) : null,
+        reviewNote: c.reviewNote || "",
+        createdAt,
+        updatedAt: c.reviewedAt ? new Date(c.reviewedAt) : createdAt,
+      };
+
+      const existing = await attendanceCorrectionsCol.findOne({ _id: corrId });
+      if (existing) {
+        await attendanceCorrectionsCol.updateOne({ _id: corrId }, { $set: doc });
+      } else {
+        doc._id = corrId;
+        await attendanceCorrectionsCol.insertOne(doc);
+      }
+    }
+    console.log("✅ Attendance Corrections seeded.\n");
+
+    // Print comprehensive summary table
     console.log("==========================================================================");
-    console.log("🎉 DEMO DATABASE READY! LOGIN CREDENTIALS:");
+    console.log("🎉 DEMO DATABASE READY FOR STAFFFLOW (FULLSTACK EMS)!");
     console.log("==========================================================================");
     console.log("👑 ADMIN ACCOUNT:");
     console.log("   Email:    admin@example.com");
     console.log("   Password: admin123");
-    console.log("   Role:     ADMIN\n");
+    console.log("   Role:     ADMIN");
+    console.log("   Features: Dashboard analytics, employee management, payroll & payslips,");
+    console.log("             leave approvals, shifts & attendance correction review,");
+    console.log("             company announcements publisher, document center, holiday calendar.\n");
 
     console.log("👥 EMPLOYEE ACCOUNTS (Password for all: password123):");
     console.log("   -----------------------------------------------------------------------");
@@ -327,9 +482,14 @@ async function seed() {
       console.log(`   ${name} | ${dept} | ${pos} | ${emp.email}`);
     });
     console.log("==========================================================================");
-    console.log("\n💡 Next steps: Open your frontend app in the browser and log in with any");
-    console.log("   of the credentials above to explore the dashboard, charts, calendars,");
-    console.log("   attendance, leaves, and payslips!");
+    console.log("✨ HIGHLIGHTS & READY-TO-TEST DEMO FEATURES:");
+    console.log("   1. 📢 Company Announcements: Live notices on /announcements & notification bell.");
+    console.log("   2. 📄 Employee Documents & Policies: Downloadable & previewable PDFs on /documents.");
+    console.log("   3. 🕒 Attendance Corrections: Pending requests ready for Admin review on /admin/attendance");
+    console.log("      and past status tracking on /attendance.");
+    console.log("   4. 👥 Employee Directory: Rich roster on /directory with filters by department & title.");
+    console.log("   5. 💬 AI HR Assistant: Floating chatbot in bottom-right corner of employee portal.");
+    console.log("   6. 🔔 Notification Center: 7 live badge alerts across leaves, shifts, docs, announcements.");
     console.log("==========================================================================\n");
 
     await mongoose.disconnect();

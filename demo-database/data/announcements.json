@@ -1,0 +1,34 @@
+[
+  {
+    "_id": "668000000000000000000001",
+    "title": "StaffFlow 2026 Q4 All-Hands & Product Roadmap Presentation",
+    "message": "Join us this Friday at 3:00 PM IST for our quarterly all-hands meeting. We will review Q3 achievements, showcase key roadmap milestones across engineering and product, and celebrate top team performers. Google Meet link will be shared via calendar invitation.",
+    "createdBy": "66f000000000000000000001",
+    "expiresAt": null,
+    "createdAt": "2026-10-18T09:30:00.000Z"
+  },
+  {
+    "_id": "668000000000000000000002",
+    "title": "Updated Hybrid Work & Core Collaboration Hours Policy",
+    "message": "Please review the updated policy in the Documents section. Core collaboration hours are 10:00 AM – 4:00 PM IST. Teams should coordinate in-office sync days directly with their department leads. Contact Emily Watson in HR for any inquiries.",
+    "createdBy": "66f000000000000000000001",
+    "expiresAt": null,
+    "createdAt": "2026-10-16T08:00:00.000Z"
+  },
+  {
+    "_id": "668000000000000000000003",
+    "title": "Annual Benefits Enrollment & Health Insurance Window Open",
+    "message": "The annual window for updating dependent coverage, health insurance riders, and wellness allowances is open until next Friday. Please review the Benefits Summary document in the Documents section and submit any changes through the HR portal.",
+    "createdBy": "66f000000000000000000001",
+    "expiresAt": "2026-11-15T23:59:59.999Z",
+    "createdAt": "2026-10-12T04:30:00.000Z"
+  },
+  {
+    "_id": "668000000000000000000004",
+    "title": "Scheduled Infrastructure Maintenance & IT Badge Firmware Update",
+    "message": "IT will be performing scheduled network switch and badge-reader firmware updates this Saturday between 10:00 PM and 2:00 AM IST. Internal VPN connections and automated door access will undergo brief rolling restarts during this maintenance window.",
+    "createdBy": "66f000000000000000000001",
+    "expiresAt": "2026-10-31T23:59:59.999Z",
+    "createdAt": "2026-10-19T11:15:00.000Z"
+  }
+]

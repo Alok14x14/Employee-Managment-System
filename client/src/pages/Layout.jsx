@@ -53,10 +53,16 @@ const Layout = () => {
           </button>
         </>
       )}
-      <main className="flex-1 min-w-0 pt-14 lg:pt-0">
-        <div className="p-6 lg:p-8 max-w-7xl mx-auto">
+      <main className="flex min-h-screen flex-1 min-w-0 flex-col pt-14 lg:pt-0">
+        <div className="w-full flex-1 p-6 lg:p-8 max-w-7xl mx-auto">
           <Outlet />
         </div>
+        <footer className="border-t border-[var(--border-color)] px-6 py-4 text-center text-xs text-[var(--text-muted)] lg:px-8">
+          <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-1 sm:flex-row">
+            <span className="font-semibold text-[var(--text-secondary)]">StaffFlow</span>
+            <span>© {new Date().getFullYear()} StaffFlow. All rights reserved.</span>
+          </div>
+        </footer>
       </main>
     </div>
   );

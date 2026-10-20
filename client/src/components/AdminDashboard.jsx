@@ -16,6 +16,7 @@ import {
   Cell,
   Legend,
 } from 'recharts'
+import AdminReviewQueue from './AdminReviewQueue'
 
 const CHART_PALETTE_LIGHT = ['#2563EB', '#64748B', '#94A3B8', '#CBD5E1', '#E4E4E7']
 const CHART_PALETTE_DARK = ['#3B82F6', '#60A5FA', '#93C5FD', '#94A3B8', '#475569']
@@ -86,6 +87,12 @@ const AdminDashboard = ({ data }) => {
           </Link>
         </div>
       </div>
+
+      <AdminReviewQueue
+        leaveRequests={data.leaveRequests}
+        correctionRequests={data.correctionRequests}
+        errors={data.reviewErrors}
+      />
 
       {/* 4 Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">

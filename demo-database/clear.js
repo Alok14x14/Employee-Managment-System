@@ -1,5 +1,5 @@
 /**
- * Demo Database Cleaner for FullStack-EMS
+ * Demo Database Cleaner for FullStack-EMS (StaffFlow)
  * Safely removes demo data from MongoDB collections without affecting custom data.
  * 
  * Usage:
@@ -46,18 +46,27 @@ async function clear() {
     const usersData = loadJson("users.json");
     const employeesData = loadJson("employees.json");
     const holidaysData = loadJson("holidays.json");
+    const announcementsData = loadJson("announcements.json");
+    const employeeDocsData = loadJson("employeeDocuments.json");
+    const attendanceCorrectionsData = loadJson("attendanceCorrections.json");
 
     const demoUserIds = usersData.map((u) => new mongoose.Types.ObjectId(u._id));
     const demoEmployeeIds = employeesData.map((e) => new mongoose.Types.ObjectId(e._id));
     const demoHolidayNames = holidaysData.map((h) => h.name);
+    const demoAnnouncementIds = announcementsData.map((a) => new mongoose.Types.ObjectId(a._id));
+    const demoDocumentIds = employeeDocsData.map((d) => new mongoose.Types.ObjectId(d._id));
+    const demoCorrectionIds = attendanceCorrectionsData.map((c) => new mongoose.Types.ObjectId(c._id));
 
-    const [uRes, eRes, aRes, lRes, pRes, hRes] = await Promise.all([
+    const [uRes, eRes, aRes, lRes, pRes, hRes, annRes, docRes, corrRes] = await Promise.all([
       db.collection("users").deleteMany({ _id: { $in: demoUserIds } }),
       db.collection("employees").deleteMany({ _id: { $in: demoEmployeeIds } }),
       db.collection("attendances").deleteMany({ employeeId: { $in: demoEmployeeIds } }),
       db.collection("leaveapplications").deleteMany({ employeeId: { $in: demoEmployeeIds } }),
       db.collection("payslips").deleteMany({ employeeId: { $in: demoEmployeeIds } }),
       db.collection("holidays").deleteMany({ name: { $in: demoHolidayNames } }),
+      db.collection("announcements").deleteMany({ _id: { $in: demoAnnouncementIds } }),
+      db.collection("employeedocuments").deleteMany({ _id: { $in: demoDocumentIds } }),
+      db.collection("attendancecorrections").deleteMany({ _id: { $in: demoCorrectionIds } }),
     ]);
 
     console.log("✅ Successfully removed demo records:");
@@ -66,7 +75,10 @@ async function clear() {
     console.log(`   - Attendances deleted: ${aRes.deletedCount}`);
     console.log(`   - Leaves deleted: ${lRes.deletedCount}`);
     console.log(`   - Payslips deleted: ${pRes.deletedCount}`);
-    console.log(`   - Holidays deleted: ${hRes.deletedCount}\n`);
+    console.log(`   - Holidays deleted: ${hRes.deletedCount}`);
+    console.log(`   - Announcements deleted: ${annRes.deletedCount}`);
+    console.log(`   - Documents deleted: ${docRes.deletedCount}`);
+    console.log(`   - Attendance corrections deleted: ${corrRes.deletedCount}\n`);
 
     await mongoose.disconnect();
     process.exit(0);
