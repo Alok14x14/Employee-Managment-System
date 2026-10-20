@@ -96,6 +96,7 @@ async function seed() {
     const announcementsCol = db.collection("announcements");
     const employeeDocsCol = db.collection("employeedocuments");
     const attendanceCorrectionsCol = db.collection("attendancecorrections");
+    const auditLogsCol = db.collection("auditlogs");
 
     // Demo IDs and email lists
     const demoUserIds = usersData.map((u) => new mongoose.Types.ObjectId(u._id));
@@ -118,6 +119,7 @@ async function seed() {
       await announcementsCol.deleteMany({ _id: { $in: demoAnnouncementIds } });
       await employeeDocsCol.deleteMany({ _id: { $in: demoDocumentIds } });
       await attendanceCorrectionsCol.deleteMany({ _id: { $in: demoCorrectionIds } });
+      await auditLogsCol.deleteMany({ demoKey: { $regex: "^demo:" } });
       console.log("✨ Cleaned prior demo records.\n");
     }
 
@@ -489,6 +491,56 @@ async function seed() {
     });
     await attendanceCorrectionsCol.bulkWrite(correctionOps);
     console.log("✅ Attendance Corrections seeded.\n");
+
+    // Seed a few realistic admin activity entries so the audit page is useful in a fresh demo.
+    const demoAdmin = usersData.find((user) => user.role === "ADMIN");
+    const demoEmployee = employeesData[0];
+    const demoLeave = leaveAppsData.find((leave) => leave.status === "APPROVED") || leaveAppsData[0];
+    const demoPayslip = payslipsData[0];
+    const demoAnnouncement = announcementsData[0];
+    const auditCreatedAt = new Date();
+    const auditExpiresAt = new Date(auditCreatedAt.getTime() + 365 * 24 * 60 * 60 * 1000);
+    const employeeSummary = { name: `${demoEmployee.firstName} ${demoEmployee.lastName}`, email: demoEmployee.email };
+    const auditSamples = [
+      {
+        demoKey: "demo:leave-review",
+        action: `${demoLeave.status === "REJECTED" ? "Rejected" : "Approved"} leave request`,
+        resource: "leave request",
+        resourceId: demoLeave._id,
+        meta: { applicant: employeeSummary, leaveType: demoLeave.type, startDate: new Date(demoLeave.startDate), endDate: new Date(demoLeave.endDate), requestedOutcome: demoLeave.status === "REJECTED" ? "Rejected" : "Accepted" },
+        path: `/api/leave/${demoLeave._id}`,
+        method: "PATCH",
+        statusCode: 200,
+      },
+      {
+        demoKey: "demo:payslip-issued",
+        action: "Issued payslip",
+        resource: "payslip",
+        resourceId: demoPayslip._id,
+        meta: { employee: employeeSummary, period: new Intl.DateTimeFormat("en", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(Date.UTC(demoPayslip.year, demoPayslip.month - 1, 1))) },
+        path: "/api/payslips",
+        method: "POST",
+        statusCode: 201,
+      },
+      {
+        demoKey: "demo:announcement-published",
+        action: "Created announcement",
+        resource: "announcement",
+        resourceId: demoAnnouncement._id,
+        meta: { title: demoAnnouncement.title, expiresAt: demoAnnouncement.expiresAt ? new Date(demoAnnouncement.expiresAt) : null },
+        path: "/api/announcements",
+        method: "POST",
+        statusCode: 201,
+      },
+    ];
+    await auditLogsCol.bulkWrite(auditSamples.map((sample) => ({
+      updateOne: {
+        filter: { demoKey: sample.demoKey },
+        update: { $set: { ...sample, actorId: new mongoose.Types.ObjectId(demoAdmin._id), outcome: "SUCCESS", ip: "127.0.0.1", userAgent: "StaffFlow demo data", createdAt: auditCreatedAt, updatedAt: auditCreatedAt, expiresAt: auditExpiresAt }, $setOnInsert: { _id: new mongoose.Types.ObjectId() } },
+        upsert: true,
+      },
+    })));
+    console.log("✅ Admin audit activity seeded.\n");
 
     // Print comprehensive summary table
     console.log("==========================================================================");
