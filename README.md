@@ -14,9 +14,41 @@
 
 ## Screenshots
 
-| Admin dashboard | Employee management |
-|---|---|
-| ![StaffFlow admin dashboard](docs/screenshots/admin-dashboard.png) | ![StaffFlow employee management screen](docs/screenshots/employees.png) |
+### Admin portal
+
+![StaffFlow admin dashboard and review queue](docs/screenshots/Admin-portal/Screenshot%202026-10-20%20192409.png)
+
+![StaffFlow admin portal screenshot](docs/screenshots/Admin-portal/Screenshot%202026-10-20%20192423.png)
+
+![StaffFlow admin portal screenshot](docs/screenshots/Admin-portal/Screenshot%202026-10-20%20192433.png)
+
+![StaffFlow admin portal screenshot](docs/screenshots/Admin-portal/Screenshot%202026-10-20%20192441.png)
+
+![StaffFlow admin portal screenshot](docs/screenshots/Admin-portal/Screenshot%202026-10-20%20192451.png)
+
+![StaffFlow admin portal screenshot](docs/screenshots/Admin-portal/Screenshot%202026-10-20%20192459.png)
+
+![StaffFlow admin portal screenshot](docs/screenshots/Admin-portal/Screenshot%202026-10-20%20192508.png)
+
+![StaffFlow admin portal screenshot](docs/screenshots/Admin-portal/Screenshot%202026-10-20%20192515.png)
+
+![StaffFlow admin portal screenshot](docs/screenshots/Admin-portal/Screenshot%202026-10-20%20192526.png)
+
+![StaffFlow admin portal screenshot](docs/screenshots/Admin-portal/Screenshot%202026-10-20%20192536.png)
+
+### Employee portal
+
+![StaffFlow employee dashboard](docs/screenshots/employee-portal/Screenshot%202026-10-20%20192802.png)
+
+![StaffFlow employee portal screenshot](docs/screenshots/employee-portal/Screenshot%202026-10-20%20192813.png)
+
+![StaffFlow employee portal screenshot](docs/screenshots/employee-portal/Screenshot%202026-10-20%20192833.png)
+
+![StaffFlow employee portal screenshot](docs/screenshots/employee-portal/Screenshot%202026-10-20%20192845.png)
+
+![StaffFlow employee portal screenshot](docs/screenshots/employee-portal/Screenshot%202026-10-20%20192855.png)
+
+![StaffFlow employee portal screenshot](docs/screenshots/employee-portal/Screenshot%202026-10-20%20192906.png)
 
 ## What you can do
 
