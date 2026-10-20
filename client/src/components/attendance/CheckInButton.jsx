@@ -126,9 +126,7 @@ const CheckInButton = ({ todayRecord, onAction, restriction }) => {
                 Today's check-in: <strong className="font-medium text-[#18181B] dark:text-[#FAFAFA] font-mono">{formatTime(todayRecord.checkIn)}</strong>
               </span>
             ) : restriction ? (
-              <span className="text-amber-600 dark:text-amber-400 font-medium">
-                Clock-in is unavailable: {restriction}
-              </span>
+              null
             ) : (
               <span>Not clocked in today</span>
             )}
