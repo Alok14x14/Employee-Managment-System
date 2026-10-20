@@ -8,7 +8,7 @@ import { loadHolidaySet } from "../utils/holidays.js";
 import { countWorkingDays, splitDaysByYear } from "../utils/leaveDays.js";
 import { istDayStart, istParts } from "../utils/time.js";
 import { isValidObjectId, parseDate } from "../utils/validate.js";
-import { autoRejectExpiredLeaves, isLeavePassed } from "../utils/leaveAutoReject.js";
+import { isLeavePassed } from "../utils/leaveAutoReject.js";
 
 // Create leave
 // POST /api/leave
@@ -153,9 +153,6 @@ export const getLeaveBalance = async (req, res) => {
         const employee = await Employee.findOne({ userId: session.userId });
         if (!employee) return res.status(404).json({ error: "Employee not found" });
 
-        // Auto-reject any expired pending leaves for this employee before computing balance
-        await autoRejectExpiredLeaves(employee._id);
-
         const rawYear = req.query.year;
         let year = parseInt(rawYear, 10);
         if (isNaN(year) || year < 1970 || year > 2100) {
@@ -214,9 +211,6 @@ export const getLeaves = async (req, res) => {
     try {
         const session = req.session;
         const isAdmin = session.role === "ADMIN";
-
-        // Auto-reject any expired pending leaves before returning
-        await autoRejectExpiredLeaves();
 
         if (isAdmin) {
             const status = req.query.status;

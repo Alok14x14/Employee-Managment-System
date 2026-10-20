@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { BellIcon, Clock3, FileTextIcon, UserPlus, XIcon } from 'lucide-react'
 import api from '../api/axios'
@@ -62,11 +62,10 @@ const AdminNotificationCenter = ({ userId }) => {
     setItems(next.sort((a, b) => new Date(b.date) - new Date(a.date)))
   }, [])
 
-  useEffect(() => {
-    const initial = window.setTimeout(refresh, 0)
-    const timer = window.setInterval(refresh, 60_000)
-    return () => { window.clearTimeout(initial); window.clearInterval(timer) }
-  }, [refresh])
+  const toggleOpen = () => {
+    if (!open) refresh()
+    setOpen((value) => !value)
+  }
 
   const unreadCount = useMemo(() => items.filter((item) => !readIds.includes(item.id)).length, [items, readIds])
   const saveRead = (ids) => setReadIds((current) => {
@@ -77,7 +76,7 @@ const AdminNotificationCenter = ({ userId }) => {
   const icons = { leave: FileTextIcon, correction: Clock3, employee: UserPlus }
 
   return <div className="relative">
-    <button type="button" onClick={() => setOpen((value) => !value)} aria-label={`Notifications${unreadCount ? `, ${unreadCount} unread` : ''}`} aria-expanded={open}
+    <button type="button" onClick={toggleOpen} aria-label={`Notifications${unreadCount ? `, ${unreadCount} unread` : ''}`} aria-expanded={open}
       className="relative inline-flex size-8 items-center justify-center rounded-md text-zinc-500 hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100">
       <BellIcon className="size-4" />
       {unreadCount > 0 && <span className="absolute -right-1 -top-1 min-w-4 rounded-full bg-blue-600 px-1 text-center text-[10px] leading-4 text-white">{unreadCount > 9 ? '9+' : unreadCount}</span>}

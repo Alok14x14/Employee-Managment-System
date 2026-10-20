@@ -7,7 +7,6 @@ import Holiday from "../models/Holiday.js";
 import User from "../models/User.js";
 import { istDayStart, istDayEnd, istParts, isWeekend, isHoliday } from "../utils/time.js";
 import { loadHolidaySet } from "../utils/holidays.js";
-import { autoRejectExpiredLeaves } from "../utils/leaveAutoReject.js";
 
 // Get dashboard for employee and admin
 // GET /api/dashboard
@@ -30,9 +29,6 @@ export const getDashboard  = async (req, res) => {
             }).select("_id joinDate createdAt employmentStatus department").lean();
             const nonAdminEmployeeIds = nonAdminEmployees.map((e) => e._id);
             const totalEmployees = nonAdminEmployees.length;
-            // Auto-reject any expired leaves before compiling dashboard metrics
-            await autoRejectExpiredLeaves();
-
             const [todayAttendance, pendingLeaves, recentLeaves, recentEmployees, deptHeadcount, leaveDistribution, fiveDayTrend, approvedLeavesFiveDays, holidaySet] = await Promise.all([
                 Attendance.countDocuments({
                     employeeId: { $in: nonAdminEmployeeIds },
@@ -172,9 +168,6 @@ export const getDashboard  = async (req, res) => {
             const nextMonthNum = +month === 12 ? 1 : +month + 1;
             const nextYearNum = +month === 12 ? +year + 1 : +year;
             const startOfNextMonth = new Date(`${nextYearNum}-${String(nextMonthNum).padStart(2, '0')}-01T00:00:00+05:30`);
-            // Auto-reject any expired leaves for this employee before compiling metrics
-            await autoRejectExpiredLeaves(employee._id);
-
             const [currentMonthAttendance, pendingLeaves, approvedLeaves, latestPayslip, todayRecord, recentAttendance, recentLeaves, past7DaysRecords] = await Promise.all([
                 Attendance.countDocuments({
                     employeeId: employee._id,
