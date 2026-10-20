@@ -1,15 +1,16 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 
 const ThemeContext = createContext()
+const THEME_STORAGE_KEY = 'staffflow-theme'
 
 export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(() => {
     try {
-      const stored = localStorage.getItem('theme')
+      const stored = localStorage.getItem(THEME_STORAGE_KEY)
       if (stored === 'light' || stored === 'dark') {
         return stored
       }
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+      return 'light'
     } catch {
       return 'light'
     }
@@ -24,14 +25,14 @@ export const ThemeProvider = ({ children }) => {
     }
 
     try {
-      localStorage.setItem('theme', theme)
+      localStorage.setItem(THEME_STORAGE_KEY, theme)
     } catch {
       // Ignore localStorage write failure in restricted environments
     }
 
     const metaThemeColor = document.querySelector('meta[name="theme-color"]')
     if (metaThemeColor) {
-      metaThemeColor.setAttribute('content', theme === 'dark' ? '#0A0A0B' : '#FFFFFF')
+      metaThemeColor.setAttribute('content', theme === 'dark' ? '#0A0A0B' : '#F5F7FB')
     }
   }, [theme])
 

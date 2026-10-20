@@ -131,7 +131,7 @@ const AttendanceCalendar = ({
       </div>
 
       {/* Weekday Column Headers */}
-      <div className="grid grid-cols-7 border-b border-[#E4E4E7] dark:border-[#27272A] text-center text-xs font-medium text-[#71717A] dark:text-[#A1A1AA] py-2 bg-[#FAFAFA] dark:bg-[#111113]">
+      <div className="grid grid-cols-7 border-b border-[#E4E4E7] dark:border-[#27272A] text-center text-xs font-medium text-[#64748B] dark:text-[#A1A1AA] py-2 bg-[var(--bg-surface-subtle)] dark:bg-[#111113]">
         {weekdays.map((day) => (
           <div key={day}>{day}</div>
         ))}
@@ -172,7 +172,7 @@ const AttendanceCalendar = ({
               }}
               className={`min-h-[72px] sm:min-h-[80px] p-2 text-left transition-colors relative flex flex-col justify-between cursor-pointer ${
                 !isCurrMonth
-                  ? 'bg-[#FAFAFA] dark:bg-[#111113] text-[#A1A1AA] dark:text-[#52525B]'
+                  ? 'bg-[var(--bg-app)] dark:bg-[#111113] text-[#64748B] dark:text-[#71717A]'
                   : 'bg-white dark:bg-[#18181B] hover:bg-[#F4F4F5] dark:hover:bg-[#202024]'
                 } ${record || holidayName ? 'cursor-pointer' : 'cursor-default'}`}
             >

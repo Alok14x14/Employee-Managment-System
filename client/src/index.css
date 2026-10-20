@@ -43,16 +43,17 @@
 }
 
 :root {
-  --bg-app: #FAFAFA;
+  color-scheme: light;
+  --bg-app: #F5F7FB;
   --bg-surface: #FFFFFF;
-  --bg-surface-subtle: #F4F4F5;
-  --bg-surface-hover: #F4F4F5;
-  --border-color: #E4E4E7;
-  --border-hover: #D4D4D8;
+  --bg-surface-subtle: #F1F4F8;
+  --bg-surface-hover: #EEF2F7;
+  --border-color: #E2E8F0;
+  --border-hover: #CBD5E1;
   --text-primary: #18181B;
-  --text-secondary: #52525B;
-  --text-muted: #71717A;
-  --text-subtle: #A1A1AA;
+  --text-secondary: #475569;
+  --text-muted: #64748B;
+  --text-subtle: #94A3B8;
   --accent: #2563EB;
   --accent-hover: #1D4ED8;
   --accent-subtle: #EFF6FF;
@@ -87,6 +88,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   --bg-app: #0A0A0B;
   --bg-surface: #18181B;
   --bg-surface-subtle: #202024;

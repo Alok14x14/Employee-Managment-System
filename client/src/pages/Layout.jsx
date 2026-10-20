@@ -21,7 +21,7 @@ const Layout = () => {
   if (user.mustChangePassword) return <Navigate to="/change-password-required" replace />;
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] dark:bg-[#0A0A0B] flex flex-col lg:flex-row text-zinc-900 dark:text-zinc-100">
+    <div className="min-h-screen bg-[var(--bg-app)] flex flex-col lg:flex-row text-zinc-900 dark:text-zinc-100">
       <Sidebar />
       {user.role === "EMPLOYEE" && (
         <>
