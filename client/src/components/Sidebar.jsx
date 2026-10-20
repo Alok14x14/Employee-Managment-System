@@ -14,11 +14,15 @@ import {
     SunIcon,
     UserIcon,
     XIcon,
-    Building2Icon
+    Building2Icon,
+    FilesIcon,
+    UsersRound,
+    Megaphone
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import api from '../api/axios';
+import NotificationCenter from './NotificationCenter';
 
 const Sidebar = () => {
     const { pathname } = useLocation();
@@ -43,10 +47,13 @@ const Sidebar = () => {
             { name: 'Attendance', href: '/admin/attendance', icon: CalendarIcon },
             { name: 'Holidays', href: '/holidays', icon: CalendarDaysIcon }
         ] : [
-            { name: 'Attendance', href: '/attendance', icon: CalendarIcon }
+            { name: 'Attendance', href: '/attendance', icon: CalendarIcon },
+            { name: 'Directory', href: '/directory', icon: UsersRound }
         ]),
         { name: 'Leave', href: '/leave', icon: FileTextIcon },
         { name: 'Payslips', href: '/payslips', icon: DollarSignIcon },
+        { name: 'Documents', href: '/documents', icon: FilesIcon },
+        { name: 'Announcements', href: '/announcements', icon: Megaphone },
         { name: 'Settings', href: '/settings', icon: SettingsIcon },
     ];
 
@@ -58,15 +65,18 @@ const Sidebar = () => {
     const sidebarBody = (
         <div className="flex flex-col h-full w-[240px]">
             {/* Brand Header */}
-            <div className="h-14 px-5 flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800">
+            <div className="relative h-14 px-5 flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800">
                 <span className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">StaffFlow</span>
-                <button
-                    onClick={() => setMobileOpen(false)}
-                    className="lg:hidden text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-1 rounded-[6px]"
-                    aria-label="Close navigation menu"
-                >
-                    <XIcon size={18} />
-                </button>
+                <div className="flex items-center gap-1">
+                    {role === 'EMPLOYEE' && <NotificationCenter userId={user?.userId || user?.id || 'employee'} />}
+                    <button
+                        onClick={() => setMobileOpen(false)}
+                        className="lg:hidden text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-1 rounded-[6px]"
+                        aria-label="Close navigation menu"
+                    >
+                        <XIcon size={18} />
+                    </button>
+                </div>
             </div>
 
             {/* Nav list */}
@@ -168,7 +178,7 @@ const Sidebar = () => {
             </aside>
 
             {/* Desktop Fixed Sidebar */}
-            <aside className="hidden lg:flex flex-col w-[240px] shrink-0 h-screen sticky top-0 bg-white dark:bg-[#18181B] border-r border-zinc-200 dark:border-zinc-800">
+            <aside className="hidden lg:flex flex-col w-[240px] shrink-0 h-screen sticky top-0 z-40 bg-white dark:bg-[#18181B] border-r border-zinc-200 dark:border-zinc-800">
                 {sidebarBody}
             </aside>
         </>

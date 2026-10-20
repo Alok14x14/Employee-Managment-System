@@ -1,6 +1,7 @@
 import Employee from "../models/Employee.js";
 import Payslip from "../models/Payslip.js";
 import { isValidObjectId } from "../utils/validate.js";
+import { sendPayslipAvailableEmail } from "../utils/emailService.js";
 
 // Create payslip
 // POST /api/payslips
@@ -51,6 +52,14 @@ export const createPayslip = async (req, res) => {
             deductions: deduct,
             netSalary,
         });
+
+        if (employee.email) {
+            try {
+                await sendPayslipAvailableEmail(employee.email, employee.firstName, m, y);
+            } catch (emailError) {
+                console.error("Failed to send payslip notification email:", emailError);
+            }
+        }
 
         return res.json({ success: true, data: payslip });
     } catch (error) {

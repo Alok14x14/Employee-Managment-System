@@ -1,6 +1,8 @@
 import Holiday from "../models/Holiday.js";
 import { istDayStart, istParts } from "../utils/time.js";
 import { isValidObjectId, parseDate } from "../utils/validate.js";
+import Employee from "../models/Employee.js";
+import { sendHolidayAnnouncementEmail } from "../utils/emailService.js";
 
 // GET /api/holidays?year=YYYY
 export const getHolidays = async (req, res) => {
@@ -63,6 +65,13 @@ export const createHoliday = async (req, res) => {
       name: trimmedName,
       createdBy: req.session?.userId,
     });
+
+    const employees = await Employee.find({ isDeleted: { $ne: true } }).populate("userId", "role").lean();
+    const emailResults = await Promise.allSettled(employees
+      .filter((employee) => employee.email && employee.userId?.role !== "ADMIN")
+      .map((employee) => sendHolidayAnnouncementEmail(employee.email, employee.firstName, trimmedName, normalizedDate)));
+    const failedEmails = emailResults.filter((result) => result.status === "rejected").length;
+    if (failedEmails) console.error(`Failed to email ${failedEmails} holiday announcement recipient(s)`);
 
     return res.status(201).json({
       success: true,

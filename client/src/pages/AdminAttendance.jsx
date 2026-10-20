@@ -6,6 +6,7 @@ import api from '../api/axios'
 import toast from 'react-hot-toast'
 import { formatISTDate, formatTime } from '../utils/formatters'
 import { getWorkingHoursDisplay } from '../utils/attendance'
+import AdminCorrectionRequests from '../components/attendance/AdminCorrectionRequests'
 
 const getTodayIST = () => {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date())
@@ -232,6 +233,7 @@ const AdminAttendance = () => {
 
   return (
     <div className="space-y-6">
+      <AdminCorrectionRequests />
       {/* Page Header */}
       <div className="page-header">
         <div>

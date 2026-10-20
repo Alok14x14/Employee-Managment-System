@@ -13,6 +13,8 @@ import dashboardRouter from "./routes/dashboardRoutes.js";
 import metaRouter from "./routes/metaRoutes.js";
 import holidayRouter from "./routes/holidayRoutes.js";
 import hrAssistantRouter from "./routes/hrAssistantRoutes.js";
+import employeeDocumentRouter from "./routes/employeeDocumentRoutes.js";
+import announcementRouter from "./routes/announcementRoutes.js";
 
 import dns from "dns"
 import { serve } from "inngest/express";
@@ -33,7 +35,6 @@ app.use(helmet());
 // Middleware
 app.use(cors({ origin: process.env.CLIENT_URL?.split(",") || true }))
 app.use(express.json())
-app.use(multer().none())
 
 app.use(async (req, res, next) => {
     try {
@@ -46,6 +47,9 @@ app.use(async (req, res, next) => {
 
 // Routes
 app.get("/", (req, res)=> res.send("Server is running"));
+app.use("/api/documents", employeeDocumentRouter)
+app.use("/api/announcements", announcementRouter)
+app.use(multer().none())
 app.use("/api/auth", authRouter)
 app.use("/api/employees", employeesRouter)
 app.use("/api/profile", profileRouter)

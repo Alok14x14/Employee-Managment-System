@@ -55,6 +55,41 @@ export const sendLeaveStatusEmail = async (email, firstName, status, type, start
     return sendEmail({ to: email, subject, body });
 };
 
+export const sendPayslipAvailableEmail = async (email, firstName, month, year) => {
+    const period = new Intl.DateTimeFormat("en-IN", { month: "long", year: "numeric", timeZone: "Asia/Kolkata" }).format(new Date(Date.UTC(year, month - 1, 1)));
+    const subject = `Your ${period} payslip is ready - StaffFlow`;
+    const body = `<div style="max-width:600px;font-family:Arial,sans-serif;color:#18181b"><h2>Hello ${escapeHtml(firstName || "there")},</h2><p>Your <strong>${escapeHtml(period)}</strong> payslip is now available in your StaffFlow employee portal.</p><p>Sign in and open Payslips to review or download it.</p><p style="color:#71717a">StaffFlow Operations</p></div>`;
+    return sendEmail({ to: email, subject, body });
+};
+
+export const sendHolidayAnnouncementEmail = async (email, firstName, holidayName, holidayDate) => {
+    const date = new Intl.DateTimeFormat("en-IN", { dateStyle: "full", timeZone: "Asia/Kolkata" }).format(new Date(holidayDate));
+    const subject = `Public holiday added: ${holidayName} - StaffFlow`;
+    const body = `<div style="max-width:600px;font-family:Arial,sans-serif;color:#18181b"><h2>Hello ${escapeHtml(firstName || "there")},</h2><p>A public holiday has been added to the StaffFlow calendar: <strong>${escapeHtml(holidayName)}</strong> on <strong>${escapeHtml(date)}</strong>.</p><p>You can review holidays in the employee portal.</p><p style="color:#71717a">StaffFlow Operations</p></div>`;
+    return sendEmail({ to: email, subject, body });
+};
+
+export const sendDocumentAvailableEmail = async (email, firstName, title, category) => {
+    const subject = "A new document is available - StaffFlow";
+    const body = `<div style="max-width:600px;font-family:Arial,sans-serif;color:#18181b"><h2>Hello ${escapeHtml(firstName || "there")},</h2><p>A new ${escapeHtml(category)} document, <strong>${escapeHtml(title)}</strong>, is available in your StaffFlow employee portal.</p><p>Sign in and open Employee documents to view or download it.</p><p style="color:#71717a">StaffFlow Operations</p></div>`;
+    return sendEmail({ to: email, subject, body });
+};
+
+export const sendAttendanceCorrectionStatusEmail = async (email, firstName, status, field, requestedTime, reviewNote) => {
+    const label = field === "checkIn" ? "check-in" : "check-out";
+    const time = new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Kolkata" }).format(new Date(requestedTime));
+    const subject = `Attendance correction ${status.toLowerCase()} - StaffFlow`;
+    const body = `<div style="max-width:600px;font-family:Arial,sans-serif;color:#18181b"><h2>Hello ${escapeHtml(firstName || "there")},</h2><p>Your request to correct the ${label} time for <strong>${escapeHtml(time)}</strong> was <strong>${status.toLowerCase()}</strong>.</p>${reviewNote ? `<p>Manager note: ${escapeHtml(reviewNote)}</p>` : ""}<p>Sign in to StaffFlow to review your attendance.</p><p style="color:#71717a">StaffFlow Operations</p></div>`;
+    return sendEmail({ to: email, subject, body });
+};
+
+export const sendAnnouncementEmail = async (email, firstName, title, message) => {
+    const subject = `Company announcement: ${String(title).replace(/[\r\n]/g, " ").slice(0, 140)}`;
+    const paragraphs = escapeHtml(message).split(/\r?\n/).map((line) => line || "&nbsp;").join("<br />");
+    const body = `<div style="max-width:600px;font-family:Arial,sans-serif;color:#18181b"><h2>Hello ${escapeHtml(firstName || "there")},</h2><h3>${escapeHtml(title)}</h3><p style="line-height:1.6">${paragraphs}</p><p style="color:#71717a">StaffFlow Operations</p></div>`;
+    return sendEmail({ to: email, subject, body });
+};
+
 export const sendCheckOutReminderEmail = async (email, firstName, department, checkInTime) => {
     const subject = "Attendance Check-Out Reminder";
     const body = `<div style="max-width: 600px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #18181b;">

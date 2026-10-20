@@ -8,6 +8,7 @@ import { toast } from "react-hot-toast";
 import { Calendar, List } from "lucide-react";
 
 import { format } from "date-fns";
+import AttendanceCorrectionRequests from "../components/attendance/AttendanceCorrectionRequests";
 
 const Attendance = () => {
   const [history, setHistory] = useState([]);
@@ -66,6 +67,8 @@ const Attendance = () => {
       )}
 
       <AttendanceStats history={history} loading={loading} />
+
+      <AttendanceCorrectionRequests />
 
       {/* View Switcher Controls */}
       <div className="flex items-center justify-between gap-4">

@@ -51,6 +51,35 @@ export const getEmployees = async (req, res)=>{
     }
 }
 
+// GET /api/employees/directory - employee-safe colleague directory
+export const getEmployeeDirectory = async (_req, res) => {
+    try {
+        const employeeUsers = await User.find({ role: "EMPLOYEE" }).select("_id").lean();
+        const employeeUserIds = employeeUsers.map((user) => user._id);
+        const employees = await Employee.find({
+            userId: { $in: employeeUserIds },
+            isDeleted: { $ne: true },
+            employmentStatus: "ACTIVE",
+        })
+            .select("firstName lastName email department position")
+            .sort({ firstName: 1, lastName: 1 })
+            .limit(500)
+            .lean();
+
+        return res.json({ data: employees.map((employee) => ({
+            id: employee._id.toString(),
+            firstName: employee.firstName,
+            lastName: employee.lastName,
+            email: employee.email,
+            department: employee.department || "Unassigned",
+            position: employee.position || "Team member",
+        })) });
+    } catch (error) {
+        console.error("getEmployeeDirectory error:", error);
+        return res.status(500).json({ error: "Failed to fetch employee directory" });
+    }
+}
+
 // Create employee
 // POST /api/employees
 export const createEmployee = async (req, res)=>{

@@ -15,6 +15,9 @@ import ResetPassword from "./pages/ResetPassword"
 import ForceChangePassword from "./pages/ForceChangePassword"
 import AdminAttendance from "./pages/AdminAttendance"
 import Holidays from "./pages/Holidays"
+import Documents from "./pages/Documents"
+import Directory from "./pages/Directory"
+import Announcements from "./pages/Announcements"
 import LoginForm from "./components/LoginForm"
 import RequireRole from "./components/RequireRole"
 import { useAuth } from "./context/AuthContext"
@@ -151,6 +154,9 @@ const App = () => {
           />
           <Route path="/leave" element={<Leave />} />
           <Route path="/payslips" element={<Payslips />} />
+          <Route path="/documents" element={<Documents />} />
+          <Route path="/directory" element={<RequireRole role="EMPLOYEE"><Directory /></RequireRole>} />
+          <Route path="/announcements" element={<Announcements />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
         <Route path="/print/payslips/:id" element={<PrintPayslip />} />
