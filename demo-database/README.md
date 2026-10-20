@@ -1,4 +1,4 @@
-# 🗄️ FullStack EMS - Demo Database
+# 🗄️ StaffFlow - Demo Database
 
 This directory contains pre-configured demo data, seed datasets in JSON format, and seeding scripts for the **FullStack Employee Management System (EMS)**.
 
