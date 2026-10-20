@@ -50,13 +50,7 @@ const Leave = () => {
     if (!isAdmin) fetchBalances()
   }, [fetchLeaves, fetchBalances, isAdmin])
 
-  const defaultBalances = [
-    { type: 'SICK', quota: 12, used: 0, pending: 0, remaining: 12 },
-    { type: 'CASUAL', quota: 12, used: 0, pending: 0, remaining: 12 },
-    { type: 'ANNUAL', quota: 18, used: 0, pending: 0, remaining: 18 },
-  ]
-
-  const activeBalances = balances.length > 0 ? balances : defaultBalances
+  const activeBalances = balances
 
   return (
     <div className="space-y-6">
@@ -96,9 +90,9 @@ const Leave = () => {
             return (
               <div key={b.type} className="card p-4">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs font-medium text-[#71717A] dark:text-[#A1A1AA]">{label}</p>
+                  <p className="text-xs font-medium text-[#52525B] dark:text-[#D4D4D8]">{label}</p>
                   <span className="text-[11px] font-medium text-[#2563EB] dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded-[4px] tabular-nums">
-                    {balanceLoading ? '—' : `${b.remaining} remaining`}
+                    {balanceLoading ? 'Loading…' : `${b.remaining} available`}
                   </span>
                 </div>
                 <div className="mt-2 flex items-baseline gap-1.5">
@@ -106,9 +100,12 @@ const Leave = () => {
                     {balanceLoading ? '—' : b.remaining}
                   </p>
                   <span className="text-xs text-[#71717A] dark:text-[#A1A1AA] tabular-nums">
-                    of {b.quota} days quota
+                    available of {b.quota} days
                   </span>
                 </div>
+                <p className="mt-2 text-[11px] text-[#52525B] dark:text-[#D4D4D8]">
+                  Remaining includes pending requests ({balanceLoading ? '—' : b.pending} days).
+                </p>
                 <div className="mt-3 pt-2.5 border-t border-[#E4E4E7] dark:border-[#27272A] flex items-center justify-between text-[11px] text-[#71717A] dark:text-[#A1A1AA] tabular-nums">
                   <span>Used: <strong className="font-medium text-[#18181B] dark:text-[#FAFAFA]">{b.used}</strong></span>
                   <span>Pending: <strong className="font-medium text-[#18181B] dark:text-[#FAFAFA]">{b.pending}</strong></span>
@@ -117,6 +114,11 @@ const Leave = () => {
               </div>
             )
           })}
+          {!balanceLoading && activeBalances.length === 0 && (
+            <div className="card p-4 text-sm text-[#52525B] dark:text-[#D4D4D8] sm:col-span-3">
+              Leave balances are unavailable right now. Refresh the page or contact HR if this continues.
+            </div>
+          )}
         </div>
       )}
 

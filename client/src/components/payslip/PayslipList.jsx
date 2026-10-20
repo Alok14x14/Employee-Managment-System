@@ -16,11 +16,17 @@ const PayslipList = ({ payslips, isAdmin, loading = false }) => {
               <th className="px-3.5 py-2.5 font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-[11px]">
                 Period
               </th>
+              <th className="px-3.5 py-2.5 font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-[11px]">
+                Issued
+              </th>
               <th className="px-3.5 py-2.5 font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-[11px] text-right">
                 Basic Salary
               </th>
               <th className="px-3.5 py-2.5 font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-[11px] text-right">
                 Net Salary
+              </th>
+              <th className="px-3.5 py-2.5 font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-[11px]">
+                Status
               </th>
               <th className="px-3.5 py-2.5 font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider text-[11px] text-right">
                 Action
@@ -37,15 +43,17 @@ const PayslipList = ({ payslips, isAdmin, loading = false }) => {
                     </td>
                   )}
                   <td className="px-3.5 py-2.5"><div className="h-3.5 w-24 skeleton" /></td>
+                  <td className="px-3.5 py-2.5"><div className="h-3.5 w-24 skeleton" /></td>
                   <td className="px-3.5 py-2.5 text-right"><div className="h-3.5 w-20 skeleton ml-auto" /></td>
                   <td className="px-3.5 py-2.5 text-right"><div className="h-3.5 w-20 skeleton ml-auto" /></td>
+                  <td className="px-3.5 py-2.5"><div className="h-4 w-16 skeleton" /></td>
                   <td className="px-3.5 py-2.5 text-right"><div className="h-4 w-16 skeleton ml-auto" /></td>
                 </tr>
               ))
             ) : payslips.length === 0 ? (
               <tr>
                 <td
-                  colSpan={isAdmin ? 5 : 4}
+                  colSpan={isAdmin ? 7 : 6}
                   className="px-3.5 py-12 text-center text-zinc-400 dark:text-zinc-500"
                 >
                   <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">No payslips found</p>
@@ -66,6 +74,9 @@ const PayslipList = ({ payslips, isAdmin, loading = false }) => {
                     <td className="px-3.5 py-2.5 text-zinc-600 dark:text-zinc-400">
                       {formatISTDate(new Date(Date.UTC(payslip.year, payslip.month - 1, 1)), { month: 'long', year: 'numeric' })}
                     </td>
+                    <td className="px-3.5 py-2.5 text-zinc-600 dark:text-zinc-400">
+                      {payslip.createdAt ? formatISTDate(payslip.createdAt, { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
+                    </td>
 
                     <td className="px-3.5 py-2.5 text-right text-zinc-600 dark:text-zinc-400 font-mono tabular-nums">
                       {formatCurrency(payslip.basicSalary)}
@@ -74,6 +85,8 @@ const PayslipList = ({ payslips, isAdmin, loading = false }) => {
                     <td className="px-3.5 py-2.5 text-right font-medium text-zinc-900 dark:text-zinc-100 font-mono tabular-nums">
                       {formatCurrency(payslip.netSalary)}
                     </td>
+
+                    <td className="px-3.5 py-2.5"><span className="badge badge-success">Issued</span></td>
 
                     <td className="px-3.5 py-2.5 text-right">
                       <a

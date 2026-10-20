@@ -16,7 +16,9 @@ const Attendance = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [loading, setLoading] = useState(true);
   const [isDeleted, setIsDeleted] = useState(false);
-  const [viewMode, setViewMode] = useState("calendar"); // "calendar" | "table"
+  const [viewMode, setViewMode] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches ? 'table' : 'calendar'
+  ); // "calendar" | "table"
 
   const fetchData = useCallback(async (monthDate = currentMonth, mode = viewMode) => {
     try {

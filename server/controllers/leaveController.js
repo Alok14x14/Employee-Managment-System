@@ -410,3 +410,30 @@ export const updateLeaveStatus = async (req, res) => {
         if (session) await session.endSession();
     }
 };
+
+// Cancel an employee's own pending request before its start date.
+// DELETE /api/leave/:id
+export const cancelLeaveRequest = async (req, res) => {
+    try {
+        if (!isValidObjectId(req.params.id)) {
+            return res.status(400).json({ error: "Invalid ID" });
+        }
+        const employee = await Employee.findOne({ userId: req.session.userId });
+        if (!employee) return res.status(404).json({ error: "Employee not found" });
+
+        const deleted = await LeaveApplication.findOneAndDelete({
+            _id: req.params.id,
+            employeeId: employee._id,
+            status: "PENDING",
+            startDate: { $gt: istDayStart() },
+        });
+        if (deleted) return res.json({ success: true });
+
+        const request = await LeaveApplication.findOne({ _id: req.params.id, employeeId: employee._id });
+        if (!request) return res.status(404).json({ error: "Leave request not found" });
+        return res.status(409).json({ error: "Only pending requests starting in the future can be cancelled" });
+    } catch (error) {
+        console.error("cancelLeaveRequest error:", error);
+        return res.status(500).json({ error: "Failed to cancel leave request" });
+    }
+};

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Check, Loader2, X } from 'lucide-react'
-import { formatDate, formatStatus } from '../../utils/formatters'
+import { Check, Loader2, Trash2, X } from 'lucide-react'
+import { formatDate, formatStatus, istDayKey } from '../../utils/formatters'
 import api from '../../api/axios'
 import toast from 'react-hot-toast'
 
@@ -50,6 +50,21 @@ const LeaveHistory = ({ leaves = [], isAdmin, onUpdate, loading = false }) => {
     setRejectModal({ open: false, leaveId: null, reason: '' })
   }
 
+  const handleCancel = async (event, leaveId) => {
+    event.stopPropagation()
+    if (!window.confirm('Cancel this pending leave request?')) return
+    setProcessing(leaveId)
+    try {
+      await api.delete(`/leave/${leaveId}`)
+      toast.success('Leave request cancelled')
+      onUpdate()
+    } catch (error) {
+      toast.error(error?.response?.data?.error || error?.message || 'Cancellation failed')
+    } finally {
+      setProcessing(null)
+    }
+  }
+
   return (
     <div className="card overflow-hidden">
       <div className="px-4 py-3 border-b border-[#E4E4E7] dark:border-[#27272A] flex items-center justify-between">
@@ -68,7 +83,7 @@ const LeaveHistory = ({ leaves = [], isAdmin, onUpdate, loading = false }) => {
               <th>Days</th>
               <th>Reason</th>
               <th>Status</th>
-              {isAdmin && <th className="text-right">Actions</th>}
+              <th className="text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -85,12 +100,12 @@ const LeaveHistory = ({ leaves = [], isAdmin, onUpdate, loading = false }) => {
                   <td><div className="h-3.5 w-10 skeleton" /></td>
                   <td><div className="h-3.5 w-44 skeleton" /></td>
                   <td><div className="h-4 w-16 skeleton" /></td>
-                  {isAdmin && <td className="text-right"><div className="h-4 w-14 skeleton ml-auto" /></td>}
+                  <td className="text-right"><div className="h-4 w-14 skeleton ml-auto" /></td>
                 </tr>
               ))
             ) : leaves.length === 0 ? (
               <tr>
-                <td colSpan={isAdmin ? 7 : 5} className="text-center py-14 text-xs text-[#71717A] dark:text-[#A1A1AA]">
+                <td colSpan={isAdmin ? 7 : 6} className="text-center py-14 text-xs text-[#71717A] dark:text-[#A1A1AA]">
                   No leave requests found.
                 </td>
               </tr>
@@ -160,7 +175,7 @@ const LeaveHistory = ({ leaves = [], isAdmin, onUpdate, loading = false }) => {
                         )}
                       </div>
                     </td>
-                    {isAdmin && (
+                    {isAdmin ? (
                       <td className="text-right">
                         {leave.status === 'PENDING' ? (
                           <div className="flex items-center justify-end gap-1">
@@ -200,6 +215,21 @@ const LeaveHistory = ({ leaves = [], isAdmin, onUpdate, loading = false }) => {
                         ) : (
                           <span className="text-xs text-[#A1A1AA] dark:text-[#71717A]">—</span>
                         )}
+                      </td>
+                    ) : (
+                      <td className="text-right">
+                        {leave.status === 'PENDING' && istDayKey(leave.startDate) > istDayKey(new Date()) ? (
+                          <button
+                            type="button"
+                            disabled={Boolean(processing)}
+                            onClick={(event) => handleCancel(event, leaveId)}
+                            className="btn-secondary h-7 px-2.5 text-xs inline-flex items-center gap-1.5 text-rose-700 dark:text-rose-300"
+                            aria-label="Cancel pending leave request"
+                          >
+                            {processing === leaveId ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+                            Cancel
+                          </button>
+                        ) : <span className="text-xs text-[#71717A] dark:text-[#A1A1AA]">—</span>}
                       </td>
                     )}
                   </tr>

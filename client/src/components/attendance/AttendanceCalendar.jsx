@@ -67,7 +67,7 @@ const AttendanceCalendar = ({
 
   // Current month aggregates
   const monthRecords = history.filter((r) => isSameMonth(new Date(r.date), currentMonth))
-  const presentCount = monthRecords.filter((r) => r.status === 'PRESENT' || r.status === 'LATE').length
+  const presentCount = monthRecords.filter((r) => r.status === 'PRESENT').length
   const lateCount = monthRecords.filter((r) => r.status === 'LATE').length
   const absentCount = monthRecords.filter((r) => r.status === 'ABSENT').length
 
@@ -75,7 +75,7 @@ const AttendanceCalendar = ({
 
   return (
     <div className="card overflow-hidden mb-6">
-      {/* Calendar Header with Controls & 3 Status Legend */}
+      {/* Calendar Header with Controls and status legend */}
       <div className="p-4 sm:p-5 border-b border-[#E4E4E7] dark:border-[#27272A] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h2 className="text-sm font-semibold text-[#18181B] dark:text-[#FAFAFA]">
@@ -98,6 +98,7 @@ const AttendanceCalendar = ({
               <span className="size-1.5 rounded-full bg-purple-600 dark:bg-purple-400" />
               Holiday
             </span>
+            <span className="text-[11px]">Absences count recorded workdays only.</span>
           </div>
         </div>
 
@@ -136,7 +137,7 @@ const AttendanceCalendar = ({
         ))}
       </div>
 
-      {/* Calendar Grid: Neutral cells with small colored dots */}
+      {/* Calendar Grid */}
       <div className="grid grid-cols-7 gap-px bg-[#E4E4E7] dark:bg-[#27272A]">
         {days.map((day) => {
           const isCurrMonth = isSameMonth(day, currentMonth)
@@ -146,18 +147,22 @@ const AttendanceCalendar = ({
           const record = history.find((r) => istDayKey(r.date) === dayKey)
 
           let dotColor = null
+          let statusLabel = null
           if (holidayName) {
             dotColor = 'bg-purple-600 dark:bg-purple-400'
+            statusLabel = 'Holiday'
           } else if (record) {
-            if (record.status === 'PRESENT') dotColor = 'bg-[#16A34A] dark:bg-emerald-400'
-            else if (record.status === 'LATE') dotColor = 'bg-[#D97706] dark:bg-amber-400'
-            else if (record.status === 'ABSENT') dotColor = 'bg-[#DC2626] dark:bg-rose-500'
+            if (record.status === 'PRESENT') { dotColor = 'bg-[#16A34A] dark:bg-emerald-400'; statusLabel = 'Present' }
+            else if (record.status === 'LATE') { dotColor = 'bg-[#D97706] dark:bg-amber-400'; statusLabel = 'Late' }
+            else if (record.status === 'ABSENT') { dotColor = 'bg-[#DC2626] dark:bg-rose-500'; statusLabel = 'Absent' }
           }
 
           return (
             <button
               type="button"
               key={day.toISOString()}
+              disabled={!record && !holidayName}
+              aria-label={`${format(day, 'EEEE, d MMMM yyyy')}${statusLabel ? `, ${statusLabel}` : ''}${record?.workingHours ? `, ${record.workingHours} hours` : ''}`}
               onClick={() => {
                 if (record) {
                   setSelectedDayRecord({ day, record, holidayName })
@@ -169,7 +174,7 @@ const AttendanceCalendar = ({
                 !isCurrMonth
                   ? 'bg-[#FAFAFA] dark:bg-[#111113] text-[#A1A1AA] dark:text-[#52525B]'
                   : 'bg-white dark:bg-[#18181B] hover:bg-[#F4F4F5] dark:hover:bg-[#202024]'
-              }`}
+                } ${record || holidayName ? 'cursor-pointer' : 'cursor-default'}`}
             >
               {/* Day Number */}
               <div className="flex items-center justify-between">
@@ -194,20 +199,12 @@ const AttendanceCalendar = ({
               {/* Working Hours or Holiday Text */}
               <div className="mt-auto">
                 {holidayName ? (
-                  <span className="text-[11px] text-purple-600 dark:text-purple-400 font-medium truncate block" title={holidayName}>
-                    {holidayName}
+                  <span className="text-[11px] text-purple-700 dark:text-purple-300 font-medium truncate block" title={holidayName}>
+                    Holiday · {holidayName}
                   </span>
-                ) : record?.workingHours != null && record.workingHours > 0 ? (
-                  <span className="text-xs text-[#71717A] dark:text-[#A1A1AA] tabular-nums truncate block">
-                    {record.workingHours}h
-                  </span>
-                ) : record?.checkIn && !record?.checkOut ? (
-                  <span className={`text-xs ${isCurrDay ? 'text-[#2563EB] dark:text-blue-400' : 'text-amber-500 dark:text-amber-400'} truncate block font-medium`}>
-                    {isCurrDay ? 'In shift' : 'Unclosed'}
-                  </span>
-                ) : record?.status === 'ABSENT' ? (
-                  <span className="text-xs text-[#DC2626] dark:text-rose-400 truncate block font-medium">
-                    Absent
+                ) : record ? (
+                  <span className={`text-[11px] font-medium truncate block ${record.status === 'ABSENT' ? 'text-rose-700 dark:text-rose-300' : record.status === 'LATE' ? 'text-amber-700 dark:text-amber-300' : 'text-emerald-700 dark:text-emerald-300'}`}>
+                    {statusLabel}{record.workingHours > 0 ? ` · ${record.workingHours}h` : record.checkIn && !record.checkOut ? ' · In shift' : ''}
                   </span>
                 ) : null}
               </div>

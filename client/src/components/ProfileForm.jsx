@@ -6,7 +6,7 @@ import {
     ShieldCheck,
     User
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import api from '../api/axios';
 import { formatCurrency, formatDate } from '../utils/formatters';
 
@@ -14,6 +14,14 @@ const ProfileForm = ({ initialData, onSuccess }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [message, setMessage] = useState("");
+    const [bio, setBio] = useState(initialData?.bio || "");
+    const [savedBio, setSavedBio] = useState(initialData?.bio || "");
+
+    useEffect(() => {
+        const nextBio = initialData?.bio || "";
+        setBio(nextBio);
+        setSavedBio(nextBio);
+    }, [initialData?.bio]);
 
     const isAdmin = initialData?.isAdmin || initialData?.role === 'ADMIN';
 
@@ -40,6 +48,7 @@ const ProfileForm = ({ initialData, onSuccess }) => {
         const formData = new FormData(e.currentTarget);
         try {
             await api.post("/profile", formData);
+            setSavedBio(bio);
             setMessage("Profile updated successfully");
             onSuccess?.();
         } catch (err) {
@@ -101,6 +110,10 @@ const ProfileForm = ({ initialData, onSuccess }) => {
                     <span>Personal Information</span>
                 </h3>
 
+                <p className="text-xs text-zinc-600 dark:text-zinc-300 mb-4 rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 px-3 py-2.5">
+                    Your professional bio is editable here. Name, work email, and phone are managed by HR; contact your HR administrator to correct them.
+                </p>
+
                 {error && (
                     <div className="bg-rose-50 dark:bg-rose-950/30 text-rose-800 dark:text-rose-300 p-3 rounded-[4px] text-xs border border-rose-200 dark:border-rose-900 mb-5 flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-rose-600 shrink-0" />
@@ -156,7 +169,8 @@ const ProfileForm = ({ initialData, onSuccess }) => {
                         <textarea
                             disabled={initialData?.isDeleted}
                             name="bio"
-                            defaultValue={initialData?.bio || ""}
+                            value={bio}
+                            onChange={(event) => { setBio(event.target.value); setMessage(""); }}
                             placeholder="Write a brief professional summary..."
                             rows={3}
                             className={`w-full text-xs rounded-[6px] border border-zinc-200 dark:border-zinc-700 p-2.5 resize-none ${
@@ -179,7 +193,7 @@ const ProfileForm = ({ initialData, onSuccess }) => {
                         <div className="flex justify-end pt-2 border-t border-zinc-100 dark:border-zinc-800">
                             <button
                                 type="submit"
-                                disabled={loading}
+                                disabled={loading || bio === savedBio}
                                 className="btn-primary text-xs inline-flex items-center gap-1.5"
                             >
                                 {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}

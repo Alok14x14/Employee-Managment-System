@@ -101,10 +101,10 @@ const CheckInButton = ({ todayRecord, onAction, restriction }) => {
                 <span className="size-1.5 rounded-full bg-[#2563EB] dark:bg-blue-400" />
                 Clocked in
               </span>
-            ) : restriction ? (
+              ) : restriction ? (
               <span className="badge badge-warning">
                 <span className="size-1.5 rounded-full bg-[#D97706] dark:bg-amber-400" />
-                {restriction}
+                Attendance unavailable today
               </span>
             ) : null}
           </div>
@@ -128,7 +128,7 @@ const CheckInButton = ({ todayRecord, onAction, restriction }) => {
             ) : restriction ? (
               null
             ) : (
-              <span>Not clocked in today</span>
+              <span>{restriction ? `${restriction}. Clock-in is disabled for this day.` : 'Not clocked in today'}</span>
             )}
           </div>
         </div>

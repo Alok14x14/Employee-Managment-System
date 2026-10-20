@@ -32,6 +32,7 @@ const EmployeeDashboard = ({ data }) => {
   }
 
   const weeklyHours = data.weeklyHours || []
+  const workdayHours = weeklyHours.filter((entry) => !['Sat', 'Sun'].includes(entry.day))
   const recentAttendance = data.recentAttendance || []
   const recentLeaves = data.recentLeaves || []
   const todayRecord = data.todayRecord
@@ -45,9 +46,9 @@ const EmployeeDashboard = ({ data }) => {
 
   const stats = [
     {
-      label: 'Days present',
+      label: 'Days attended',
       value: data.currentMonthAttendance ?? 0,
-      description: 'Current month total',
+      description: 'Present or late this month',
       link: '/attendance',
     },
     {
@@ -85,7 +86,7 @@ const EmployeeDashboard = ({ data }) => {
         </div>
         <div className="flex items-center gap-2">
           <Link to="/attendance" className="btn-primary">
-            Record attendance
+            {todayRecord?.checkIn && !todayRecord?.checkOut ? 'Clock out' : todayRecord?.checkOut ? 'View attendance' : data.attendanceRestriction ? 'View attendance' : 'Clock in'}
           </Link>
           <Link to="/leave" className="btn-secondary">
             Apply for leave
@@ -116,11 +117,13 @@ const EmployeeDashboard = ({ data }) => {
         <div className="card p-4 sm:p-5 lg:col-span-2">
           <div className="mb-4">
             <h2 className="text-sm font-semibold text-[#18181B] dark:text-[#FAFAFA]">Weekly working hours</h2>
-            <p className="text-xs text-[#71717A] dark:text-[#A1A1AA] mt-0.5">Recorded daily duration for the current cycle</p>
+            <p className="text-xs text-[#71717A] dark:text-[#A1A1AA] mt-0.5">
+              {weeklyHours[0]?.date} – {weeklyHours.at(-1)?.date} · weekdays only
+            </p>
           </div>
           <div className="h-[250px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={weeklyHours} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <AreaChart data={workdayHours} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="2 2" vertical={false} stroke={gridStroke} />
                 <XAxis
                   dataKey="day"
@@ -138,7 +141,7 @@ const EmployeeDashboard = ({ data }) => {
                 <RechartsTooltip
                   contentStyle={tooltipStyle}
                   itemStyle={tooltipItemStyle}
-                  formatter={(val) => [`${val} hours`, 'Duration']}
+                  formatter={(val, _name, item) => [val > 0 ? `${val} hours` : 'No attendance recorded', item.payload.status === 'LATE' ? 'Late' : 'Workday']}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '10px', color: axisColor }} />
                 <Area
@@ -163,10 +166,18 @@ const EmployeeDashboard = ({ data }) => {
                 <span className="badge badge-success">
                   {formatStatus(todayRecord.status, 'Present')}
                 </span>
+              ) : data.attendanceRestriction ? (
+                <span className="badge badge-warning">Unavailable today</span>
               ) : (
                 <span className="badge badge-neutral">Not recorded</span>
               )}
             </div>
+
+            {!todayRecord && data.attendanceRestriction && (
+              <p className="mt-3 text-xs text-[#52525B] dark:text-[#D4D4D8]" role="status">
+                {data.attendanceRestriction}. Clock-in is disabled today.
+              </p>
+            )}
 
             <div className="mt-4 space-y-3 text-xs">
               <div className="flex justify-between py-1 border-b border-[#E4E4E7] dark:border-[#27272A]">
@@ -191,8 +202,8 @@ const EmployeeDashboard = ({ data }) => {
           </div>
 
           <div className="pt-4 border-t border-[#E4E4E7] dark:border-[#27272A] mt-4">
-            <Link to="/attendance" className="btn-secondary w-full text-xs">
-              Open attendance console
+              <Link to="/attendance" className="btn-primary w-full text-xs">
+              {todayRecord?.checkIn && !todayRecord?.checkOut ? 'Clock out' : todayRecord?.checkOut ? 'View attendance details' : data.attendanceRestriction ? 'View attendance details' : 'Clock in'}
             </Link>
           </div>
         </div>

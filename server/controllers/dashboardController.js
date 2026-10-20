@@ -3,6 +3,7 @@ import Attendance from "../models/Attendance.js";
 import Employee from "../models/Employee.js";
 import LeaveApplication from "../models/LeaveApplication.js";
 import Payslip from "../models/Payslip.js";
+import Holiday from "../models/Holiday.js";
 import User from "../models/User.js";
 import { istDayStart, istDayEnd, istParts, isWeekend, isHoliday } from "../utils/time.js";
 import { loadHolidaySet } from "../utils/holidays.js";
@@ -210,6 +211,23 @@ export const getDashboard  = async (req, res) => {
                 }).lean(),
             ]);
 
+            const [holidayToday, approvedLeaveToday] = await Promise.all([
+                Holiday.findOne({ date: today }).select("name").lean(),
+                LeaveApplication.findOne({
+                    employeeId: employee._id,
+                    status: "APPROVED",
+                    startDate: { $lte: today },
+                    endDate: { $gte: today },
+                }).select("type").lean(),
+            ]);
+            const attendanceRestriction = isWeekend(today)
+                ? "Weekend (Non-working day)"
+                : holidayToday
+                ? `Public Holiday (${holidayToday.name})`
+                : approvedLeaveToday
+                ? `On Approved ${approvedLeaveToday.type.charAt(0) + approvedLeaveToday.type.slice(1).toLowerCase()} Leave`
+                : null;
+
             const weeklyMap = new Map();
             past7DaysRecords.forEach((rec) => {
                 const { year, month, day: d } = istParts(new Date(rec.date));
@@ -250,6 +268,7 @@ export const getDashboard  = async (req, res) => {
                 approvedLeaves,
                 latestPayslip: latestPayslip ? {...latestPayslip, id: latestPayslip._id.toString()} : null,
                 todayRecord: todayRecord ? {...todayRecord, id: todayRecord._id.toString()} : null,
+                attendanceRestriction,
                 weeklyHours,
                 recentAttendance: formattedAttendance,
                 recentLeaves: formattedLeaves,
