@@ -4,6 +4,7 @@ import LoginLanding from "./pages/LoginLanding"
 import Layout from "./pages/Layout"
 import Dashboard from "./pages/Dashboard"
 import Employees from "./pages/Employees"
+import EmployeeDetails from "./pages/EmployeeDetails"
 import Departments from "./pages/Departments"
 import Attendance from "./pages/Attendance"
 import Leave from "./pages/Leave"
@@ -14,6 +15,7 @@ import ForgotPassword from "./pages/ForgotPassword"
 import ResetPassword from "./pages/ResetPassword"
 import ForceChangePassword from "./pages/ForceChangePassword"
 import AdminAttendance from "./pages/AdminAttendance"
+import AdminAttendanceCorrections from "./pages/AdminAttendanceCorrections"
 import Holidays from "./pages/Holidays"
 import Documents from "./pages/Documents"
 import Directory from "./pages/Directory"
@@ -121,6 +123,14 @@ const App = () => {
             }
           />
           <Route
+            path="/employees/:id"
+            element={
+              <RequireRole role="ADMIN">
+                <EmployeeDetails />
+              </RequireRole>
+            }
+          />
+          <Route
             path="/departments"
             element={
               <RequireRole role="ADMIN">
@@ -133,6 +143,14 @@ const App = () => {
             element={
               <RequireRole role="ADMIN">
                 <AdminAttendance />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="/admin/attendance/corrections"
+            element={
+              <RequireRole role="ADMIN">
+                <AdminAttendanceCorrections />
               </RequireRole>
             }
           />

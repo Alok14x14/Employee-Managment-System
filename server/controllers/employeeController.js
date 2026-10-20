@@ -4,6 +4,9 @@ import bcrypt from "bcrypt";
 import User from "../models/User.js";
 import { sendWelcomeEmail } from "../utils/emailService.js";
 import Attendance from "../models/Attendance.js";
+import LeaveApplication from "../models/LeaveApplication.js";
+import Payslip from "../models/Payslip.js";
+import EmployeeDocument from "../models/EmployeeDocument.js";
 import { istDayStart, istDayEnd } from "../utils/time.js";
 import { isValidObjectId, parseDate } from "../utils/validate.js";
 
@@ -13,7 +16,10 @@ const round2 = (x) => Math.round(Number(x || 0) * 100) / 100;
 // GET /api/employees
 export const getEmployees = async (req, res)=>{
     try {
-        const { department, status } = req.query;
+        const { department, status, search } = req.query;
+        const paginated = req.query.page !== undefined || req.query.limit !== undefined;
+        const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+        const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 12));
         const where = {};
         if (status === 'deleted') {
             where.isDeleted = true;
@@ -22,13 +28,27 @@ export const getEmployees = async (req, res)=>{
         }
         
         if(department) where.department = department;
+        if (search?.trim()) {
+            const escapedSearch = search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            const expression = new RegExp(escapedSearch, "i");
+            where.$or = [
+                { firstName: expression },
+                { lastName: expression },
+                { position: expression },
+                { email: expression },
+            ];
+        }
 
-        const employees = await Employee.find(where).sort({createdAt: -1}).populate("userId", "email role").lean();
+        const total = paginated ? await Employee.countDocuments(where) : null;
+        let employeesQuery = Employee.find(where).sort({createdAt: -1});
+        if (paginated) employeesQuery = employeesQuery.skip((page - 1) * limit).limit(limit);
+        const employees = await employeesQuery.populate("userId", "email role").lean();
 
         // Get today's attendances
         const startOfDay = istDayStart();
         const endOfDay = istDayEnd();
         const todayAttendances = await Attendance.find({
+            employeeId: { $in: employees.map((employee) => employee._id) },
             date: { $gte: startOfDay, $lt: endOfDay },
             status: { $ne: "ABSENT" }
         }).lean();
@@ -44,26 +64,77 @@ export const getEmployees = async (req, res)=>{
             user: emp.userId ? {email: emp.userId.email, role: emp.userId.role} : null,
             isPresentToday: !!attendanceMap[emp._id.toString()]
         }))
-        return res.json(result)
+        return res.json(paginated ? { data: result, total, page, limit, totalPages: Math.ceil(total / limit) } : result)
     } catch (error) {
         
         return res.status(500).json({error: "Failed to fetch employees"})
     }
 }
 
+// GET /api/employees/:id/details - admin employee profile and recent records
+export const getEmployeeDetails = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!isValidObjectId(id)) return res.status(400).json({ error: "Invalid employee ID" });
+        const employee = await Employee.findById(id).populate("userId", "email role").lean();
+        if (!employee) return res.status(404).json({ error: "Employee not found" });
+
+        const filter = { employeeId: employee._id };
+        const [attendance, leaves, payslips, documents, counts] = await Promise.all([
+            Attendance.find(filter).sort({ date: -1 }).limit(10).lean(),
+            LeaveApplication.find(filter).sort({ createdAt: -1 }).limit(10).lean(),
+            Payslip.find(filter).sort({ year: -1, month: -1 }).limit(10).lean(),
+            EmployeeDocument.find({ $or: [{ employeeId: employee._id }, { audience: "ALL" }] })
+                .select("category title fileName fileSize audience createdAt").sort({ createdAt: -1 }).limit(50).lean(),
+            Promise.all([
+                Attendance.countDocuments(filter), LeaveApplication.countDocuments(filter),
+                Payslip.countDocuments(filter),
+            ]),
+        ]);
+
+        return res.json({ data: {
+            employee: { ...employee, id: employee._id.toString(), user: employee.userId ? { email: employee.userId.email, role: employee.userId.role } : null },
+            attendance: attendance.map((item) => ({ ...item, id: item._id.toString() })),
+            leaves: leaves.map((item) => ({ ...item, id: item._id.toString() })),
+            payslips: payslips.map((item) => ({ ...item, id: item._id.toString() })),
+            documents: documents.map((item) => ({ ...item, id: item._id.toString() })),
+            counts: { attendance: counts[0], leaves: counts[1], payslips: counts[2] },
+        } });
+    } catch (error) {
+        console.error("getEmployeeDetails error:", error);
+        return res.status(500).json({ error: "Failed to fetch employee details" });
+    }
+}
+
 // GET /api/employees/directory - employee-safe colleague directory
-export const getEmployeeDirectory = async (_req, res) => {
+export const getEmployeeDirectory = async (req, res) => {
     try {
         const employeeUsers = await User.find({ role: "EMPLOYEE" }).select("_id").lean();
         const employeeUserIds = employeeUsers.map((user) => user._id);
-        const employees = await Employee.find({
+        const where = {
             userId: { $in: employeeUserIds },
             isDeleted: { $ne: true },
             employmentStatus: "ACTIVE",
-        })
+        };
+        if (req.query.department) where.department = req.query.department;
+        if (req.query.position) where.position = req.query.position;
+        const positionOptions = await Employee.distinct("position", {
+            userId: { $in: employeeUserIds }, isDeleted: { $ne: true }, employmentStatus: "ACTIVE",
+            ...(req.query.department ? { department: req.query.department } : {}),
+        });
+        if (req.query.search?.trim()) {
+            const escapedSearch = req.query.search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            const expression = new RegExp(escapedSearch, "i");
+            where.$or = [{ firstName: expression }, { lastName: expression }, { email: expression }];
+        }
+        const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+        const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 10));
+        const total = await Employee.countDocuments(where);
+        const employees = await Employee.find(where)
             .select("firstName lastName email department position")
             .sort({ firstName: 1, lastName: 1 })
-            .limit(500)
+            .skip((page - 1) * limit)
+            .limit(limit)
             .lean();
 
         return res.json({ data: employees.map((employee) => ({
@@ -73,7 +144,7 @@ export const getEmployeeDirectory = async (_req, res) => {
             email: employee.email,
             department: employee.department || "Unassigned",
             position: employee.position || "Team member",
-        })) });
+        })), total, page, limit, totalPages: Math.ceil(total / limit), positions: positionOptions.filter(Boolean).sort((a, b) => a.localeCompare(b)) });
     } catch (error) {
         console.error("getEmployeeDirectory error:", error);
         return res.status(500).json({ error: "Failed to fetch employee directory" });

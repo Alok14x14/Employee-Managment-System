@@ -9,6 +9,8 @@ import toast from 'react-hot-toast'
 const Leave = () => {
   const { user } = useAuth()
   const [leaves, setLeaves] = useState([])
+  const [leavePage, setLeavePage] = useState(1)
+  const [leaveTotal, setLeaveTotal] = useState(0)
   const [balances, setBalances] = useState([])
   const [loading, setLoading] = useState(true)
   const [balanceLoading, setBalanceLoading] = useState(true)
@@ -17,16 +19,18 @@ const Leave = () => {
   const isAdmin = user?.role === 'ADMIN'
 
   const fetchLeaves = useCallback(async () => {
+    setLoading(true)
     try {
-      const res = await api.get('/leave')
+      const res = await api.get(`/leave?page=${leavePage}&limit=10`)
       setLeaves(res.data.data || [])
+      setLeaveTotal(res.data.total || 0)
       if (res.data.employee?.isDeleted) setIsDeleted(true)
     } catch (error) {
       toast.error(error?.response?.data?.error || error.message || 'Failed to fetch leave requests')
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [leavePage])
 
   const fetchBalances = useCallback(async () => {
     if (isAdmin) return
@@ -57,7 +61,7 @@ const Leave = () => {
       {/* Page Header */}
       <div className="page-header">
         <div>
-          <h1 className="page-title">Leave management</h1>
+          <h1 className="page-title">{isAdmin ? 'Leave requests' : 'Leave management'}</h1>
           <p className="page-subtitle">
             {isAdmin
               ? 'Review and administer employee time-off requests.'
@@ -131,7 +135,7 @@ const Leave = () => {
       )}
 
       {/* Leave History Table */}
-      <LeaveHistory leaves={leaves} isAdmin={isAdmin} onUpdate={refreshAll} loading={loading} />
+      <LeaveHistory leaves={leaves} isAdmin={isAdmin} onUpdate={refreshAll} loading={loading} page={leavePage} total={leaveTotal} totalPages={Math.max(1, Math.ceil(leaveTotal / 10))} onPageChange={setLeavePage} />
 
       {/* Apply Leave Modal */}
       <ApplyLeaveModal

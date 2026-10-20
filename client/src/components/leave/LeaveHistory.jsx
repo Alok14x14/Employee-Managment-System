@@ -3,8 +3,9 @@ import { Check, Loader2, Trash2, X } from 'lucide-react'
 import { formatDate, formatStatus, istDayKey } from '../../utils/formatters'
 import api from '../../api/axios'
 import toast from 'react-hot-toast'
+import Pagination from '../Pagination'
 
-const LeaveHistory = ({ leaves = [], isAdmin, onUpdate, loading = false }) => {
+const LeaveHistory = ({ leaves = [], isAdmin, onUpdate, loading = false, page = 1, total = leaves.length, totalPages = 1, onPageChange }) => {
   const [processing, setProcessing] = useState(null)
   const [rejectModal, setRejectModal] = useState({ open: false, leaveId: null, reason: '' })
   const [selectedLeave, setSelectedLeave] = useState(null)
@@ -70,7 +71,7 @@ const LeaveHistory = ({ leaves = [], isAdmin, onUpdate, loading = false }) => {
       <div className="px-4 py-3 border-b border-[#E4E4E7] dark:border-[#27272A] flex items-center justify-between">
         <h3 className="text-sm font-semibold text-[#18181B] dark:text-[#FAFAFA]">Leave applications</h3>
         <span className="text-xs text-[#71717A] dark:text-[#A1A1AA] tabular-nums">
-          {loading ? '—' : `${leaves.length} records`}
+          {loading ? '—' : `${total} records`}
         </span>
       </div>
       <div className="overflow-x-auto">
@@ -88,7 +89,7 @@ const LeaveHistory = ({ leaves = [], isAdmin, onUpdate, loading = false }) => {
           </thead>
           <tbody>
             {loading ? (
-              Array.from({ length: 5 }).map((_, idx) => (
+              Array.from({ length: 10 }).map((_, idx) => (
                 <tr key={idx}>
                   {isAdmin && (
                     <td>
@@ -239,6 +240,7 @@ const LeaveHistory = ({ leaves = [], isAdmin, onUpdate, loading = false }) => {
           </tbody>
         </table>
       </div>
+      {!loading && <Pagination page={page} totalPages={totalPages} totalItems={total} onPageChange={onPageChange} />}
 
       {/* Full leave request details */}
       {selectedLeave && (

@@ -21,7 +21,7 @@ const AdminReviewQueue = ({ leaveRequests = [], correctionRequests = [], errors 
       }),
     },
     {
-      title: 'Attendance corrections', count: correctionRequests.length, href: '/admin/attendance', icon: Clock3,
+      title: 'Attendance corrections', count: correctionRequests.length, href: '/admin/attendance/corrections', icon: Clock3,
       empty: 'No attendance corrections need review.',
       rows: correctionRequests.map((request) => ({
         id: request._id || request.id,

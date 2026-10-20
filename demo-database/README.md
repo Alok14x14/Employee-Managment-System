@@ -51,7 +51,7 @@ node demo-database/seed.js "mongodb://localhost:27017/EMS"
 
 ---
 
-### 👥 Employee Accounts
+### 👥 Employee Accounts (25 Corporate Team Members)
 All employee accounts use the password: **`password123`**
 
 | Name | Role / Position | Department | Email | Salary |
@@ -66,6 +66,21 @@ All employee accounts use the password: **`password123`**
 | **Alex Rivera** | Cloud & DevOps Specialist | IT Support | `alex.rivera@example.com` | $92,000 |
 | **Liam Wilson** | Enterprise Account Executive | Sales | `liam.wilson@example.com` | $70,000 |
 | **Sophia Martinez** | Operations Manager | Operations | `sophia.martinez@example.com` | $76,000 |
+| **Marcus Vance** | Staff Backend Engineer | Engineering | `marcus.vance@example.com` | $110,000 |
+| **Chloe Bennett** | Frontend UI Architect | Engineering | `chloe.bennett@example.com` | $98,000 |
+| **Daniel Kim** | QA Automation & Test Lead | Engineering | `daniel.kim@example.com` | $84,000 |
+| **Ananya Sharma** | Senior Technical Product Manager | Product Management | `ananya.sharma@example.com` | $94,000 |
+| **Tyler Reed** | Associate Product Manager | Product Management | `tyler.reed@example.com` | $68,000 |
+| **Elena Rostova** | Lead UX Researcher | Design | `elena.rostova@example.com` | $88,000 |
+| **Brandon Cole** | Visual & Motion Designer | Design | `brandon.cole@example.com` | $74,000 |
+| **Lucas Silva** | Content & SEO Specialist | Marketing | `lucas.silva@example.com` | $66,000 |
+| **Zoe Campbell** | Social Media & Brand Strategist | Marketing | `zoe.campbell@example.com` | $62,000 |
+| **Rachel Green** | Talent Acquisition Specialist | Human Resources | `rachel.green@example.com` | $68,000 |
+| **Sanjay Gupta** | Corporate Accounting Manager | Finance | `sanjay.gupta@example.com` | $92,000 |
+| **Olivia Thorne** | Business Development Representative | Sales | `olivia.thorne@example.com` | $60,000 |
+| **Nathan Drake** | Enterprise Support Engineer | Customer Success | `nathan.drake@example.com` | $72,000 |
+| **Kevin Park** | Systems & Network Administrator | IT Support | `kevin.park@example.com` | $80,000 |
+| **Aaron Brooks** | Logistics & Workplace Coordinator | Operations | `aaron.brooks@example.com` | $62,000 |
 
 ---
 
@@ -75,14 +90,14 @@ All raw datasets are stored as clean, structured JSON files in [`data/`](file://
 
 | File | Description | Records |
 |---|---|---|
-| [`users.json`](file:///c:/Users/ASUS/Documents/FullStack-EMS/demo-database/data/users.json) | Admin and employee authentication records with bcrypt password hashes. | 11 users |
-| [`employees.json`](file:///c:/Users/ASUS/Documents/FullStack-EMS/demo-database/data/employees.json) | Rich employee profiles across all 10 corporate departments. | 10 profiles |
-| [`attendance.json`](file:///c:/Users/ASUS/Documents/FullStack-EMS/demo-database/data/attendance.json) | Today's active shifts, past 7 days logged hours, and monthly calendars. | 44 records |
-| [`attendanceCorrections.json`](file:///c:/Users/ASUS/Documents/FullStack-EMS/demo-database/data/attendanceCorrections.json) | Correction requests for missed check-in/out times in `PENDING`, `APPROVED`, and `REJECTED` states. | 4 requests |
-| [`announcements.json`](file:///c:/Users/ASUS/Documents/FullStack-EMS/demo-database/data/announcements.json) | Company-wide notices, town halls, and policy updates published by Admin. | 4 notices |
-| [`employeeDocuments.json`](file:///c:/Users/ASUS/Documents/FullStack-EMS/demo-database/data/employeeDocuments.json) | Real valid PDF documents across Policies, Offer Letters, Tax Forms, and Reviews. | 8 documents |
-| [`leaveApplications.json`](file:///c:/Users/ASUS/Documents/FullStack-EMS/demo-database/data/leaveApplications.json) | Time-off requests in `PENDING`, `APPROVED`, and `REJECTED` (including Auto-Rejected) states. | 9 applications |
-| [`payslips.json`](file:///c:/Users/ASUS/Documents/FullStack-EMS/demo-database/data/payslips.json) | Monthly payslips with basic pay, allowances, deductions, and net salary. | 11 payslips |
+| [`users.json`](file:///c:/Users/ASUS/Documents/FullStack-EMS/demo-database/data/users.json) | Admin and employee authentication records with bcrypt password hashes. | 26 users |
+| [`employees.json`](file:///c:/Users/ASUS/Documents/FullStack-EMS/demo-database/data/employees.json) | Rich employee profiles across all 10 corporate departments. | 25 profiles |
+| [`attendance.json`](file:///c:/Users/ASUS/Documents/FullStack-EMS/demo-database/data/attendance.json) | Today's active shifts, past 10 business days logged hours, and monthly calendars. | 275 records |
+| [`attendanceCorrections.json`](file:///c:/Users/ASUS/Documents/FullStack-EMS/demo-database/data/attendanceCorrections.json) | Correction requests for missed check-in/out times in `PENDING`, `APPROVED`, and `REJECTED` states. | 12 requests |
+| [`announcements.json`](file:///c:/Users/ASUS/Documents/FullStack-EMS/demo-database/data/announcements.json) | Company-wide notices, town halls, hackathons, and policy updates published by Admin. | 7 notices |
+| [`employeeDocuments.json`](file:///c:/Users/ASUS/Documents/FullStack-EMS/demo-database/data/employeeDocuments.json) | Real valid PDF documents across Policies, Offer Letters, Tax Forms, and Reviews. | 16 documents |
+| [`leaveApplications.json`](file:///c:/Users/ASUS/Documents/FullStack-EMS/demo-database/data/leaveApplications.json) | Time-off requests in `PENDING`, `APPROVED`, and `REJECTED` (including Auto-Rejected) states. | 28 applications |
+| [`payslips.json`](file:///c:/Users/ASUS/Documents/FullStack-EMS/demo-database/data/payslips.json) | Monthly payslips with basic pay, allowances, deductions, and net salary. | 50 payslips |
 | [`holidays.json`](file:///c:/Users/ASUS/Documents/FullStack-EMS/demo-database/data/holidays.json) | National and public holidays across the calendar year. | 10 holidays |
 
 ---
@@ -92,8 +107,9 @@ All raw datasets are stored as clean, structured JSON files in [`data/`](file://
 Once seeded and connected:
 
 1. **Admin Dashboard (`/dashboard`)**:
-   - Total Workforce Headcount & Department distribution breakdown chart.
-   - Live **Today's Attendance** meter and 5-Day Attendance trend bar chart.
+   - Total Workforce Headcount (25 employees) & Department distribution breakdown chart.
+   - **Review Queue**: Pending leave requests & attendance correction review cards with quick-action links.
+   - Live **Today's Attendance** meter and 5-Day Attendance trend bar chart with realistic workforce volume.
    - Pending leave approval count and badge alerts.
    - Recent employee hires and recent leave request widgets.
 
@@ -103,7 +119,7 @@ Once seeded and connected:
    - Live clock-in / clock-out button with current shift timer.
 
 3. **📢 Company Announcements (`/announcements`)**:
-   - Organization-wide notices (All-Hands, Hybrid Work Policy, Benefits Enrollment, IT Maintenance).
+   - Organization-wide notices (All-Hands, Hybrid Work Policy, Benefits Enrollment, IT Maintenance, Hackathon 2026, Mental Health Sessions, Year-End Gala).
    - Admin view with announcement publishing form and delete actions.
    - Employee view with rich formatted announcement cards and expiration indicators.
 
@@ -113,11 +129,11 @@ Once seeded and connected:
    - Admin upload form supporting company-wide policies or employee-assigned documents.
 
 5. **🕒 Attendance & Correction Requests (`/attendance` & `/admin/attendance`)**:
-   - **Admin Attendance**: Real-time today shift tracker and **Pending Attendance Corrections** review widget with Approve & Reject action buttons.
+   - **Admin Attendance**: Real-time today shift tracker for 25 employees and **Pending Attendance Corrections** review widget with Approve & Reject action buttons.
    - **Employee Attendance**: Monthly calendar with color-coded day types (Full Day, Half Day, Late, Absent) and **Attendance Corrections** submission & status history.
 
 6. **👥 Employee Directory (`/directory`)**:
-   - Colleague roster with department filtering, instant search by name/position/email, and direct mailto links.
+   - 25-colleague roster with department filtering, instant search by name/position/email, and direct mailto links.
 
 7. **💬 AI HR Assistant (`HrAssistant.jsx`)**:
    - Floating HR companion in the bottom right corner of the employee portal to answer policy, quota, and process questions.

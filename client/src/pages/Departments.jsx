@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import toast from 'react-hot-toast';
 import { Building2Icon, ChevronDown, ChevronUp, UsersIcon } from 'lucide-react';
 import { useDepartments } from '../constants/departments';
 
 const Departments = () => {
+    const location = useLocation();
+    const navigate = useNavigate();
     const allDepartments = useDepartments();
     const [employees, setEmployees] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -101,7 +104,7 @@ const Departments = () => {
                                                     </thead>
                                                     <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
                                                         {roster.map(emp => (
-                                                            <tr key={emp.id} className="hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40 transition-colors">
+                                                            <tr key={emp.id || emp._id} role="link" tabIndex={0} onClick={() => navigate(`/employees/${emp.id || emp._id}`, { state: { from: location } })} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); navigate(`/employees/${emp.id || emp._id}`, { state: { from: location } }); } }} aria-label={`View details for ${emp.firstName} ${emp.lastName}`} className="cursor-pointer hover:bg-zinc-50/60 focus-visible:outline-2 focus-visible:outline-blue-500 dark:hover:bg-zinc-800/40 transition-colors">
                                                                 <td className="px-3.5 py-2.5 font-medium text-zinc-900 dark:text-zinc-100">
                                                                     {emp.firstName} {emp.lastName}
                                                                 </td>

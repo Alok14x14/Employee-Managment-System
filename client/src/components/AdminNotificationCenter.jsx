@@ -40,7 +40,7 @@ const AdminNotificationCenter = ({ userId }) => {
       for (const request of results[1].value.data.data || []) {
         const employee = request.employeeId
         next.push({
-          id: `correction-${request._id}`, type: 'correction', href: '/admin/attendance',
+          id: `correction-${request._id}`, type: 'correction', href: '/admin/attendance/corrections',
           title: 'Attendance correction needs review',
           detail: `${employee?.firstName || 'Employee'} ${employee?.lastName || ''} · ${request.field === 'checkIn' ? 'check-in' : 'check-out'} · ${dateLabel(request.attendanceId?.date || request.requestedTime)}`,
           date: request.createdAt,

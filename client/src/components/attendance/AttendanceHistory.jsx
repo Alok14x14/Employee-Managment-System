@@ -1,7 +1,8 @@
 import { getDayTypeDisplay, getWorkingHoursDisplay } from '../../utils/attendance'
 import { formatDate, formatTime } from '../../utils/formatters'
+import Pagination from '../Pagination'
 
-const AttendanceHistory = ({ history = [], loading = false }) => {
+const AttendanceHistory = ({ history = [], loading = false, page = 1, total = history.length, totalPages = 1, onPageChange }) => {
   return (
     <div className="card overflow-hidden">
       <div className="px-4 py-3 border-b border-[#E4E4E7] dark:border-[#27272A] flex items-center justify-between">
@@ -24,7 +25,7 @@ const AttendanceHistory = ({ history = [], loading = false }) => {
           </thead>
           <tbody>
             {loading ? (
-              Array.from({ length: 5 }).map((_, idx) => (
+              Array.from({ length: 10 }).map((_, idx) => (
                 <tr key={idx}>
                   <td><div className="h-3.5 w-24 skeleton" /></td>
                   <td><div className="h-3.5 w-16 skeleton" /></td>
@@ -93,6 +94,7 @@ const AttendanceHistory = ({ history = [], loading = false }) => {
           </tbody>
         </table>
       </div>
+      {!loading && <Pagination page={page} totalPages={totalPages} totalItems={total} onPageChange={onPageChange} />}
     </div>
   )
 }

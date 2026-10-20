@@ -221,7 +221,13 @@ export const getLeaves = async (req, res) => {
         if (isAdmin) {
             const status = req.query.status;
             const where = status ? { status } : {};
-            const leaves = await LeaveApplication.find(where).populate("employeeId").sort({ createdAt: -1 });
+            const paginated = req.query.page !== undefined || req.query.limit !== undefined;
+            const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+            const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 10));
+            const total = paginated ? await LeaveApplication.countDocuments(where) : null;
+            let query = LeaveApplication.find(where).sort({ createdAt: -1 });
+            if (paginated) query = query.skip((page - 1) * limit).limit(limit);
+            const leaves = await query.populate("employeeId");
             const data = leaves.map((l) => {
                 const obj = l.toObject();
                 return {
@@ -233,16 +239,27 @@ export const getLeaves = async (req, res) => {
                     autoRejected: obj.autoRejected ?? false,
                 };
             });
-            return res.json({ data });
+            return res.json(paginated ? { data, total, page, limit, totalPages: Math.ceil(total / limit) } : { data });
         } else {
             const employee = await Employee.findOne({
                 userId: session.userId,
             }).lean();
             if (!employee) return res.status(404).json({ error: "Not found" });
-            const leaves = await LeaveApplication.find({
+            const where = {
                 employeeId: employee._id,
-            }).sort({ createdAt: -1 });
-            return res.json({
+            };
+            const paginated = req.query.page !== undefined || req.query.limit !== undefined;
+            const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+            const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 10));
+            const total = paginated ? await LeaveApplication.countDocuments(where) : null;
+            let query = LeaveApplication.find(where).sort({ createdAt: -1 });
+            if (paginated) query = query.skip((page - 1) * limit).limit(limit);
+            const leaves = await query;
+            return res.json(paginated ? {
+                data: leaves,
+                employee: { ...employee, id: employee._id.toString() },
+                total, page, limit, totalPages: Math.ceil(total / limit),
+            } : {
                 data: leaves,
                 employee: { ...employee, id: employee._id.toString() },
             });

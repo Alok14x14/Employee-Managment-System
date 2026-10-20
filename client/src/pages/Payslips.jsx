@@ -7,6 +7,8 @@ import toast from "react-hot-toast";
 
 const Payslips = () => {
   const [payslips, setPayslips] = useState([])
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
   const [employees, setEmployees] = useState([])
   const [loading, setLoading] = useState(true);
 
@@ -14,15 +16,17 @@ const Payslips = () => {
   const isAdmin = user?.role === "ADMIN";
 
   const fetchPayslips = useCallback(async ()=>{
+    setLoading(true)
     try {
-      const res = await api.get('/payslips')
+      const res = await api.get(`/payslips?page=${page}&limit=10`)
       setPayslips(res.data.data || [])
+      setTotal(res.data.total || 0)
     } catch (error) {
       toast.error(error?.response?.data?.error || error?.message);
     }finally{
       setLoading(false)
     }
-  },[])
+  },[page])
 
   useEffect(()=>{
     fetchPayslips()
@@ -43,7 +47,7 @@ const Payslips = () => {
         </div>
         {isAdmin && <GeneratePayslipForm employees={employees} onSuccess={fetchPayslips} />}
       </div>
-      <PayslipList payslips={payslips} isAdmin={isAdmin} loading={loading} />
+      <PayslipList payslips={payslips} isAdmin={isAdmin} loading={loading} page={page} total={total} totalPages={Math.max(1, Math.ceil(total / 10))} onPageChange={setPage} />
     </div>
   );
 };

@@ -51,15 +51,17 @@ async function clear() {
     const attendanceCorrectionsData = loadJson("attendanceCorrections.json");
 
     const demoUserIds = usersData.map((u) => new mongoose.Types.ObjectId(u._id));
+    const demoUserEmails = usersData.map((u) => u.email.toLowerCase().trim());
     const demoEmployeeIds = employeesData.map((e) => new mongoose.Types.ObjectId(e._id));
+    const demoEmails = employeesData.map((e) => e.email.toLowerCase().trim());
     const demoHolidayNames = holidaysData.map((h) => h.name);
     const demoAnnouncementIds = announcementsData.map((a) => new mongoose.Types.ObjectId(a._id));
     const demoDocumentIds = employeeDocsData.map((d) => new mongoose.Types.ObjectId(d._id));
     const demoCorrectionIds = attendanceCorrectionsData.map((c) => new mongoose.Types.ObjectId(c._id));
 
     const [uRes, eRes, aRes, lRes, pRes, hRes, annRes, docRes, corrRes] = await Promise.all([
-      db.collection("users").deleteMany({ _id: { $in: demoUserIds } }),
-      db.collection("employees").deleteMany({ _id: { $in: demoEmployeeIds } }),
+      db.collection("users").deleteMany({ $or: [{ _id: { $in: demoUserIds } }, { email: { $in: demoUserEmails } }] }),
+      db.collection("employees").deleteMany({ $or: [{ _id: { $in: demoEmployeeIds } }, { email: { $in: demoEmails } }] }),
       db.collection("attendances").deleteMany({ employeeId: { $in: demoEmployeeIds } }),
       db.collection("leaveapplications").deleteMany({ employeeId: { $in: demoEmployeeIds } }),
       db.collection("payslips").deleteMany({ employeeId: { $in: demoEmployeeIds } }),

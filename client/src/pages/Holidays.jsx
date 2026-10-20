@@ -3,6 +3,7 @@ import { CalendarDays, Loader2, Plus, Search, Trash2Icon, X } from 'lucide-react
 import { formatDate } from '../utils/formatters'
 import api from '../api/axios'
 import toast from 'react-hot-toast'
+import Pagination from '../components/Pagination'
 
 const Holidays = () => {
   const currentYear = new Date().getFullYear()
@@ -10,6 +11,8 @@ const Holidays = () => {
   const [holidays, setHolidays] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
+  const [total, setTotal] = useState(0)
 
   // Add holiday modal state
   const [showAddModal, setShowAddModal] = useState(false)
@@ -24,22 +27,23 @@ const Holidays = () => {
   const fetchHolidays = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await api.get(`/holidays?year=${selectedYear}`)
+      const params = new URLSearchParams({ year: String(selectedYear), page: String(page), limit: '10' })
+      if (search.trim()) params.set('search', search.trim())
+      const res = await api.get(`/holidays?${params.toString()}`)
       setHolidays(res.data.data || [])
+      setTotal(res.data.total || 0)
     } catch {
       toast.error('Failed to load organization holidays')
     } finally {
       setLoading(false)
     }
-  }, [selectedYear])
+  }, [selectedYear, page, search])
 
   useEffect(() => {
     fetchHolidays()
   }, [fetchHolidays])
 
-  const filteredHolidays = holidays.filter((h) =>
-    h.name.toLowerCase().includes(search.toLowerCase())
-  )
+  const totalPages = Math.max(1, Math.ceil(total / 10))
 
   const handleAddSubmit = async (e) => {
     e.preventDefault()
@@ -125,13 +129,13 @@ const Holidays = () => {
           <input
             placeholder="Search holiday by name..."
             className="pl-9"
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(1) }}
             value={search}
           />
         </div>
         <select
           value={selectedYear}
-          onChange={(e) => setSelectedYear(parseInt(e.target.value, 10))}
+          onChange={(e) => { setSelectedYear(parseInt(e.target.value, 10)); setPage(1) }}
           className="sm:w-36"
         >
           {Array.from({ length: 5 }, (_, i) => currentYear - 1 + i).map((y) => (
@@ -152,7 +156,7 @@ const Holidays = () => {
             </h3>
           </div>
           <span className="text-xs text-[#71717A] dark:text-[#A1A1AA] tabular-nums">
-            {loading ? '—' : `${filteredHolidays.length} days`}
+            {loading ? '—' : `${total} days`}
           </span>
         </div>
 
@@ -169,7 +173,7 @@ const Holidays = () => {
             </thead>
             <tbody>
               {loading ? (
-                Array.from({ length: 4 }).map((_, idx) => (
+                Array.from({ length: 10 }).map((_, idx) => (
                   <tr key={idx}>
                     <td><div className="h-3.5 w-24 skeleton" /></td>
                     <td><div className="h-3.5 w-20 skeleton" /></td>
@@ -178,7 +182,7 @@ const Holidays = () => {
                     <td className="text-right"><div className="h-4 w-8 skeleton ml-auto" /></td>
                   </tr>
                 ))
-              ) : filteredHolidays.length === 0 ? (
+              ) : holidays.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="text-center py-14 text-xs text-[#71717A] dark:text-[#A1A1AA]">
                     {search
@@ -187,7 +191,7 @@ const Holidays = () => {
                   </td>
                 </tr>
               ) : (
-                filteredHolidays.map((h) => {
+                holidays.map((h) => {
                   const hid = h.id || h._id
                   return (
                     <tr key={hid}>
@@ -220,6 +224,7 @@ const Holidays = () => {
             </tbody>
           </table>
         </div>
+        {!loading && <Pagination page={page} totalPages={totalPages} totalItems={total} onPageChange={setPage} />}
       </div>
 
       {/* Add Holiday Modal */}

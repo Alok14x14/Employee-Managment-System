@@ -22,11 +22,18 @@ export const getCorrectionRequests = async (req, res) => {
     if (!isAdmin && !employee) return res.status(404).json({ error: "Employee not found" });
     const filter = isAdmin ? {} : { employeeId: employee._id };
     if (status && ["PENDING", "APPROVED", "REJECTED"].includes(status)) filter.status = status;
-    const requests = await AttendanceCorrection.find(filter)
+    const paginated = req.query.page !== undefined || req.query.limit !== undefined;
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 10));
+    const total = paginated ? await AttendanceCorrection.countDocuments(filter) : null;
+    let query = AttendanceCorrection.find(filter).sort({ createdAt: -1 });
+    if (paginated) query = query.skip((page - 1) * limit).limit(limit);
+    else query = query.limit(100);
+    const requests = await query
       .populate("employeeId", "firstName lastName email department")
-      .populate("attendanceId", "date checkIn checkOut")
-      .sort({ createdAt: -1 }).limit(100).lean();
-    return res.json({ data: requests.map((item) => ({ ...item, id: item._id.toString() })) });
+      .populate("attendanceId", "date checkIn checkOut").lean();
+    const data = requests.map((item) => ({ ...item, id: item._id.toString() }));
+    return res.json(paginated ? { data, total, page, limit, totalPages: Math.ceil(total / limit) } : { data });
   } catch (error) {
     console.error("getCorrectionRequests error:", error);
     return res.status(500).json({ error: "Failed to fetch correction requests" });

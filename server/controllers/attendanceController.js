@@ -159,6 +159,8 @@ export const getAttendance = async (req, res) => {
 
         const today = istDayStart();
         const { month, limit } = req.query;
+        const paginated = !month && (req.query.page !== undefined || limit !== undefined);
+        const page = Math.max(1, parseInt(req.query.page, 10) || 1);
 
         let startDate, endDate;
         let isMonthQuery = false;
@@ -272,11 +274,15 @@ export const getAttendance = async (req, res) => {
         let historyQuery = Attendance.find(query).sort({ date: -1 });
         if (!isMonthQuery) {
             let lim = parseInt(limit, 10);
-            if (isNaN(lim)) lim = 30;
+            if (isNaN(lim)) lim = 10;
             lim = Math.max(1, Math.min(100, lim));
+            if (paginated) historyQuery = historyQuery.skip((page - 1) * lim);
             historyQuery = historyQuery.limit(lim);
         }
-        const history = await historyQuery;
+        const [history, historyTotal] = await Promise.all([
+            historyQuery,
+            paginated ? Attendance.countDocuments(query) : Promise.resolve(null),
+        ]);
 
         const [todayRecord, isWeekendToday, holidayToday, approvedLeaveToday] = await Promise.all([
             Attendance.findOne({
@@ -305,6 +311,7 @@ export const getAttendance = async (req, res) => {
 
         return res.json({
             data: history,
+            ...(paginated ? { total: historyTotal, page, limit: parseInt(limit, 10) || 10, totalPages: Math.ceil(historyTotal / (parseInt(limit, 10) || 10)) } : {}),
             todayRecord: todayRecord || null,
             employee: { isDeleted: employee.isDeleted },
             restriction,
@@ -319,7 +326,10 @@ export const getAttendance = async (req, res) => {
 // GET /api/attendance/admin/today?department=&date=YYYY-MM-DD
 export const getTodayAttendanceAdmin = async (req, res) => {
     try {
-        const { department, date } = req.query;
+        const { department, date, search, status, page: rawPage, limit: rawLimit } = req.query;
+        const paginated = rawPage !== undefined || rawLimit !== undefined;
+        const page = Math.max(1, parseInt(rawPage, 10) || 1);
+        const limit = Math.min(100, Math.max(1, parseInt(rawLimit, 10) || 10));
 
         // Current today in IST
         const currentTodayStart = istDayStart();
@@ -509,13 +519,29 @@ export const getTodayAttendanceAdmin = async (req, res) => {
             return nameA.localeCompare(nameB);
         });
 
+        let filteredData = data;
+        if (status === "PRESENT") filteredData = filteredData.filter((row) => row.status === "PRESENT" || row.status === "LATE");
+        else if (status === "LATE") filteredData = filteredData.filter((row) => row.status === "LATE");
+        else if (status === "ON_LEAVE" || status === "ABSENT") filteredData = filteredData.filter((row) => row.status === status);
+        if (search?.trim()) {
+            const term = search.trim().toLocaleLowerCase();
+            filteredData = filteredData.filter((row) => `${row.employee.firstName} ${row.employee.lastName} ${row.employee.email || ""} ${row.employee.position || ""}`.toLocaleLowerCase().includes(term));
+        }
+        const total = filteredData.length;
+        const pageData = paginated ? filteredData.slice((page - 1) * limit, page * limit) : data;
+
         // Calculate summary counts
         const totalActive = employees.length;
         const present = checkedInEmpIds.size;
         const late = data.filter((d) => d.status === "LATE").length;
         const stillWorking = data.filter((d) => d.checkIn && !d.checkOut).length;
         const checkedOut = data.filter((d) => d.checkIn && d.checkOut).length;
-        const onLeave = leaveMap.size;
+        // Count employees represented as ON_LEAVE in the attendance data. Approved leave
+        // records for employees who still checked in must not inflate this metric.
+        const summaryRows = search?.trim()
+            ? data.filter((row) => `${row.employee.firstName} ${row.employee.lastName} ${row.employee.email || ""} ${row.employee.position || ""}`.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()))
+            : data;
+        const onLeave = summaryRows.filter((row) => row.status === "ON_LEAVE").length;
         const notCheckedIn = Math.max(0, totalActive - present);
         const absent = dayInfo.type === "WORKING"
             ? Math.max(0, totalActive - present - onLeave)
@@ -535,7 +561,8 @@ export const getTodayAttendanceAdmin = async (req, res) => {
                 onLeave,
                 absent,
             },
-            data,
+            data: pageData,
+            ...(paginated ? { total, page, limit, totalPages: Math.ceil(total / limit) } : {}),
         });
     } catch (error) {
         console.error("getTodayAttendanceAdmin error:", error);

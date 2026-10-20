@@ -17,7 +17,8 @@ export const getDashboard  = async (req, res) => {
         if(session.role === "ADMIN"){
             const todayStart = istDayStart();
             const todayEnd = istDayEnd();
-            const fiveDaysAgo = new Date(todayStart.getTime() - 4 * 24 * 60 * 60 * 1000);
+            // Pull a broad window so the trend can select five working days even when holidays cluster.
+            const trendStart = new Date(todayStart.getTime() - 60 * 24 * 60 * 60 * 1000);
 
             // Exclude employees whose linked User has role "ADMIN"
             const adminUsers = await User.find({ role: "ADMIN" }).select("_id").lean();
@@ -57,7 +58,7 @@ export const getDashboard  = async (req, res) => {
                     {
                         $match: {
                             employeeId: { $in: nonAdminEmployeeIds },
-                            date: { $gte: fiveDaysAgo, $lt: todayEnd },
+                            date: { $gte: trendStart, $lt: todayEnd },
                             status: { $ne: "ABSENT" }
                         }
                     },
@@ -77,9 +78,9 @@ export const getDashboard  = async (req, res) => {
                 LeaveApplication.find({
                     status: "APPROVED",
                     startDate: { $lt: todayEnd },
-                    endDate: { $gte: fiveDaysAgo }
+                    endDate: { $gte: trendStart }
                 }).select("employeeId startDate endDate").lean(),
-                loadHolidaySet(fiveDaysAgo, todayEnd)
+                loadHolidaySet(trendStart, todayEnd)
             ])
 
             const trendMap = new Map();
@@ -87,25 +88,19 @@ export const getDashboard  = async (req, res) => {
                 trendMap.set(item._id, item.count);
             });
 
-            // Calculate past 5 days attendance trend
-            const past5Days = Array.from({length: 5}, (_, i) => {
-                return new Date(todayStart.getTime() - (4 - i) * 24 * 60 * 60 * 1000);
-            });
+            // Select the five most recent working days, skipping weekends and configured holidays.
+            const past5Days = [];
+            for (let offset = 0; offset < 60 && past5Days.length < 5; offset += 1) {
+                const day = new Date(todayStart.getTime() - offset * 24 * 60 * 60 * 1000);
+                if (!isWeekend(day) && !isHoliday(day, holidaySet)) past5Days.push(day);
+            }
+            past5Days.reverse();
 
             const attendanceData = past5Days.map((day) => {
                 const dayStart = istDayStart(day);
                 const { year, month, day: d } = istParts(dayStart);
                 const dateKey = `${year}-${month}-${d}`;
                 const present = trendMap.get(dateKey) || 0;
-
-                // Skip weekends: return actual present data and absent: 0
-                if (isWeekend(dayStart)) {
-                    return {
-                        name: dayStart.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'Asia/Kolkata' }),
-                        present,
-                        absent: 0
-                    };
-                }
 
                 // Compute eligible headcount per day as active, non-deleted employees whose joinDate is on or before that day
                 const eligibleHeadcount = nonAdminEmployees.filter((emp) => {
@@ -127,8 +122,7 @@ export const getDashboard  = async (req, res) => {
                 });
 
                 const onLeave = onLeaveSet.size;
-                const isHolidayDay = isHoliday(dayStart, holidaySet);
-                const absent = isHolidayDay ? 0 : Math.max(0, eligibleHeadcount - present - onLeave);
+                const absent = Math.max(0, eligibleHeadcount - present - onLeave);
 
                 return {
                     name: dayStart.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'Asia/Kolkata' }),

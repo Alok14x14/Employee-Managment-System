@@ -97,5 +97,140 @@
     "bio": "Streamlining organizational workflows and supply chain efficiency.",
     "mustChangePassword": false,
     "tokenVersion": 0
+  },
+  {
+    "_id": "66f00000000000000000000c",
+    "email": "marcus.vance@example.com",
+    "password": "$2b$10$KylaFRMp.W2ABuxIl9Inq.7ZHOB5WMB32it1r8AZiOu/hlAw11rz.",
+    "role": "EMPLOYEE",
+    "bio": "Distributed systems and high-throughput microservices specialist in Go & Node.js.",
+    "mustChangePassword": false,
+    "tokenVersion": 0
+  },
+  {
+    "_id": "66f00000000000000000000d",
+    "email": "chloe.bennett@example.com",
+    "password": "$2b$10$KylaFRMp.W2ABuxIl9Inq.7ZHOB5WMB32it1r8AZiOu/hlAw11rz.",
+    "role": "EMPLOYEE",
+    "bio": "Passionate about modern web standards, accessibility, micro-interactions, and design tokens.",
+    "mustChangePassword": false,
+    "tokenVersion": 0
+  },
+  {
+    "_id": "66f00000000000000000000e",
+    "email": "daniel.kim@example.com",
+    "password": "$2b$10$KylaFRMp.W2ABuxIl9Inq.7ZHOB5WMB32it1r8AZiOu/hlAw11rz.",
+    "role": "EMPLOYEE",
+    "bio": "Leading end-to-end testing, Playwright automation suites, and release readiness.",
+    "mustChangePassword": false,
+    "tokenVersion": 0
+  },
+  {
+    "_id": "66f00000000000000000000f",
+    "email": "ananya.sharma@example.com",
+    "password": "$2b$10$KylaFRMp.W2ABuxIl9Inq.7ZHOB5WMB32it1r8AZiOu/hlAw11rz.",
+    "role": "EMPLOYEE",
+    "bio": "Bridging customer requirements and technical engineering roadmaps for scalable SaaS products.",
+    "mustChangePassword": false,
+    "tokenVersion": 0
+  },
+  {
+    "_id": "66f000000000000000000010",
+    "email": "tyler.reed@example.com",
+    "password": "$2b$10$KylaFRMp.W2ABuxIl9Inq.7ZHOB5WMB32it1r8AZiOu/hlAw11rz.",
+    "role": "EMPLOYEE",
+    "bio": "Focusing on analytics telemetry, customer discovery interviews, and sprint backlog grooming.",
+    "mustChangePassword": false,
+    "tokenVersion": 0
+  },
+  {
+    "_id": "66f000000000000000000011",
+    "email": "elena.rostova@example.com",
+    "password": "$2b$10$KylaFRMp.W2ABuxIl9Inq.7ZHOB5WMB32it1r8AZiOu/hlAw11rz.",
+    "role": "EMPLOYEE",
+    "bio": "Uncovering actionable user behaviors through qualitative usability labs and cohort studies.",
+    "mustChangePassword": false,
+    "tokenVersion": 0
+  },
+  {
+    "_id": "66f000000000000000000012",
+    "email": "brandon.cole@example.com",
+    "password": "$2b$10$KylaFRMp.W2ABuxIl9Inq.7ZHOB5WMB32it1r8AZiOu/hlAw11rz.",
+    "role": "EMPLOYEE",
+    "bio": "Creating engaging micro-animations, illustration libraries, and sleek visual identities.",
+    "mustChangePassword": false,
+    "tokenVersion": 0
+  },
+  {
+    "_id": "66f000000000000000000013",
+    "email": "lucas.silva@example.com",
+    "password": "$2b$10$KylaFRMp.W2ABuxIl9Inq.7ZHOB5WMB32it1r8AZiOu/hlAw11rz.",
+    "role": "EMPLOYEE",
+    "bio": "Directing high-intent search strategy, technical content marketing, and inbound lead funnels.",
+    "mustChangePassword": false,
+    "tokenVersion": 0
+  },
+  {
+    "_id": "66f000000000000000000014",
+    "email": "zoe.campbell@example.com",
+    "password": "$2b$10$KylaFRMp.W2ABuxIl9Inq.7ZHOB5WMB32it1r8AZiOu/hlAw11rz.",
+    "role": "EMPLOYEE",
+    "bio": "Growing global brand presence, community events, and tech podcast production.",
+    "mustChangePassword": false,
+    "tokenVersion": 0
+  },
+  {
+    "_id": "66f000000000000000000015",
+    "email": "rachel.green@example.com",
+    "password": "$2b$10$KylaFRMp.W2ABuxIl9Inq.7ZHOB5WMB32it1r8AZiOu/hlAw11rz.",
+    "role": "EMPLOYEE",
+    "bio": "Scaling engineering, product, and leadership hiring pipelines across regions.",
+    "mustChangePassword": false,
+    "tokenVersion": 0
+  },
+  {
+    "_id": "66f000000000000000000016",
+    "email": "sanjay.gupta@example.com",
+    "password": "$2b$10$KylaFRMp.W2ABuxIl9Inq.7ZHOB5WMB32it1r8AZiOu/hlAw11rz.",
+    "role": "EMPLOYEE",
+    "bio": "Managing multi-currency general ledgers, tax withholdings, and statutory audit compliance.",
+    "mustChangePassword": false,
+    "tokenVersion": 0
+  },
+  {
+    "_id": "66f000000000000000000017",
+    "email": "olivia.thorne@example.com",
+    "password": "$2b$10$KylaFRMp.W2ABuxIl9Inq.7ZHOB5WMB32it1r8AZiOu/hlAw11rz.",
+    "role": "EMPLOYEE",
+    "bio": "Sourcing enterprise qualified leads and accelerating executive discovery calls.",
+    "mustChangePassword": false,
+    "tokenVersion": 0
+  },
+  {
+    "_id": "66f000000000000000000018",
+    "email": "nathan.drake@example.com",
+    "password": "$2b$10$KylaFRMp.W2ABuxIl9Inq.7ZHOB5WMB32it1r8AZiOu/hlAw11rz.",
+    "role": "EMPLOYEE",
+    "bio": "Resolving mission-critical customer escalations and driving SLA satisfaction.",
+    "mustChangePassword": false,
+    "tokenVersion": 0
+  },
+  {
+    "_id": "66f000000000000000000019",
+    "email": "kevin.park@example.com",
+    "password": "$2b$10$KylaFRMp.W2ABuxIl9Inq.7ZHOB5WMB32it1r8AZiOu/hlAw11rz.",
+    "role": "EMPLOYEE",
+    "bio": "Maintaining identity providers, SSO infrastructure, zero-trust VPN, and hardware fleet.",
+    "mustChangePassword": false,
+    "tokenVersion": 0
+  },
+  {
+    "_id": "66f00000000000000000001a",
+    "email": "aaron.brooks@example.com",
+    "password": "$2b$10$KylaFRMp.W2ABuxIl9Inq.7ZHOB5WMB32it1r8AZiOu/hlAw11rz.",
+    "role": "EMPLOYEE",
+    "bio": "Orchestrating office operations, facility logistics, and inventory management.",
+    "mustChangePassword": false,
+    "tokenVersion": 0
   }
 ]

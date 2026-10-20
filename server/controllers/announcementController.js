@@ -8,8 +8,16 @@ export const listAnnouncements = async (req, res) => {
     const filter = req.session.role === "ADMIN"
       ? {}
       : { $or: [{ expiresAt: null }, { expiresAt: { $gte: new Date() } }] };
-    const announcements = await Announcement.find(filter).sort({ createdAt: -1 }).limit(200).lean();
-    return res.json({ data: announcements.map((announcement) => ({ ...announcement, id: announcement._id.toString() })) });
+    const paginated = req.query.page !== undefined || req.query.limit !== undefined;
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 10));
+    const total = paginated ? await Announcement.countDocuments(filter) : null;
+    let query = Announcement.find(filter).sort({ createdAt: -1 });
+    if (paginated) query = query.skip((page - 1) * limit).limit(limit);
+    else query = query.limit(200);
+    const announcements = await query.lean();
+    const data = announcements.map((announcement) => ({ ...announcement, id: announcement._id.toString() }));
+    return res.json(paginated ? { data, total, page, limit, totalPages: Math.ceil(total / limit) } : { data });
   } catch (error) {
     console.error("listAnnouncements error:", error);
     return res.status(500).json({ error: "Failed to fetch announcements" });

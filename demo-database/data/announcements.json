@@ -30,5 +30,29 @@
     "createdBy": "66f000000000000000000001",
     "expiresAt": "2026-10-31T23:59:59.999Z",
     "createdAt": "2026-10-19T11:15:00.000Z"
+  },
+  {
+    "_id": "668000000000000000000005",
+    "title": "StaffFlow Annual Innovation Hackathon 2026 - Registration Open",
+    "message": "Gear up for our annual 48-hour innovation hackathon scheduled for November 12-14! Cross-functional teams across Engineering, Product, Design, and Marketing can submit problem statements and prototypes. Grand prizes include learning stipends and fast-track product incubation.",
+    "createdBy": "66f000000000000000000001",
+    "expiresAt": "2026-11-14T23:59:59.999Z",
+    "createdAt": "2026-10-15T14:00:00.000Z"
+  },
+  {
+    "_id": "668000000000000000000006",
+    "title": "Workplace Mental Health & Confidential Counseling Sessions",
+    "message": "As part of our commitment to employee wellbeing, free 1-on-1 confidential counseling sessions with accredited psychologists are available every Wednesday and Friday. Appointments can be scheduled discreetly through the Employee Assistance Program portal.",
+    "createdBy": "66f000000000000000000001",
+    "expiresAt": null,
+    "createdAt": "2026-10-09T10:00:00.000Z"
+  },
+  {
+    "_id": "668000000000000000000007",
+    "title": "Annual Corporate Year-End Gala & Awards Evening - Save the Date",
+    "message": "Mark your calendars for Friday, December 18, 2026! We will celebrate our collective milestones with a black-tie evening, awards ceremony, live music, and dinner banquet. Formal RSVP links will open next week.",
+    "createdBy": "66f000000000000000000001",
+    "expiresAt": "2026-12-19T23:59:59.999Z",
+    "createdAt": "2026-10-05T09:00:00.000Z"
   }
 ]

@@ -9,9 +9,12 @@ import { Calendar, List } from "lucide-react";
 
 import { format } from "date-fns";
 import AttendanceCorrectionRequests from "../components/attendance/AttendanceCorrectionRequests";
+import Pagination from "../components/Pagination";
 
 const Attendance = () => {
   const [history, setHistory] = useState([]);
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyTotal, setHistoryTotal] = useState(0);
   const [todayRecord, setTodayRecord] = useState(null);
   const [restriction, setRestriction] = useState(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -22,13 +25,15 @@ const Attendance = () => {
   ); // "calendar" | "table"
 
   const fetchData = useCallback(async (monthDate = currentMonth, mode = viewMode) => {
+    setLoading(true)
     try {
       const queryParam = mode === "calendar"
         ? `?month=${format(monthDate, "yyyy-MM")}`
-        : "?limit=50";
+        : `?page=${historyPage}&limit=10`;
       const res = await api.get(`/attendance${queryParam}`);
       const json = res.data;
       setHistory(json.data || []);
+      if (mode === 'table') setHistoryTotal(json.total || 0);
       if (json.todayRecord !== undefined) {
         setTodayRecord(json.todayRecord);
       }
@@ -39,7 +44,7 @@ const Attendance = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentMonth, viewMode]);
+  }, [currentMonth, viewMode, historyPage]);
 
   useEffect(() => {
     fetchData(currentMonth, viewMode);
@@ -108,7 +113,7 @@ const Attendance = () => {
           onMonthChange={setCurrentMonth}
         />
       ) : (
-        <AttendanceHistory history={history} loading={loading} />
+      <AttendanceHistory history={history} loading={loading} page={historyPage} total={historyTotal} totalPages={Math.max(1, Math.ceil(historyTotal / 10))} onPageChange={setHistoryPage} />
       )}
     </div>
   );

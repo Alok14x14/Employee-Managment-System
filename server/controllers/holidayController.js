@@ -16,18 +16,26 @@ export const getHolidays = async (req, res) => {
     const yearStart = new Date(`${year}-01-01T00:00:00+05:30`);
     const yearEnd = new Date(`${year}-12-31T23:59:59.999+05:30`);
 
-    const holidays = await Holiday.find({
+    const where = {
       date: { $gte: yearStart, $lte: yearEnd },
-    })
-      .sort({ date: 1 })
-      .lean();
+    };
+    if (req.query.search?.trim()) {
+      where.name = { $regex: req.query.search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), $options: "i" };
+    }
+    const paginated = req.query.page !== undefined || req.query.limit !== undefined;
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 10));
+    const total = paginated ? await Holiday.countDocuments(where) : null;
+    let query = Holiday.find(where).sort({ date: 1 });
+    if (paginated) query = query.skip((page - 1) * limit).limit(limit);
+    const holidays = await query.lean();
 
     const data = holidays.map((h) => ({
       ...h,
       id: h._id.toString(),
     }));
 
-    return res.json({ success: true, year, data });
+    return res.json(paginated ? { success: true, year, data, total, page, limit, totalPages: Math.ceil(total / limit) } : { success: true, year, data });
   } catch (error) {
     console.error("getHolidays error:", error);
     return res.status(500).json({ error: "Failed to fetch holidays" });

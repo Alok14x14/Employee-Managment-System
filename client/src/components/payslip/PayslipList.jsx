@@ -1,7 +1,11 @@
 import { Download } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { formatCurrency, formatISTDate } from '../../utils/formatters';
+import Pagination from '../Pagination';
 
-const PayslipList = ({ payslips, isAdmin, loading = false }) => {
+const PayslipList = ({ payslips, isAdmin, loading = false, page = 1, total = payslips.length, totalPages = 1, onPageChange }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
   return (
     <div className="bg-white dark:bg-[#18181B] border border-zinc-200 dark:border-zinc-800 rounded-[6px] overflow-hidden">
       <div className="overflow-x-auto">
@@ -35,7 +39,7 @@ const PayslipList = ({ payslips, isAdmin, loading = false }) => {
           </thead>
           <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
             {loading ? (
-              Array.from({ length: 5 }).map((_, idx) => (
+              Array.from({ length: 10 }).map((_, idx) => (
                 <tr key={idx}>
                   {isAdmin && (
                     <td className="px-3.5 py-2.5">
@@ -64,7 +68,7 @@ const PayslipList = ({ payslips, isAdmin, loading = false }) => {
               payslips.map((payslip) => {
                 const targetId = payslip._id || payslip.id;
                 return (
-                  <tr key={targetId} className="hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40 transition-colors">
+                  <tr key={targetId} role={isAdmin ? 'link' : undefined} tabIndex={isAdmin ? 0 : undefined} onClick={isAdmin ? () => navigate(`/employees/${payslip.employee?.id || payslip.employee?._id}`, { state: { from: location } }) : undefined} onKeyDown={isAdmin ? (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); navigate(`/employees/${payslip.employee?.id || payslip.employee?._id}`, { state: { from: location } }) } } : undefined} aria-label={isAdmin ? `View details for ${payslip.employee?.firstName || 'employee'} ${payslip.employee?.lastName || ''}` : undefined} className={`hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40 transition-colors ${isAdmin ? 'cursor-pointer focus-visible:outline-2 focus-visible:outline-blue-500' : ''}`}>
                     {isAdmin && (
                       <td className="px-3.5 py-2.5 font-medium text-zinc-900 dark:text-zinc-100">
                         {payslip.employee?.firstName} {payslip.employee?.lastName}
@@ -93,6 +97,8 @@ const PayslipList = ({ payslips, isAdmin, loading = false }) => {
                         href={`/print/payslips/${targetId}?autoprint=true`}
                         target="_blank"
                         rel="noopener noreferrer"
+                        onClick={(event) => event.stopPropagation()}
+                        onKeyDown={(event) => event.stopPropagation()}
                         className="btn-secondary h-7 px-2.5 py-0 text-xs inline-flex items-center gap-1.5"
                       >
                         <Download className="w-3.5 h-3.5 text-zinc-500 dark:text-zinc-400" />
@@ -106,6 +112,7 @@ const PayslipList = ({ payslips, isAdmin, loading = false }) => {
           </tbody>
         </table>
       </div>
+      {!loading && <Pagination page={page} totalPages={totalPages} totalItems={total} onPageChange={onPageChange} />}
     </div>
   );
 };

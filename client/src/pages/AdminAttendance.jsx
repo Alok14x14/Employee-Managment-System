@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState, useRef } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { Search, RefreshCw, ChevronLeft, ChevronRight, AlertCircle, Calendar } from 'lucide-react'
 import { useDepartments } from '../constants/departments'
 import api from '../api/axios'
 import toast from 'react-hot-toast'
 import { formatISTDate, formatTime } from '../utils/formatters'
 import { getWorkingHoursDisplay } from '../utils/attendance'
-import AdminCorrectionRequests from '../components/attendance/AdminCorrectionRequests'
+import Pagination from '../components/Pagination'
 
 const getTodayIST = () => {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date())
@@ -23,6 +23,8 @@ const addDays = (dateStr, days) => {
 }
 
 const AdminAttendance = () => {
+  const location = useLocation()
+  const navigate = useNavigate()
   const departments = useDepartments()
   const [searchParams, setSearchParams] = useSearchParams()
   const todayIST = getTodayIST()
@@ -56,6 +58,8 @@ const AdminAttendance = () => {
   const [search, setSearch] = useState('')
   const [selectedDept, setSelectedDept] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('ALL')
+  const [page, setPage] = useState(1)
+  const [totalRows, setTotalRows] = useState(0)
 
   const isViewingToday = selectedDate === todayIST
 
@@ -65,6 +69,12 @@ const AdminAttendance = () => {
 
   const selectedDateRef = useRef(selectedDate)
   selectedDateRef.current = selectedDate
+  const searchRef = useRef(search)
+  searchRef.current = search
+  const statusRef = useRef(selectedStatus)
+  statusRef.current = selectedStatus
+  const pageRef = useRef(page)
+  pageRef.current = page
 
   const handleDateSelect = useCallback((newDate) => {
     if (!newDate) return
@@ -72,6 +82,7 @@ const AdminAttendance = () => {
       toast.error('Cannot view attendance for future dates')
       return
     }
+    setPage(1)
     setSelectedDate(newDate)
     setSearchParams((prev) => {
       const next = new URLSearchParams(prev)
@@ -107,11 +118,16 @@ const AdminAttendance = () => {
       if (selectedDateRef.current) {
         params.append('date', selectedDateRef.current)
       }
+      params.set('page', String(pageRef.current))
+      params.set('limit', '10')
+      if (searchRef.current.trim()) params.set('search', searchRef.current.trim())
+      if (statusRef.current !== 'ALL') params.set('status', statusRef.current)
 
       const res = await api.get(`/attendance/admin/today?${params.toString()}`)
       if (ignoreRef && ignoreRef.current) return
 
       setData(res.data.data || [])
+      setTotalRows(res.data.total || 0)
       setSummary(res.data.summary || {
         totalActive: 0,
         present: 0,
@@ -144,7 +160,7 @@ const AdminAttendance = () => {
     return () => {
       ignoreRef.current = true
     }
-  }, [selectedDept, selectedDate, fetchAttendance])
+  }, [selectedDept, selectedDate, selectedStatus, search, page, fetchAttendance])
 
   // Auto-refresh every 60 seconds; only active when viewing today in IST
   useEffect(() => {
@@ -171,21 +187,7 @@ const AdminAttendance = () => {
   }, [selectedDate, todayIST, fetchAttendance])
 
   // Client-side search and status filtering
-  const filteredData = data.filter((row) => {
-    if (selectedStatus === 'PRESENT') {
-      if (row.status !== 'PRESENT' && row.status !== 'LATE') return false
-    } else if (selectedStatus === 'ON_LEAVE') {
-      if (row.status !== 'ON_LEAVE') return false
-    } else if (selectedStatus === 'ABSENT') {
-      if (row.status !== 'ABSENT') return false
-    }
-
-    const term = search.toLowerCase()
-    const name = `${row.employee.firstName} ${row.employee.lastName}`.toLowerCase()
-    const email = (row.employee.email || '').toLowerCase()
-    const position = (row.employee.position || '').toLowerCase()
-    return name.includes(term) || email.includes(term) || position.includes(term)
-  })
+  const totalPages = Math.max(1, Math.ceil(totalRows / 10))
 
   const isNonWorkingDay = dayInfo?.type === 'WEEKEND' || dayInfo?.type === 'HOLIDAY'
 
@@ -200,6 +202,7 @@ const AdminAttendance = () => {
       label: 'Late',
       value: summary.late,
       helper: 'Check-in after 9:00 AM',
+      statusFilter: 'LATE',
     },
     {
       label: 'On leave',
@@ -233,7 +236,6 @@ const AdminAttendance = () => {
 
   return (
     <div className="space-y-6">
-      <AdminCorrectionRequests />
       {/* Page Header */}
       <div className="page-header">
         <div>
@@ -273,6 +275,7 @@ const AdminAttendance = () => {
               key={s.label}
               onClick={() => {
                 if (!isClickable) return
+                setPage(1)
                 setSelectedStatus((prev) => (prev === s.statusFilter ? 'ALL' : s.statusFilter))
               }}
               className={`card p-4 text-left transition-all ${
@@ -303,7 +306,7 @@ const AdminAttendance = () => {
           <input
             placeholder="Search by name, email, or title..."
             className="pl-9"
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(1) }}
             value={search}
           />
         </div>
@@ -366,7 +369,7 @@ const AdminAttendance = () => {
         {/* Department Filter */}
         <select
           value={selectedDept}
-          onChange={(e) => setSelectedDept(e.target.value)}
+          onChange={(e) => { setSelectedDept(e.target.value); setPage(1) }}
           className="sm:w-44"
         >
           <option value="">All departments</option>
@@ -380,11 +383,12 @@ const AdminAttendance = () => {
         {/* Status Filter */}
         <select
           value={selectedStatus}
-          onChange={(e) => setSelectedStatus(e.target.value)}
+          onChange={(e) => { setSelectedStatus(e.target.value); setPage(1) }}
           className="sm:w-36"
         >
           <option value="ALL">All statuses</option>
           <option value="PRESENT">Present</option>
+          <option value="LATE">Late</option>
           <option value="ON_LEAVE">On leave</option>
           <option value="ABSENT">Absent</option>
         </select>
@@ -418,7 +422,7 @@ const AdminAttendance = () => {
             </thead>
             <tbody>
               {loading ? (
-                Array.from({ length: 5 }).map((_, idx) => (
+                Array.from({ length: 10 }).map((_, idx) => (
                   <tr key={idx}>
                     <td>
                       <div className="flex items-center gap-2.5 py-1">
@@ -436,7 +440,7 @@ const AdminAttendance = () => {
                     <td><div className="h-4 w-16 skeleton" /></td>
                   </tr>
                 ))
-              ) : filteredData.length === 0 ? (
+              ) : data.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="text-center py-14 text-xs text-[#71717A] dark:text-[#A1A1AA]">
                     {search || selectedStatus !== 'ALL' || selectedDept
@@ -447,14 +451,14 @@ const AdminAttendance = () => {
                   </td>
                 </tr>
               ) : (
-                filteredData.map((row) => {
+                data.map((row) => {
                   const emp = row.employee
                   const isLateArrival = row.status === 'LATE'
                   const isOnLeave = row.status === 'ON_LEAVE'
                   const isAbsent = row.status === 'ABSENT'
 
                   return (
-                    <tr key={emp.id || emp._id}>
+                    <tr key={emp.id || emp._id} role="link" tabIndex={0} onClick={() => navigate(`/employees/${emp.id || emp._id}`, { state: { from: location } })} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); navigate(`/employees/${emp.id || emp._id}`, { state: { from: location } }) } }} aria-label={`View details for ${emp.firstName} ${emp.lastName}`} className="cursor-pointer hover:bg-zinc-50/60 focus-visible:outline-2 focus-visible:outline-blue-500 dark:hover:bg-zinc-800/40">
                       {/* Employee Info */}
                       <td>
                         <div className="flex items-center gap-2.5">
@@ -533,6 +537,7 @@ const AdminAttendance = () => {
             </tbody>
           </table>
         </div>
+        {!loading && <Pagination page={page} totalPages={totalPages} totalItems={totalRows} onPageChange={setPage} />}
       </div>
     </div>
   )

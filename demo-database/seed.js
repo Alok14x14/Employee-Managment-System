@@ -97,9 +97,11 @@ async function seed() {
     const employeeDocsCol = db.collection("employeedocuments");
     const attendanceCorrectionsCol = db.collection("attendancecorrections");
 
-    // Demo IDs list for cleanup/upsert
+    // Demo IDs and email lists
     const demoUserIds = usersData.map((u) => new mongoose.Types.ObjectId(u._id));
+    const demoUserEmails = usersData.map((u) => u.email.toLowerCase().trim());
     const demoEmployeeIds = employeesData.map((e) => new mongoose.Types.ObjectId(e._id));
+    const demoEmails = employeesData.map((e) => e.email.toLowerCase().trim());
     const demoHolidayNames = holidaysData.map((h) => h.name);
     const demoAnnouncementIds = announcementsData.map((a) => new mongoose.Types.ObjectId(a._id));
     const demoDocumentIds = employeeDocsData.map((d) => new mongoose.Types.ObjectId(d._id));
@@ -107,8 +109,8 @@ async function seed() {
 
     if (isForce) {
       console.log("🧹 Cleaning existing demo records (--force)...");
-      await usersCol.deleteMany({ _id: { $in: demoUserIds } });
-      await employeesCol.deleteMany({ _id: { $in: demoEmployeeIds } });
+      await usersCol.deleteMany({ $or: [{ _id: { $in: demoUserIds } }, { email: { $in: demoUserEmails } }] });
+      await employeesCol.deleteMany({ $or: [{ _id: { $in: demoEmployeeIds } }, { email: { $in: demoEmails } }] });
       await leavesCol.deleteMany({ employeeId: { $in: demoEmployeeIds } });
       await payslipsCol.deleteMany({ employeeId: { $in: demoEmployeeIds } });
       await attendanceCol.deleteMany({ employeeId: { $in: demoEmployeeIds } });
@@ -122,144 +124,163 @@ async function seed() {
     const today = getISTDayStart();
     const baseAnchorDate = new Date("2026-10-20T00:00:00.000Z");
 
-    // 1. Seed Users
+    // 1. Seed Users (Bulk)
     console.log(`👤 Upserting ${usersData.length} Users...`);
-    for (const u of usersData) {
+    const userOps = usersData.map((u) => {
       const email = u.email.toLowerCase().trim();
-      const existing = await usersCol.findOne({ email });
-      const doc = {
-        email,
-        password: u.password,
-        role: u.role,
-        bio: u.bio || "",
-        mustChangePassword: u.mustChangePassword ?? false,
-        tokenVersion: u.tokenVersion ?? 0,
-        updatedAt: new Date(),
+      const userId = new mongoose.Types.ObjectId(u._id);
+      return {
+        updateOne: {
+          filter: { $or: [{ _id: userId }, { email }] },
+          update: {
+            $set: {
+              email,
+              password: u.password,
+              role: u.role,
+              bio: u.bio || "",
+              mustChangePassword: u.mustChangePassword ?? false,
+              tokenVersion: u.tokenVersion ?? 0,
+              updatedAt: new Date(),
+            },
+            $setOnInsert: {
+              _id: userId,
+              createdAt: new Date(),
+            },
+          },
+          upsert: true,
+        },
       };
-      if (existing) {
-        await usersCol.updateOne({ _id: existing._id }, { $set: doc });
-      } else {
-        doc._id = new mongoose.Types.ObjectId(u._id);
-        doc.createdAt = new Date();
-        await usersCol.insertOne(doc);
-      }
-    }
+    });
+    await usersCol.bulkWrite(userOps);
     console.log("✅ Users seeded.");
 
-    // 2. Seed Employees
+    // 2. Seed Employees (Bulk)
     console.log(`💼 Upserting ${employeesData.length} Employees...`);
-    for (const e of employeesData) {
+    const empOps = employeesData.map((e) => {
       const email = e.email.toLowerCase().trim();
-      const existing = await employeesCol.findOne({ email });
-      const doc = {
-        userId: new mongoose.Types.ObjectId(e.userId),
-        firstName: e.firstName,
-        lastName: e.lastName,
-        email,
-        phone: e.phone,
-        position: e.position,
-        department: e.department,
-        basicSalary: Number(e.basicSalary || 0),
-        allowances: Number(e.allowances || 0),
-        deductions: Number(e.deductions || 0),
-        employmentStatus: e.employmentStatus || "ACTIVE",
-        joinDate: new Date(e.joinDate),
-        isDeleted: e.isDeleted ?? false,
-        bio: e.bio || "",
-        updatedAt: new Date(),
+      const empId = new mongoose.Types.ObjectId(e._id);
+      return {
+        updateOne: {
+          filter: { $or: [{ _id: empId }, { email }] },
+          update: {
+            $set: {
+              userId: new mongoose.Types.ObjectId(e.userId),
+              firstName: e.firstName,
+              lastName: e.lastName,
+              email,
+              phone: e.phone,
+              position: e.position,
+              department: e.department,
+              basicSalary: Number(e.basicSalary || 0),
+              allowances: Number(e.allowances || 0),
+              deductions: Number(e.deductions || 0),
+              employmentStatus: e.employmentStatus || "ACTIVE",
+              joinDate: new Date(e.joinDate),
+              isDeleted: e.isDeleted ?? false,
+              bio: e.bio || "",
+              updatedAt: new Date(),
+            },
+            $setOnInsert: {
+              _id: empId,
+              createdAt: new Date(e.joinDate),
+            },
+          },
+          upsert: true,
+        },
       };
-      if (existing) {
-        await employeesCol.updateOne({ _id: existing._id }, { $set: doc });
-      } else {
-        doc._id = new mongoose.Types.ObjectId(e._id);
-        doc.createdAt = new Date(e.joinDate);
-        await employeesCol.insertOne(doc);
-      }
-    }
+    });
+    await employeesCol.bulkWrite(empOps);
     console.log("✅ Employees seeded.");
 
-    // 3. Seed Holidays
+    // 3. Seed Holidays (Bulk)
     console.log(`🎉 Upserting ${holidaysData.length} Holidays...`);
-    for (const h of holidaysData) {
+    const holidayOps = holidaysData.map((h) => {
       let normalizedDate = getISTDayStart(new Date(h.date));
-      // In dynamic mode, ensure holiday does not accidentally fall exactly on today
       if (!isStatic && normalizedDate.getTime() === today.getTime()) {
         normalizedDate = new Date(today.getTime() + 4 * 24 * 60 * 60 * 1000);
       }
-      const existing = await holidaysCol.findOne({
-        $or: [{ date: normalizedDate }, { name: h.name }],
-      });
-      const doc = {
-        name: h.name,
-        date: normalizedDate,
-        createdBy: new mongoose.Types.ObjectId(h.createdBy),
-        updatedAt: new Date(),
+      const holId = new mongoose.Types.ObjectId(h._id);
+      return {
+        updateOne: {
+          filter: { $or: [{ _id: holId }, { date: normalizedDate }, { name: h.name }] },
+          update: {
+            $set: {
+              name: h.name,
+              date: normalizedDate,
+              createdBy: new mongoose.Types.ObjectId(h.createdBy),
+              updatedAt: new Date(),
+            },
+            $setOnInsert: {
+              _id: holId,
+              createdAt: new Date(),
+            },
+          },
+          upsert: true,
+        },
       };
-      if (existing) {
-        await holidaysCol.updateOne({ _id: existing._id }, { $set: doc });
-      } else {
-        doc._id = new mongoose.Types.ObjectId(h._id);
-        doc.createdAt = new Date();
-        await holidaysCol.insertOne(doc);
-      }
-    }
+    });
+    await holidaysCol.bulkWrite(holidayOps);
     console.log("✅ Holidays seeded.");
 
-    // 4. Seed Leave Applications
+    // 4. Seed Leave Applications (Bulk)
     console.log(`📝 Upserting ${leaveAppsData.length} Leave Applications...`);
-    for (let i = 0; i < leaveAppsData.length; i++) {
-      const l = leaveAppsData[i];
+    const leaveOps = leaveAppsData.map((l, i) => {
       let startDate = new Date(l.startDate);
       let endDate = new Date(l.endDate);
 
       if (!isStatic) {
         if (l.status === "PENDING") {
-          startDate = new Date(today.getTime() + (2 + i) * 24 * 60 * 60 * 1000);
+          startDate = new Date(today.getTime() + (2 + (i % 4)) * 24 * 60 * 60 * 1000);
           endDate = new Date(startDate.getTime() + (l.workingDays - 1) * 24 * 60 * 60 * 1000);
         } else if (l.status === "APPROVED") {
-          startDate = new Date(today.getTime() - (5 + i * 2) * 24 * 60 * 60 * 1000);
+          startDate = new Date(today.getTime() - (5 + (i % 10) * 3) * 24 * 60 * 60 * 1000);
           endDate = new Date(startDate.getTime() + (l.workingDays - 1) * 24 * 60 * 60 * 1000);
         } else if (l.status === "REJECTED") {
-          startDate = new Date(today.getTime() - (8 + i) * 24 * 60 * 60 * 1000);
+          startDate = new Date(today.getTime() - (8 + (i % 6) * 4) * 24 * 60 * 60 * 1000);
           endDate = new Date(startDate.getTime() + (l.workingDays - 1) * 24 * 60 * 60 * 1000);
         }
       }
 
-      const empId = new mongoose.Types.ObjectId(l.employeeId);
       const leaveId = new mongoose.Types.ObjectId(l._id);
-      const doc = {
-        employeeId: empId,
-        type: l.type,
-        startDate,
-        endDate,
-        reason: l.reason,
-        status: l.status,
-        rejectReason: l.rejectReason || undefined,
-        autoRejected: l.autoRejected || false,
-        workingDays: l.workingDays || 1,
-        updatedAt: new Date(),
+      const empId = new mongoose.Types.ObjectId(l.employeeId);
+      return {
+        updateOne: {
+          filter: { _id: leaveId },
+          update: {
+            $set: {
+              employeeId: empId,
+              type: l.type,
+              startDate,
+              endDate,
+              reason: l.reason,
+              status: l.status,
+              rejectReason: l.rejectReason || undefined,
+              autoRejected: l.autoRejected || false,
+              workingDays: l.workingDays || 1,
+              updatedAt: new Date(),
+            },
+            $setOnInsert: {
+              _id: leaveId,
+              createdAt: new Date(startDate.getTime() - 2 * 24 * 60 * 60 * 1000),
+            },
+          },
+          upsert: true,
+        },
       };
-
-      const existing = await leavesCol.findOne({ _id: leaveId });
-      if (existing) {
-        await leavesCol.updateOne({ _id: leaveId }, { $set: doc });
-      } else {
-        doc._id = leaveId;
-        doc.createdAt = new Date(startDate.getTime() - 2 * 24 * 60 * 60 * 1000);
-        await leavesCol.insertOne(doc);
-      }
-    }
+    });
+    await leavesCol.bulkWrite(leaveOps);
     console.log("✅ Leave Applications seeded.");
 
-    // 5. Seed Payslips
+    // 5. Seed Payslips (Bulk)
     console.log(`💰 Upserting ${payslipsData.length} Payslips...`);
-    const currentMonth = today.getMonth() + 1; // 1-12
+    const currentMonth = today.getMonth() + 1;
     const currentYear = today.getFullYear();
     const prevMonth = currentMonth === 1 ? 12 : currentMonth - 1;
     const prevYear = currentMonth === 1 ? currentYear - 1 : currentYear;
 
-    for (const p of payslipsData) {
+    const payslipOps = payslipsData.map((p) => {
       const empId = new mongoose.Types.ObjectId(p.employeeId);
+      const pId = new mongoose.Types.ObjectId(p._id);
       let targetMonth = Number(p.month);
       let targetYear = Number(p.year);
 
@@ -268,45 +289,42 @@ async function seed() {
         targetYear = prevYear;
       }
 
-      const doc = {
-        employeeId: empId,
-        month: targetMonth,
-        year: targetYear,
-        basicSalary: Number(p.basicSalary),
-        allowances: Number(p.allowances || 0),
-        deductions: Number(p.deductions || 0),
-        netSalary: Number(p.netSalary),
-        updatedAt: new Date(),
+      return {
+        updateOne: {
+          filter: { $or: [{ _id: pId }, { employeeId: empId, month: targetMonth, year: targetYear }] },
+          update: {
+            $set: {
+              employeeId: empId,
+              month: targetMonth,
+              year: targetYear,
+              basicSalary: Number(p.basicSalary),
+              allowances: Number(p.allowances || 0),
+              deductions: Number(p.deductions || 0),
+              netSalary: Number(p.netSalary),
+              updatedAt: new Date(),
+            },
+            $setOnInsert: {
+              _id: pId,
+              createdAt: new Date(p.createdAt || Date.now()),
+            },
+          },
+          upsert: true,
+        },
       };
-
-      const existing = await payslipsCol.findOne({
-        employeeId: doc.employeeId,
-        month: doc.month,
-        year: doc.year,
-      });
-
-      if (existing) {
-        await payslipsCol.updateOne({ _id: existing._id }, { $set: doc });
-      } else {
-        doc._id = new mongoose.Types.ObjectId(p._id);
-        doc.createdAt = new Date(p.createdAt || Date.now());
-        await payslipsCol.insertOne(doc);
-      }
-    }
+    });
+    await payslipsCol.bulkWrite(payslipOps);
     console.log("✅ Payslips seeded.");
 
-    // 6. Seed Attendance
+    // 6. Seed Attendance (Bulk)
     console.log(`⏱️ Upserting ${attendanceData.length} Attendance Records...`);
     const seededAttendanceMap = new Map();
 
-    for (let i = 0; i < attendanceData.length; i++) {
-      const a = attendanceData[i];
+    const attendanceOps = attendanceData.map((a) => {
       let recDate = new Date(a.date);
       let checkIn = a.checkIn ? new Date(a.checkIn) : null;
       let checkOut = a.checkOut ? new Date(a.checkOut) : null;
 
       if (!isStatic) {
-        // Calculate offset in days from baseAnchorDate (2026-10-20)
         const daysDiff = Math.round((baseAnchorDate.getTime() - new Date(a.date).getTime()) / (24 * 3600 * 1000));
         recDate = new Date(today.getTime() - daysDiff * 24 * 60 * 60 * 1000);
 
@@ -323,39 +341,40 @@ async function seed() {
       }
 
       const empId = new mongoose.Types.ObjectId(a.employeeId);
-      const doc = {
-        employeeId: empId,
-        date: recDate,
-        checkIn,
-        checkOut,
-        status: a.status,
-        workingHours: a.workingHours,
-        dayType: a.dayType,
-        autoCheckedOut: a.autoCheckedOut ?? false,
-        updatedAt: checkOut || checkIn || recDate,
-      };
-
       const attId = new mongoose.Types.ObjectId(a._id);
-      const existing = await attendanceCol.findOne({
-        $or: [{ _id: attId }, { employeeId: doc.employeeId, date: doc.date }],
-      });
 
-      if (existing) {
-        await attendanceCol.updateOne({ _id: existing._id }, { $set: doc });
-        seededAttendanceMap.set(a._id, { _id: existing._id, date: recDate, checkIn, checkOut });
-      } else {
-        doc._id = attId;
-        doc.createdAt = recDate;
-        await attendanceCol.insertOne(doc);
-        seededAttendanceMap.set(a._id, { _id: attId, date: recDate, checkIn, checkOut });
-      }
-    }
+      seededAttendanceMap.set(a._id, { _id: attId, date: recDate, checkIn, checkOut });
+
+      return {
+        updateOne: {
+          filter: { $or: [{ _id: attId }, { employeeId: empId, date: recDate }] },
+          update: {
+            $set: {
+              employeeId: empId,
+              date: recDate,
+              checkIn,
+              checkOut,
+              status: a.status,
+              workingHours: a.workingHours,
+              dayType: a.dayType,
+              autoCheckedOut: a.autoCheckedOut ?? false,
+              updatedAt: checkOut || checkIn || recDate,
+            },
+            $setOnInsert: {
+              _id: attId,
+              createdAt: recDate,
+            },
+          },
+          upsert: true,
+        },
+      };
+    });
+    await attendanceCol.bulkWrite(attendanceOps);
     console.log("✅ Attendance records seeded.");
 
-    // 7. Seed Announcements
+    // 7. Seed Announcements (Bulk)
     console.log(`📢 Upserting ${announcementsData.length} Company Announcements...`);
-    for (let i = 0; i < announcementsData.length; i++) {
-      const ann = announcementsData[i];
+    const announcementOps = announcementsData.map((ann, i) => {
       let createdAt = new Date(ann.createdAt);
       let expiresAt = ann.expiresAt ? new Date(ann.expiresAt) : null;
 
@@ -367,58 +386,66 @@ async function seed() {
       }
 
       const annId = new mongoose.Types.ObjectId(ann._id);
-      const doc = {
-        title: ann.title,
-        message: ann.message,
-        createdBy: new mongoose.Types.ObjectId(ann.createdBy),
-        expiresAt,
-        createdAt,
-        updatedAt: createdAt,
+      return {
+        updateOne: {
+          filter: { _id: annId },
+          update: {
+            $set: {
+              title: ann.title,
+              message: ann.message,
+              createdBy: new mongoose.Types.ObjectId(ann.createdBy),
+              expiresAt,
+              createdAt,
+              updatedAt: createdAt,
+            },
+            $setOnInsert: {
+              _id: annId,
+            },
+          },
+          upsert: true,
+        },
       };
-
-      const existing = await announcementsCol.findOne({ _id: annId });
-      if (existing) {
-        await announcementsCol.updateOne({ _id: annId }, { $set: doc });
-      } else {
-        doc._id = annId;
-        await announcementsCol.insertOne(doc);
-      }
-    }
+    });
+    await announcementsCol.bulkWrite(announcementOps);
     console.log("✅ Announcements seeded.");
 
-    // 8. Seed Employee Documents
+    // 8. Seed Employee Documents (Bulk)
     console.log(`📄 Upserting ${employeeDocsData.length} Employee Documents & Policies...`);
-    for (const d of employeeDocsData) {
+    const docOps = employeeDocsData.map((d) => {
       const docId = new mongoose.Types.ObjectId(d._id);
       const empId = d.employeeId ? new mongoose.Types.ObjectId(d.employeeId) : null;
       const pdfBuffer = Buffer.from(d.contentBase64, "base64");
 
-      const doc = {
-        employeeId: empId,
-        audience: d.audience,
-        category: d.category,
-        title: d.title,
-        fileName: d.fileName,
-        fileSize: pdfBuffer.length,
-        content: pdfBuffer,
-        uploadedBy: new mongoose.Types.ObjectId(d.uploadedBy),
-        createdAt: new Date(d.createdAt),
-        updatedAt: new Date(),
+      return {
+        updateOne: {
+          filter: { _id: docId },
+          update: {
+            $set: {
+              employeeId: empId,
+              audience: d.audience,
+              category: d.category,
+              title: d.title,
+              fileName: d.fileName,
+              fileSize: pdfBuffer.length,
+              content: pdfBuffer,
+              uploadedBy: new mongoose.Types.ObjectId(d.uploadedBy),
+              createdAt: new Date(d.createdAt),
+              updatedAt: new Date(),
+            },
+            $setOnInsert: {
+              _id: docId,
+            },
+          },
+          upsert: true,
+        },
       };
-
-      const existing = await employeeDocsCol.findOne({ _id: docId });
-      if (existing) {
-        await employeeDocsCol.updateOne({ _id: docId }, { $set: doc });
-      } else {
-        doc._id = docId;
-        await employeeDocsCol.insertOne(doc);
-      }
-    }
+    });
+    await employeeDocsCol.bulkWrite(docOps);
     console.log("✅ Employee Documents seeded.");
 
-    // 9. Seed Attendance Corrections
+    // 9. Seed Attendance Corrections (Bulk)
     console.log(`🕒 Upserting ${attendanceCorrectionsData.length} Attendance Corrections...`);
-    for (const c of attendanceCorrectionsData) {
+    const correctionOps = attendanceCorrectionsData.map((c) => {
       const corrId = new mongoose.Types.ObjectId(c._id);
       const empId = new mongoose.Types.ObjectId(c.employeeId);
       const mappedAtt = seededAttendanceMap.get(c.attendanceId);
@@ -435,28 +462,32 @@ async function seed() {
         createdAt = new Date(requestedTime.getTime() + 30 * 60 * 1000);
       }
 
-      const doc = {
-        employeeId: empId,
-        attendanceId: attId,
-        field: c.field,
-        requestedTime,
-        reason: c.reason,
-        status: c.status,
-        reviewedBy: c.reviewedBy ? new mongoose.Types.ObjectId(c.reviewedBy) : null,
-        reviewedAt: c.reviewedAt ? new Date(c.reviewedAt) : null,
-        reviewNote: c.reviewNote || "",
-        createdAt,
-        updatedAt: c.reviewedAt ? new Date(c.reviewedAt) : createdAt,
+      return {
+        updateOne: {
+          filter: { _id: corrId },
+          update: {
+            $set: {
+              employeeId: empId,
+              attendanceId: attId,
+              field: c.field,
+              requestedTime,
+              reason: c.reason,
+              status: c.status,
+              reviewedBy: c.reviewedBy ? new mongoose.Types.ObjectId(c.reviewedBy) : null,
+              reviewedAt: c.reviewedAt ? new Date(c.reviewedAt) : null,
+              reviewNote: c.reviewNote || "",
+              createdAt,
+              updatedAt: c.reviewedAt ? new Date(c.reviewedAt) : createdAt,
+            },
+            $setOnInsert: {
+              _id: corrId,
+            },
+          },
+          upsert: true,
+        },
       };
-
-      const existing = await attendanceCorrectionsCol.findOne({ _id: corrId });
-      if (existing) {
-        await attendanceCorrectionsCol.updateOne({ _id: corrId }, { $set: doc });
-      } else {
-        doc._id = corrId;
-        await attendanceCorrectionsCol.insertOne(doc);
-      }
-    }
+    });
+    await attendanceCorrectionsCol.bulkWrite(correctionOps);
     console.log("✅ Attendance Corrections seeded.\n");
 
     // Print comprehensive summary table
@@ -472,22 +503,22 @@ async function seed() {
     console.log("             company announcements publisher, document center, holiday calendar.\n");
 
     console.log("👥 EMPLOYEE ACCOUNTS (Password for all: password123):");
-    console.log("   -----------------------------------------------------------------------");
-    console.log("   Name              | Department         | Position               | Email");
-    console.log("   -----------------------------------------------------------------------");
+    console.log("   ----------------------------------------------------------------------------------");
+    console.log("   Name              | Department         | Position                         | Email");
+    console.log("   ----------------------------------------------------------------------------------");
     employeesData.forEach((emp) => {
       const name = `${emp.firstName} ${emp.lastName}`.padEnd(17);
       const dept = emp.department.padEnd(18);
-      const pos = emp.position.padEnd(24);
+      const pos = emp.position.padEnd(32);
       console.log(`   ${name} | ${dept} | ${pos} | ${emp.email}`);
     });
     console.log("==========================================================================");
     console.log("✨ HIGHLIGHTS & READY-TO-TEST DEMO FEATURES:");
-    console.log("   1. 📢 Company Announcements: Live notices on /announcements & notification bell.");
-    console.log("   2. 📄 Employee Documents & Policies: Downloadable & previewable PDFs on /documents.");
-    console.log("   3. 🕒 Attendance Corrections: Pending requests ready for Admin review on /admin/attendance");
+    console.log("   1. 📢 Company Announcements (7): Live notices on /announcements & notification bell.");
+    console.log("   2. 📄 Employee Documents & Policies (16): Downloadable & previewable PDFs on /documents.");
+    console.log("   3. 🕒 Attendance Corrections (12): 4 pending requests for Admin review on /admin/attendance");
     console.log("      and past status tracking on /attendance.");
-    console.log("   4. 👥 Employee Directory: Rich roster on /directory with filters by department & title.");
+    console.log("   4. 👥 Employee Directory (25): Full company roster on /directory with department filtering.");
     console.log("   5. 💬 AI HR Assistant: Floating chatbot in bottom-right corner of employee portal.");
     console.log("   6. 🔔 Notification Center: 7 live badge alerts across leaves, shifts, docs, announcements.");
     console.log("==========================================================================\n");

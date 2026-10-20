@@ -17,7 +17,8 @@ import {
     Building2Icon,
     FilesIcon,
     UsersRound,
-    Megaphone
+    Megaphone,
+    ClipboardCheck,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -46,12 +47,13 @@ const Sidebar = () => {
             { name: 'Employees', href: '/employees', icon: UserIcon },
             { name: 'Departments', href: '/departments', icon: Building2Icon },
             { name: 'Attendance', href: '/admin/attendance', icon: CalendarIcon },
+            { name: 'Attendance corrections', href: '/admin/attendance/corrections', icon: ClipboardCheck },
             { name: 'Holidays', href: '/holidays', icon: CalendarDaysIcon }
         ] : [
             { name: 'Attendance', href: '/attendance', icon: CalendarIcon },
             { name: 'Directory', href: '/directory', icon: UsersRound }
         ]),
-        { name: 'Leave', href: '/leave', icon: FileTextIcon },
+        { name: role === 'ADMIN' ? 'Leave requests' : 'Leave', href: '/leave', icon: FileTextIcon },
         { name: 'Payslips', href: '/payslips', icon: DollarSignIcon },
         { name: 'Documents', href: '/documents', icon: FilesIcon },
         { name: 'Announcements', href: '/announcements', icon: Megaphone },
@@ -89,7 +91,7 @@ const Sidebar = () => {
                     </div>
                 ) : (
                     navItems.map((item) => {
-                        const isActive = pathname.startsWith(item.href);
+                        const isActive = pathname === item.href || (item.href === '/employees' && pathname.startsWith('/employees/'));
                         const Icon = item.icon;
                         return (
                             <Link
