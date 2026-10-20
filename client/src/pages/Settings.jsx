@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback } from "react";
-import Loading from "../components/Loading";
 import { Lock } from "lucide-react";
 import ProfileForm from "../components/ProfileForm";
 import ChangePasswordModal from "../components/ChangePasswordModal";
@@ -30,7 +29,15 @@ const Settings = () => {
     fetchProfile();
   }, [user, fetchProfile]);
 
-  if (loading) return <Loading />;
+  if (loading) return (
+    <div className="space-y-6" role="status" aria-label="Loading settings">
+      <div className="border-b border-zinc-200 pb-6 dark:border-zinc-800"><div className="h-6 w-28 rounded skeleton" /><div className="mt-2 h-3 w-72 max-w-full rounded skeleton" /></div>
+      <div className="max-w-3xl space-y-6">
+        <section className="card space-y-5 p-5">{Array.from({ length: 4 }).map((_, i) => <div key={i}><div className="mb-2 h-3 w-24 rounded skeleton" /><div className="h-9 rounded skeleton" /></div>)}<div className="h-9 w-28 rounded skeleton" /></section>
+        <section className="card flex items-center justify-between p-5"><div className="flex items-center gap-3"><div className="size-8 rounded skeleton" /><div className="space-y-2"><div className="h-3 w-36 rounded skeleton" /><div className="h-3 w-28 rounded skeleton" /></div></div><div className="h-8 w-32 rounded skeleton" /></section>
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-6">

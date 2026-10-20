@@ -114,6 +114,14 @@ const Leave = () => {
               </div>
             )
           })}
+          {balanceLoading && activeBalances.length === 0 && Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="card space-y-4 p-4" role="status" aria-label="Loading leave balance">
+              <div className="flex items-center justify-between"><div className="h-3 w-24 rounded skeleton" /><div className="h-5 w-28 rounded skeleton" /></div>
+              <div className="h-8 w-16 rounded skeleton" />
+              <div className="h-3 w-40 rounded skeleton" />
+              <div className="flex justify-between border-t border-zinc-200 pt-3 dark:border-zinc-800">{Array.from({ length: 3 }).map((__, j) => <div key={j} className="h-3 w-14 rounded skeleton" />)}</div>
+            </div>
+          ))}
           {!balanceLoading && activeBalances.length === 0 && (
             <div className="card p-4 text-sm text-[#52525B] dark:text-[#D4D4D8] sm:col-span-3">
               Leave balances are unavailable right now. Refresh the page or contact HR if this continues.
