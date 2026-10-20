@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useDepartments } from '../constants/departments'
-import { Plus, Search, X, PencilIcon, Trash2Icon } from 'lucide-react'
+import { Plus, Search, X, PencilIcon, Trash2Icon, Mail, UsersRound } from 'lucide-react'
 import EmployeeForm from '../components/EmployeeForm'
 import api from '../api/axios'
 import toast from 'react-hot-toast'
@@ -36,7 +36,7 @@ const Employees = () => {
   }, [fetchEmployees])
 
   const filtered = employees.filter((emp) =>
-    `${emp.firstName} ${emp.lastName} ${emp.position}`
+    `${emp.firstName} ${emp.lastName} ${emp.position} ${emp.email}`
       .toLowerCase()
       .includes(search.toLowerCase())
   )
@@ -72,142 +72,51 @@ const Employees = () => {
         </div>
       </div>
 
-      {/* Filter & Search Toolbar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-        <div className="relative flex-1">
+      <div className="page-header -mt-3">
+        <p className="page-subtitle">Find colleagues by name, department, or job title.</p>
+        <span className="inline-flex items-center gap-1.5 rounded-md bg-zinc-100 px-2.5 py-1.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"><UsersRound className="size-3.5" />{loading ? '—' : filtered.length} colleagues</span>
+      </div>
+
+      {/* Directory filters */}
+      <div className="card grid gap-3 p-4 sm:grid-cols-[minmax(0,1fr)_180px_220px]">
+        <label className="relative block"><span className="sr-only">Search employees</span>
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#A1A1AA] dark:text-[#71717A] size-4" />
           <input
-            placeholder="Search by name or title..."
+            placeholder="Search by name or email…"
+            type="search"
             className="pl-9"
             onChange={(e) => setSearch(e.target.value)}
             value={search}
           />
-        </div>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="sm:w-44"
-        >
+        </label>
+        <label><span className="sr-only">Filter employee status</span><select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
           <option value="active">Active staff</option>
           <option value="deleted">Archived staff</option>
-        </select>
-        <select
-          value={selectedDept}
-          onChange={(e) => setSelectedDept(e.target.value)}
-          className="sm:w-48"
-        >
+        </select></label>
+        <label><span className="sr-only">Filter by department</span><select value={selectedDept} onChange={(e) => setSelectedDept(e.target.value)}>
           <option value="">All departments</option>
           {departments.map((deptName) => (
             <option key={deptName} value={deptName}>
               {deptName}
             </option>
           ))}
-        </select>
+        </select></label>
       </div>
 
-      {/* Employees Table */}
-      <div className="card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Employee</th>
-                <th>Department</th>
-                <th>Position</th>
-                <th>Attendance</th>
-                <th className="text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                Array.from({ length: 5 }).map((_, idx) => (
-                  <tr key={idx}>
-                    <td>
-                      <div className="flex items-center gap-2.5 py-1">
-                        <div className="size-7 rounded-full skeleton shrink-0" />
-                        <div className="space-y-1">
-                          <div className="h-3 w-28 skeleton" />
-                          <div className="h-2.5 w-36 skeleton" />
-                        </div>
-                      </div>
-                    </td>
-                    <td><div className="h-3 w-20 skeleton" /></td>
-                    <td><div className="h-3 w-24 skeleton" /></td>
-                    <td><div className="h-4 w-14 skeleton" /></td>
-                    <td className="text-right"><div className="h-4 w-12 skeleton ml-auto" /></td>
-                  </tr>
-                ))
-              ) : filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="text-center py-14 text-xs text-[#71717A] dark:text-[#A1A1AA]">
-                    No employees matching the current filter.
-                  </td>
-                </tr>
-              ) : (
-                filtered.map((emp) => (
-                  <tr key={emp.id || emp._id}>
-                    <td>
-                      <div className="flex items-center gap-2.5">
-                        <div className="size-7 rounded-full bg-[#F4F4F5] dark:bg-[#27272A] border border-[#E4E4E7] dark:border-[#3F3F46] text-[#52525B] dark:text-[#D4D4D8] text-xs font-medium flex items-center justify-center shrink-0">
-                          {emp.firstName?.[0]}
-                          {emp.lastName?.[0]}
-                        </div>
-                        <div>
-                          <p className="font-medium text-[#18181B] dark:text-[#FAFAFA] text-xs leading-tight">
-                            {emp.firstName} {emp.lastName}
-                          </p>
-                          <p className="text-[11px] text-[#71717A] dark:text-[#A1A1AA] leading-tight mt-0.5">
-                            {emp.email}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="text-xs text-[#52525B] dark:text-[#A1A1AA]">
-                      {emp.department || 'Unassigned'}
-                    </td>
-                    <td className="text-xs text-[#52525B] dark:text-[#A1A1AA]">{emp.position}</td>
-                    <td>
-                      {emp.isDeleted ? (
-                        <span className="badge badge-neutral">Archived</span>
-                      ) : emp.employmentStatus !== 'ACTIVE' ? (
-                        <span className="badge badge-neutral">Inactive</span>
-                      ) : emp.isPresentToday ? (
-                        <span className="badge badge-success">Present</span>
-                      ) : (
-                        <span className="badge badge-neutral">Absent</span>
-                      )}
-                    </td>
-                    <td className="text-right">
-                      {!emp.isDeleted ? (
-                        <div className="flex items-center justify-end gap-1">
-                          <button
-                            onClick={() => setEditEmployee(emp)}
-                            className="p-1.5 text-[#71717A] dark:text-[#A1A1AA] hover:text-[#18181B] dark:hover:text-[#FAFAFA] hover:bg-[#F4F4F5] dark:hover:bg-[#27272A] rounded-[5px] transition-colors cursor-pointer"
-                            aria-label="Edit employee"
-                            title="Edit"
-                          >
-                            <PencilIcon size={14} />
-                          </button>
-                          <button
-                            onClick={() => setDeleteModal({ open: true, id: emp.id || emp._id })}
-                            className="p-1.5 text-[#71717A] dark:text-[#A1A1AA] hover:text-[#DC2626] dark:hover:text-rose-400 hover:bg-[#FEF2F2] dark:hover:bg-rose-950/30 rounded-[5px] transition-colors cursor-pointer"
-                            aria-label="Deactivate employee"
-                            title="Deactivate"
-                          >
-                            <Trash2Icon size={14} />
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="badge badge-danger">Archived</span>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {loading ? <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{Array.from({ length: 6 }).map((_, index) => <div key={index} className="card h-28 skeleton" />)}</div> : filtered.length === 0 ? (
+        <div className="card flex flex-col items-center p-12 text-center"><UsersRound className="size-8 text-zinc-300 dark:text-zinc-600" /><p className="mt-3 text-sm font-medium text-zinc-700 dark:text-zinc-200">No employees found</p><p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Try a different name, department, or status.</p></div>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{filtered.map((emp) => <article key={emp.id || emp._id} className="card flex items-start gap-3 p-4">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-full border border-blue-100 bg-blue-50 text-sm font-semibold text-blue-700 dark:border-blue-900/50 dark:bg-blue-950/40 dark:text-blue-300">{emp.firstName?.[0]}{emp.lastName?.[0]}</div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-2"><div className="min-w-0"><h2 className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100">{emp.firstName} {emp.lastName}</h2><p className="mt-0.5 truncate text-xs text-zinc-500 dark:text-zinc-400">{emp.position}</p></div>
+              {!emp.isDeleted ? <div className="flex shrink-0 items-center gap-1"><button type="button" onClick={() => setEditEmployee(emp)} className="rounded p-1.5 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100" aria-label={`Edit ${emp.firstName} ${emp.lastName}`} title="Edit"><PencilIcon size={14} /></button><button type="button" onClick={() => setDeleteModal({ open: true, id: emp.id || emp._id })} className="rounded p-1.5 text-zinc-500 hover:bg-rose-50 hover:text-rose-600 dark:text-zinc-400 dark:hover:bg-rose-950/30 dark:hover:text-rose-400" aria-label={`Deactivate ${emp.firstName} ${emp.lastName}`} title="Deactivate"><Trash2Icon size={14} /></button></div> : <span className="badge badge-danger shrink-0">Archived</span>}
+            </div>
+            <span className="mt-2 inline-flex max-w-full truncate rounded-full bg-zinc-100 px-2 py-0.5 text-[10px] font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">{emp.department || 'Unassigned'}</span>
+            <a href={`mailto:${emp.email}`} className="mt-3 flex min-w-0 items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400"><Mail className="size-3.5 shrink-0" /><span className="truncate">{emp.email}</span></a>
+          </div>
+        </article>)}</div>
+      )}
 
       {/* Create Employee Modal */}
       {showCreateModal && (
