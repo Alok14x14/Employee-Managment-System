@@ -31,6 +31,22 @@ app.set("trust proxy", 1);
 
 app.use(helmet());
 
+// Expose time spent inside this Express request. Compare this with browser TTFB
+// to separate API/database latency from hosting/network startup delay.
+app.use((req, res, next) => {
+    const startedAt = process.hrtime.bigint();
+    const originalEnd = res.end;
+
+    res.end = function (...args) {
+        if (!res.headersSent) {
+            const durationMs = Number(process.hrtime.bigint() - startedAt) / 1_000_000;
+            res.setHeader("Server-Timing", `app;dur=${durationMs.toFixed(1)}`);
+        }
+        return originalEnd.apply(this, args);
+    };
+
+    next();
+});
 
 // Middleware
 app.use(cors({ origin: process.env.CLIENT_URL?.split(",") || true }))
