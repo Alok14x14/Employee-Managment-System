@@ -49,7 +49,12 @@ app.use((req, res, next) => {
 });
 
 // Middleware
-app.use(cors({ origin: process.env.CLIENT_URL?.split(",") || true }))
+app.use(cors({
+    origin: process.env.CLIENT_URL?.split(",") || true,
+    // Reuse successful browser preflight checks instead of paying for OPTIONS
+    // before each cross-origin API request during navigation.
+    maxAge: 86400,
+}))
 app.use(express.json())
 
 app.use(async (req, res, next) => {

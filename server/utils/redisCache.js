@@ -7,22 +7,25 @@ const redis = redisUrl && redisToken
   : null;
 
 export const readCache = async (key) => {
-  if (!redis) return null;
+  if (!redis) return { status: "disabled", value: null };
 
   try {
-    return await redis.get(key);
+    const value = await redis.get(key);
+    return { status: value === null ? "miss" : "hit", value };
   } catch (error) {
     console.error("Redis cache read failed:", error.message);
-    return null;
+    return { status: "error", value: null };
   }
 };
 
 export const writeCache = async (key, value, ttlSeconds) => {
-  if (!redis) return;
+  if (!redis) return "disabled";
 
   try {
     await redis.set(key, value, { ex: ttlSeconds });
+    return "ok";
   } catch (error) {
     console.error("Redis cache write failed:", error.message);
+    return "error";
   }
 };

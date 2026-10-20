@@ -9,16 +9,22 @@ import { istDayStart, istDayEnd, istParts, isWeekend, isHoliday } from "../utils
 import { loadHolidaySet } from "../utils/holidays.js";
 import { readCache, writeCache } from "../utils/redisCache.js";
 
+const getCacheHeader = (readStatus, writeStatus) => {
+    if (readStatus === "error" || writeStatus === "error") return "ERROR";
+    if (readStatus === "disabled" || writeStatus === "disabled") return "DISABLED";
+    return "MISS";
+};
+
 // Get dashboard for employee and admin
 // GET /api/dashboard
 export const getDashboard  = async (req, res) => {
     try {
         const session = req.session;
         const cacheKey = `staffflow:v1:dashboard:${session.role}:${session.userId}`;
-        const cachedDashboard = await readCache(cacheKey);
-        if (cachedDashboard) {
+        const cacheRead = await readCache(cacheKey);
+        if (cacheRead.status === "hit") {
             res.set("X-Data-Cache", "HIT");
-            return res.json(cachedDashboard);
+            return res.json(cacheRead.value);
         }
 
         if(session.role === "ADMIN"){
@@ -160,8 +166,8 @@ export const getDashboard  = async (req, res) => {
                 leaveData: leaveDistribution,
                 attendanceData
             };
-            await writeCache(cacheKey, dashboard, 15);
-            res.set("X-Data-Cache", "MISS");
+            const cacheWrite = await writeCache(cacheKey, dashboard, 15);
+            res.set("X-Data-Cache", getCacheHeader(cacheRead.status, cacheWrite));
             return res.json(dashboard);
 
         }else{
@@ -271,8 +277,8 @@ export const getDashboard  = async (req, res) => {
                 recentAttendance: formattedAttendance,
                 recentLeaves: formattedLeaves,
             };
-            await writeCache(cacheKey, dashboard, 15);
-            res.set("X-Data-Cache", "MISS");
+            const cacheWrite = await writeCache(cacheKey, dashboard, 15);
+            res.set("X-Data-Cache", getCacheHeader(cacheRead.status, cacheWrite));
             return res.json(dashboard);
         }
     } catch (error) {
