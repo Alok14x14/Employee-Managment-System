@@ -5,6 +5,7 @@ import LeaveApplication from "../models/LeaveApplication.js";
 import Holiday from "../models/Holiday.js";
 import { istParts, istDayStart, istDayEnd, isLate, isWeekend, isHoliday } from "../utils/time.js";
 import { loadHolidaySet } from "../utils/holidays.js";
+import { computeDayType, calculateAutoCheckOutDetails } from "../utils/attendance.js";
 
 // Clock in/out for employee
 // POST /api/attendance
@@ -105,11 +106,7 @@ export const clockInOut = async (req, res) => {
 
             // Compute working hours and day type
             const workingHours = parseFloat(diffHours.toFixed(2))
-            let dayType = "Half Day";
-            if (workingHours >= 8) dayType = "Full Day";
-            else if (workingHours >= 6) dayType = "Three Quarter Day";
-            else if (workingHours >= 4) dayType = "Half Day";
-            else dayType = "Short Day";
+            const dayType = computeDayType(workingHours);
 
             const checkedOut = await Attendance.findOneAndUpdate(
                 { _id: existing._id, checkOut: null },
@@ -194,9 +191,10 @@ export const getAttendance = async (req, res) => {
 
         if (unclosedPastRecords.length > 0) {
             for (const record of unclosedPastRecords) {
-                record.checkOut = new Date(new Date(record.checkIn).getTime() + 4 * 60 * 60 * 1000);
-                record.workingHours = 4;
-                record.dayType = "Half Day";
+                const details = calculateAutoCheckOutDetails(record.checkIn, new Date(), record.date);
+                record.checkOut = details.checkOut;
+                record.workingHours = details.workingHours;
+                record.dayType = details.dayType;
                 record.autoCheckedOut = true;
                 await record.save();
             }

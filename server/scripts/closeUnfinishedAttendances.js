@@ -3,6 +3,7 @@ import dns from "dns";
 import connectDB from "../config/db.js";
 import Attendance from "../models/Attendance.js";
 import { istDayStart } from "../utils/time.js";
+import { calculateAutoCheckOutDetails } from "../utils/attendance.js";
 
 dns.setServers(["8.8.8.8", "1.1.1.1"]);
 
@@ -23,16 +24,15 @@ const autoClosePastAttendances = async () => {
     console.log(`Found ${unclosed.length} unclosed attendance record(s).`);
 
     for (const record of unclosed) {
-      const checkInTime = new Date(record.checkIn);
-      const autoCheckOutTime = new Date(checkInTime.getTime() + 4 * 60 * 60 * 1000);
+      const details = calculateAutoCheckOutDetails(record.checkIn, new Date(), record.date);
 
-      record.checkOut = autoCheckOutTime;
-      record.workingHours = 4;
-      record.dayType = "Half Day";
+      record.checkOut = details.checkOut;
+      record.workingHours = details.workingHours;
+      record.dayType = details.dayType;
       record.autoCheckedOut = true;
 
       await record.save();
-      console.log(`Closed record ID ${record._id} for date ${record.date.toISOString()} (Check in: ${checkInTime.toLocaleTimeString()}, Check out: ${autoCheckOutTime.toLocaleTimeString()})`);
+      console.log(`Closed record ID ${record._id} for date ${record.date.toISOString()} (Check in: ${new Date(record.checkIn).toLocaleTimeString()}, Check out: ${details.checkOut.toLocaleTimeString()}, Hours: ${details.workingHours}, DayType: ${details.dayType})`);
     }
 
     console.log("Done successfully.");

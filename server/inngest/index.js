@@ -12,6 +12,7 @@ import {
 import { istDayStart, istDayEnd, isWeekend, isHoliday } from "../utils/time.js";
 import { loadHolidaySet } from "../utils/holidays.js";
 import { autoRejectExpiredLeaves } from "../utils/leaveAutoReject.js";
+import { calculateAutoCheckOutDetails } from "../utils/attendance.js";
 
 // Create a client to send and receive events
 export const inngest = new Inngest({ id: "fullstack-ems" });
@@ -54,13 +55,19 @@ const autoCheckOut = inngest.createFunction(
     const employeeCheck = await Employee.findById(employeeId);
     if (!employeeCheck || employeeCheck.isDeleted) return;
 
+    const autoDetails = calculateAutoCheckOutDetails(
+      attendance.checkIn,
+      new Date(),
+      attendance.date
+    );
+
     await Attendance.findOneAndUpdate(
       { _id: attendanceId, checkOut: null },
       {
         $set: {
-          checkOut: new Date(new Date(attendance.checkIn).getTime() + 4 * 60 * 60 * 1000),
-          workingHours: 4,
-          dayType: "Half Day",
+          checkOut: autoDetails.checkOut,
+          workingHours: autoDetails.workingHours,
+          dayType: autoDetails.dayType,
           autoCheckedOut: true,
         },
       }
@@ -331,9 +338,10 @@ const markAbsentCron = inngest.createFunction(
       });
 
       for (const record of unclosed) {
-        record.checkOut = new Date(new Date(record.checkIn).getTime() + 4 * 60 * 60 * 1000);
-        record.workingHours = 4;
-        record.dayType = "Half Day";
+        const details = calculateAutoCheckOutDetails(record.checkIn, new Date(), record.date);
+        record.checkOut = details.checkOut;
+        record.workingHours = details.workingHours;
+        record.dayType = details.dayType;
         record.autoCheckedOut = true;
         await record.save();
       }
