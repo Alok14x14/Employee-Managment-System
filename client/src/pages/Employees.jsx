@@ -73,8 +73,8 @@ const Employees = () => {
       </div>
 
       <div className="page-header -mt-3">
-        <p className="page-subtitle">Find colleagues by name, department, or job title.</p>
-        <span className="inline-flex items-center gap-1.5 rounded-md bg-zinc-100 px-2.5 py-1.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"><UsersRound className="size-3.5" />{loading ? '—' : filtered.length} colleagues</span>
+        <p className="page-subtitle">Find employees by name, department, or job title.</p>
+        <span className="inline-flex items-center gap-1.5 rounded-md bg-zinc-100 px-2.5 py-1.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"><UsersRound className="size-3.5" />{loading ? '—' : filtered.length} employees</span>
       </div>
 
       {/* Directory filters */}
