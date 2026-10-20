@@ -4,9 +4,11 @@ import api from '../api/axios'
 
 const suggestions = [
   'How do I apply for leave?',
-  'How are working days counted?',
-  'How do I check my leave request status?',
-  'Where can I view my payslip?',
+  'Can I cancel a pending leave request?',
+  'How do I request an attendance correction?',
+  'Where can I find company documents?',
+  'How do I contact a colleague?',
+  'Where can I find company announcements?',
 ]
 
 const renderMessage = (content) => {
@@ -86,7 +88,7 @@ const HrAssistant = ({ onClose }) => {
                 <SparklesIcon className="size-6" />
               </div>
               <h2 className="mt-4 text-lg font-semibold">How can I help?</h2>
-              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Get practical help with leave, attendance, and your StaffFlow account.</p>
+              <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Get practical help with StaffFlow’s employee tools and policies.</p>
               <div className="mt-6 grid sm:grid-cols-2 gap-2 w-full text-left">
                 {suggestions.map((suggestion) => (
                   <button key={suggestion} type="button" onClick={() => sendMessage(suggestion)} className="rounded-lg border border-zinc-200 dark:border-zinc-700 p-3 text-sm text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800/60 transition-colors">

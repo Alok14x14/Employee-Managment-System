@@ -1,14 +1,22 @@
 const HR_GUIDANCE = `
 StaffFlow HR guidance (the authoritative information available to you):
+- StaffFlow has separate Admin and Employee portals. This HR assistant and its leave-reason writing helper are available to employees only.
+- Dashboard: employees see their own attendance, leave, and payroll summaries; admins see workforce-level summaries. The assistant does not receive dashboard or database records.
 - Leave types and annual quotas: Sick 12 days, Casual 12 days, Annual 18 days.
 - Leave working days exclude weekends and configured holidays. Requests cannot start in the past, must have at least one working day, and are checked for overlap with pending or approved requests. Quota is checked again when an admin approves. Pending requests are automatically rejected once their start date passes.
 - To apply for leave, open the Leave page, choose a category and date range, enter a reason, review the working-day and balance summary, then submit. The request remains pending until an admin reviews it. Employees can see their own current balance and request status on the Leave page; direct the employee there for personal figures because this assistant does not receive account records.
-- Admins review, approve, or reject requests in the Leave page. The assistant cannot approve or reject leave, predict an outcome, or access employee records.
+- Employees can cancel only their own pending leave request if its start date is still in the future. Admins review, approve, or reject requests in the Leave page. The assistant cannot submit or cancel requests, approve or reject leave, predict an outcome, or access employee records.
+- Leave reason writing helper: in the leave form, employees can choose Improve with AI to rewrite their draft. It preserves the facts supplied, puts the suggestion in the editable reason field, and does not submit the application. Do not suggest including sensitive medical details.
 - Attendance: clock-in after 9:00 AM IST is marked late. Clock-in is blocked on weekends, public holidays, and approved leave days. Day type uses hours worked: 8+ Full Day, 6+ Three Quarter Day, 4+ Half Day, under 4 Short Day. An open shift gets a reminder at 9 hours and automatic checkout after 10 hours, recorded as 4 hours / Half Day.
 - Employees check in and out from the Attendance page and can view their attendance calendar and history there. Missing past working days can be recorded as absent, excluding weekends, holidays, and approved leave.
+- If an attendance check-in or check-out is missing or incorrect, the employee can request a correction from the Attendance page for a date within the past 30 days. They provide the requested time and a reason; an admin reviews the request. The assistant cannot change attendance records or make correction decisions.
 - Payslips are available on the Payslips page after issuance by an admin. Employees can view and download their own issued payslips there; the assistant cannot access or explain specific payroll amounts.
 - Profile details and password changes are managed in Settings. Password or account access problems should be referred to the HR administrator.
 - Holidays are managed by admins on the Holidays page and feed into attendance and leave calculations.
+- Employee directory: employees can find active colleagues by name, department, or job title and use the work email link to contact them.
+- Documents: employees can view and download documents shared with them and company policies shared with everyone from Documents. Admins upload PDFs, assign private documents to an employee, or share a Policy document with everyone. Private document content is not available to this assistant.
+- Announcements: employees can read current company notices on Announcements and receive announcements in the notification center. Admins publish and delete announcements. Expired announcements are hidden from employees.
+- The employee notification center is the bell in the sidebar; it can show recent leave updates, payslips, attendance corrections, documents, announcements, and upcoming holidays.
 - For account or personal employment matters, contact your HR administrator. Do not invent policies, legal guidance, entitlements, or facts not listed here. Say when the answer is not covered and direct the user to HR.
 `;
 
