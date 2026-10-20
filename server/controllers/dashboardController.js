@@ -7,12 +7,20 @@ import Holiday from "../models/Holiday.js";
 import User from "../models/User.js";
 import { istDayStart, istDayEnd, istParts, isWeekend, isHoliday } from "../utils/time.js";
 import { loadHolidaySet } from "../utils/holidays.js";
+import { readCache, writeCache } from "../utils/redisCache.js";
 
 // Get dashboard for employee and admin
 // GET /api/dashboard
 export const getDashboard  = async (req, res) => {
     try {
         const session = req.session;
+        const cacheKey = `staffflow:v1:dashboard:${session.role}:${session.userId}`;
+        const cachedDashboard = await readCache(cacheKey);
+        if (cachedDashboard) {
+            res.set("X-Data-Cache", "HIT");
+            return res.json(cachedDashboard);
+        }
+
         if(session.role === "ADMIN"){
             const todayStart = istDayStart();
             const todayEnd = istDayEnd();
@@ -140,7 +148,7 @@ export const getDashboard  = async (req, res) => {
                 id: emp._id.toString()
             }));
 
-            return res.json({
+            const dashboard = {
                 role: "ADMIN",
                 totalEmployees,
                 totalDepartments: DEPARTMENTS.length,
@@ -151,7 +159,10 @@ export const getDashboard  = async (req, res) => {
                 deptData: deptHeadcount,
                 leaveData: leaveDistribution,
                 attendanceData
-            })
+            };
+            await writeCache(cacheKey, dashboard, 15);
+            res.set("X-Data-Cache", "MISS");
+            return res.json(dashboard);
 
         }else{
             const employee = await Employee.findOne({
@@ -247,7 +258,7 @@ export const getDashboard  = async (req, res) => {
                 id: l._id.toString()
             }));
 
-            return res.json({
+            const dashboard = {
                 role: "EMPLOYEE",
                 employee: {...employee, id: employee._id.toString()},
                 currentMonthAttendance,
@@ -259,7 +270,10 @@ export const getDashboard  = async (req, res) => {
                 weeklyHours,
                 recentAttendance: formattedAttendance,
                 recentLeaves: formattedLeaves,
-            })
+            };
+            await writeCache(cacheKey, dashboard, 15);
+            res.set("X-Data-Cache", "MISS");
+            return res.json(dashboard);
         }
     } catch (error) {
         console.error("Dashboard error:", error)
