@@ -1,260 +1,231 @@
-# StaffFlow: Employee Management System
+# StaffFlow
 
-A full-stack MERN application for workforce operations: employee records, attendance tracking, leave management with quota rules, and payroll/payslips. It has separate Admin and Employee portals, background jobs for automation, and IST-aware date handling throughout.
+**A full-stack employee management system for everyday HR operations.** StaffFlow brings employee records, attendance, leave, payroll, announcements, and company documents together in one responsive workspace, with separate experiences for administrators and employees.
 
-**Live demo:** https://employee-managment-system-6ohy.vercel.app/login
+[![React](https://img.shields.io/badge/React-19-149eca?logo=react&logoColor=white)](https://react.dev/)
+[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D%2020.19-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![MongoDB](https://img.shields.io/badge/Database-MongoDB%20Atlas-47A248?logo=mongodb&logoColor=white)](https://www.mongodb.com/atlas)
+[![AI](https://img.shields.io/badge/AI-OpenRouter-7C3AED)](https://openrouter.ai/)
+[![License](https://img.shields.io/badge/License-ISC-blue.svg)](server/package.json)
 
-**Source:** https://github.com/Alok14x14/Employee-Managment-System
+**Live demo:** [Open StaffFlow](https://employee-managment-system-6ohy.vercel.app/login) · **Source:** [GitHub repository](https://github.com/Alok14x14/Employee-Managment-System)
 
----
+> The public demo is shared. Use demo credentials only and do not enter real employee or payroll information.
 
-## Demo credentials
+## Screenshots
+
+| Admin dashboard | Employee management |
+|---|---|
+| ![StaffFlow admin dashboard](docs/screenshots/admin-dashboard.png) | ![StaffFlow employee management screen](docs/screenshots/employees.png) |
+
+## What you can do
+
+### Admins
+
+- Review workforce, attendance, pending leave, and department summaries on the dashboard.
+- Create, edit, search, filter, and archive employee accounts while retaining historical records.
+- Browse employee rosters by department and manage organization holidays.
+- Review today's attendance, including late arrivals and open shifts; review employee attendance correction requests.
+- Approve or reject leave requests, with a reason required for rejection.
+- Publish company announcements and upload or remove employee documents and policy PDFs.
+- Generate monthly payslips with salary components, allowances, and deductions.
+
+### Employees
+
+- Clock in and out, view a live shift timer, and review attendance by month or in a log.
+- Request Sick, Casual, or Annual leave and check working-day calculations and balances.
+- Request an attendance correction and track its review status.
+- View payslips and print or save them as PDF.
+- Read company announcements and access shared or assigned documents.
+- Use the HR assistant for policy and process questions, and optionally get help clarifying a leave reason.
+- Update profile details and change a password.
+
+The interface supports light and dark themes and adapts to smaller screens. Role checks are enforced in both the client routes and server middleware.
+
+## AI features
+
+StaffFlow integrates **OpenRouter-powered generative AI** in two employee-facing tools:
+
+- **AI HR assistant:** employees can ask how-to and policy questions about StaffFlow. The assistant is grounded in the HR guidance configured by the project and can explain general leave and attendance rules.
+- **AI leave reason helper:** employees can ask AI to make their own draft reason clearer and more professional. The result is returned to the editable form for review; the employee decides whether to submit it.
+
+The model is called from the server, so the OpenRouter key is never placed in the browser. The assistant receives its conversation and fixed HR guidance, not employee database records, personal leave balances, attendance history, or payslip details. The leave helper sends the selected leave category and the employee-entered draft text to OpenRouter. It rewrites only the stated facts and does not submit a request or judge eligibility. AI output can be wrong: employees should check it, avoid including sensitive medical details, and use the relevant StaffFlow page or HR administrator for personal records and decisions.
+
+To enable these features, configure `OPENROUTER_API_KEY` in `server/.env` and in the server hosting environment. Optionally set `OPENROUTER_MODEL` (default: `openai/gpt-4o-mini`) and `OPENROUTER_SITE_URL`. Without an API key, the rest of StaffFlow can run, but AI requests return a configuration message.
+
+## Demo accounts
 
 | Role | Email | Password |
-|------|-------|----------|
+|---|---|---|
 | Admin | `admin@example.com` | `admin123` |
 | Employee | `sarah.jenkins@example.com` | `password123` |
 
-> The demo is shared and publicly reachable. Please don't store real data in it.
+Newly seeded admin accounts require a password change at first sign-in. The public demo may use a different setup.
 
----
+## Technology
 
-## Features
+| Area | Stack |
+|---|---|
+| Web client | React 19, Vite, React Router, Tailwind CSS, Recharts, Axios |
+| API | Node.js, Express 5, Mongoose |
+| Database | MongoDB (Atlas recommended) |
+| Authentication | JWT, bcrypt, role-based middleware, token versioning |
+| Jobs | Inngest events and scheduled functions |
+| Email | Nodemailer with SMTP (Brevo compatible) |
+| Hosting | Vercel-ready client and server projects |
 
-### Admin portal
-- **Dashboard:** headcount, today's attendance, pending leaves, 5-day attendance trend, leave distribution, headcount by department.
-- **Employees:** create, edit and archive (soft delete) employees; search and filter by department and status; archived staff lose access immediately.
-- **Departments:** roster view grouped by department.
-- **Today's attendance:** live view (auto-refreshes every 60s) of present, late, still working, checked out and not checked in.
-- **Holidays:** manage organization holidays that feed into leave and attendance rules.
-- **Leave governance:** approve or reject requests (rejection requires a reason); employees are notified by email.
-- **Payslips:** generate monthly payslips with basic pay, allowances and deductions.
+## Run locally
 
-### Employee portal
-- **Attendance:** one-click clock in/out with a live clock and elapsed timer, monthly calendar view and log view.
-- **Leave:** apply for Sick (12d), Casual (12d) or Annual (18d) leave with a live working-day and balance calculator.
-- **Leave request writing help:** employees can optionally use AI to make a draft reason clearer; they review and submit it themselves.
-- **Payslips:** view issued payslips and download them as PDF (print-optimized A4 layout with the amount in words, INR format).
-- **HR assistant:** ask questions about leave, attendance, holidays and payslips using the configured StaffFlow rules.
-- **Settings:** edit bio and change password.
+### Requirements
 
-### Platform
-- Light/dark theme (persisted, no flash on load), responsive layout, skeleton loaders.
-- Role-based route guards on the client and role-checking middleware on the server.
+- Node.js `>=20.19` and npm.
+- MongoDB Atlas or a local MongoDB replica set. The application uses transactions, so a standalone local MongoDB server is not sufficient.
+- Optional integrations: SMTP for email, Inngest for background jobs, and an OpenRouter API key for AI-assisted HR features.
 
----
+### 1. Install dependencies
 
-## Business rules
+From the repository root:
 
-**Attendance**
-- Clock-in after 9:00 AM IST is marked `LATE`.
-- Clock-in is blocked on weekends, public holidays and approved leave days.
-- Day type is derived from hours worked: `>= 8h` Full Day, `>= 6h` Three Quarter Day, `>= 4h` Half Day, otherwise Short Day.
-- A shift not closed after 9 hours triggers a reminder email, then an auto check-out after one more hour, recorded as a 4h Half Day (flagged `autoCheckedOut`).
-- Missing past working days are recorded as `ABSENT`, excluding weekends, holidays and approved leave.
-
-**Leave**
-- Working days exclude weekends and configured holidays.
-- A leave spanning two calendar years is charged to each year's quota separately.
-- Overlap checks against existing `PENDING` and `APPROVED` leaves.
-- Quota is re-validated at approval time, not just at application time.
-- Pending leaves are auto-rejected once their start date passes.
-- The admin is reminded by email if a request sits pending for 24h.
-
----
-
-## Tech stack
-
-| Layer | Technology |
-|-------|-----------|
-| Frontend | React 19, Vite, React Router 7, Tailwind CSS v4, Recharts, Axios, date-fns, react-hot-toast, lucide-react |
-| Backend | Node.js (>= 20.19), Express 5, Mongoose 9 |
-| Database | MongoDB Atlas |
-| Auth | JWT (7-day expiry), bcrypt, token versioning |
-| Background jobs | Inngest (event-driven functions and crons) |
-| Email | Nodemailer over Brevo SMTP |
-| Security | Helmet, CORS allowlist, express-rate-limit |
-| Hosting | Vercel (client and server as separate projects) |
-
----
-
-## Architecture
-
-```
-┌──────────────┐   HTTPS / JSON    ┌──────────────────┐     ┌───────────────┐
-│ React SPA    │ ────────────────► │ Express API      │ ──► │ MongoDB Atlas │
-│ (Vercel)     │   Bearer JWT      │ (Vercel)         │     └───────────────┘
-└──────────────┘                   │                  │
-                                   │  /api/inngest ◄──┼──── Inngest (crons, delayed jobs)
-                                   │                  │──► Brevo SMTP (emails)
-                                   └──────────────────┘
-```
-
-### Background jobs (Inngest)
-
-| Function | Trigger | Purpose |
-|----------|---------|---------|
-| `auto-check-out` | `employee/check-in` event | Reminder after 9h, auto check-out after 10h |
-| `leave-application-reminder` | `leave/pending` event | Email admin if still pending after 24h |
-| `auto-reject-leave` | `leave/pending` event | Reject at start date/time if no action |
-| `attendance-reminder-cron` | 11:30 IST, Mon-Fri | Email employees who haven't checked in |
-| `mark-absent-cron` | 23:59 IST, Mon-Fri | Create `ABSENT` records, close open shifts |
-| `auto-reject-leaves-cron` | Hourly | Safety net for expired pending leaves |
-
----
-
-## Design decisions
-
-- **Session invalidation with `tokenVersion`.** Every JWT carries the user's token version. Password change or reset increments it, which instantly invalidates all previously issued tokens. The auth middleware also re-checks the user and employee on each request, so deactivated accounts lose access immediately.
-- **Forced first-login password change.** Admin-created accounts and the seeded admin get `mustChangePassword`. A server middleware blocks every API except password change until it's done.
-- **Password reset tokens are hashed.** Only a SHA-256 hash is stored, expiry is 15 minutes, and the endpoint returns the same response whether or not the email exists, to prevent user enumeration.
-- **Everything is IST-aware.** Day boundaries are computed in `Asia/Kolkata` (`server/utils/time.js`) instead of the server's local time, so behavior is the same on a Vercel (UTC) server and on a laptop.
-- **Soft deletes.** Archived employees keep their attendance, leave and payslip history.
-- **Idempotent writes.** Unique indexes on `(employeeId, date)` for attendance and `(employeeId, month, year)` for payslips, with duplicate-key handling to survive double clicks and race conditions.
-- **Atomic status transitions.** Leave approval uses `findOneAndUpdate({ status: "PENDING" })` so two admins can't process the same request twice.
-- **Serverless-friendly DB connection.** The Mongo connection is cached and reused across invocations.
-
----
-
-## Project structure
-
-```
-.
-├── client/                    # React + Vite SPA
-│   └── src/
-│       ├── api/               # Axios instance + interceptors
-│       ├── components/        # UI, attendance/, leave/, payslip/
-│       ├── context/           # AuthContext, ThemeContext
-│       ├── pages/             # Route-level pages
-│       └── utils/             # Formatters (INR, IST), attendance helpers
-├── server/
-│   ├── config/                # DB + mailer
-│   ├── constants/             # Departments, leave quotas
-│   ├── controllers/           # Route handlers
-│   ├── inngest/               # Background functions
-│   ├── middleware/            # auth, role guards, rate limiting
-│   ├── models/                # Mongoose schemas
-│   ├── routes/
-│   ├── scripts/               # Maintenance scripts
-│   ├── utils/                 # time, holidays, leaveDays, email templates
-│   └── server.js
-└── demo-database/             # Seed data + seed/clear scripts
-```
-
----
-
-## API overview
-
-All routes are prefixed with `/api` and use `Authorization: Bearer <token>` unless noted.
-
-| Area | Endpoints |
-|------|-----------|
-| Auth | `POST /auth/login`, `POST /auth/forgot-password`, `POST /auth/reset-password`, `GET /auth/session`, `POST /auth/change-password` |
-| Employees (admin) | `GET/POST /employees`, `PUT/DELETE /employees/:id` |
-| Profile | `GET/POST /profile` |
-| Attendance | `POST /attendance` (clock in/out), `GET /attendance?month=YYYY-MM`, `GET /attendance/admin/today` (admin) |
-| Leave | `POST /leave`, `GET /leave`, `GET /leave/balance`, `PATCH /leave/:id` (admin) |
-| Payslips | `POST /payslips` (admin), `GET /payslips`, `GET /payslips/:id` |
-| Holidays | `GET /holidays?year=`, `POST /holidays` (admin), `DELETE /holidays/:id` (admin) |
-| Dashboard | `GET /dashboard` |
-| Meta | `GET /meta/departments` |
-| HR assistant | `POST /hr-assistant/chat`, `POST /hr-assistant/leave-draft` |
-
-### HR assistant setup
-
-Add `OPENROUTER_API_KEY` to the server environment. `OPENROUTER_MODEL` is optional and defaults to `openai/gpt-4o-mini`; set it to any model ID available to your OpenRouter account. `OPENROUTER_SITE_URL` is an optional site URL used for OpenRouter attribution; it defaults to the first `CLIENT_URL` if configured. The key is used only by the server. The assistant answers from the HR guidance included in the server controller and does not access employee records or make leave, payroll, or employment decisions. The leave reason helper sends only the employee-entered draft and leave category to OpenRouter, and its suggestion must be reviewed and submitted by the employee. Set the variables in your local `server/.env` and in the server hosting environment before using these AI features.
-
----
-
-## Getting started
-
-### Prerequisites
-- Node.js >= 20.19
-- A MongoDB replica set with transaction support (Atlas works; local MongoDB must be configured as a replica set)
-- Optional: a Brevo SMTP account (emails) and an Inngest account (background jobs)
-
-### 1. Clone and install
 ```bash
-git clone "https://github.com/Alok14x14/Employee-Managment-System"
-cd <repo-folder>
+cd server
+npm install
 
-cd server && npm install
-cd ../client && npm install
+cd ../client
+npm install
 ```
 
-### 2. Configure environment
+### 2. Configure the server
 
-**`server/.env`** (see `server/.env.example`)
+Copy `server/.env.example` to `server/.env`, then set the MongoDB URI and a strong JWT secret. For local development, the defaults below expect the client on port `5173` and API on port `4000`.
+
 ```env
 PORT=4000
-MONGODB_URI="mongodb+srv://<username>:<password>@cluster0.mongodb.net/EMS"
-JWT_SECRET="a-long-random-string"
-CLIENT_URL="http://localhost:5173"
-ADMIN_EMAIL="admin@example.com"
-INNGEST_EVENT_KEY=""
-INNGEST_SIGNING_KEY=""
-SMTP_USER=""
-SMTP_PASS=""
-SENDER_EMAIL=""
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>/<database>
+JWT_SECRET=<use-a-long-random-secret>
+CLIENT_URL=http://localhost:5173
+ADMIN_EMAIL=admin@example.com
+
+# Optional: Inngest background jobs
+INNGEST_EVENT_KEY=
+INNGEST_SIGNING_KEY=
+
+# Optional: SMTP email
+SMTP_USER=
+SMTP_PASS=
+SENDER_EMAIL=
+
+# Optional: HR assistant and leave reason helper
+OPENROUTER_API_KEY=
+OPENROUTER_MODEL=openai/gpt-4o-mini
+OPENROUTER_SITE_URL=
 ```
 
-**`client/.env`**
+Keep `.env` files and API keys private. SMTP, Inngest, and OpenRouter settings can remain unset if you do not need those features locally.
+
+### 3. Configure the client
+
+Create `client/.env`:
+
 ```env
 VITE_BASE_URL=http://localhost:4000
 ```
 
-### 3. Create data
+### 4. Add starter data
 
-Option A: create just an admin (temporary password `admin123`, must be changed on first login):
+For a single admin account (temporary password `admin123`; change it on first sign-in):
+
 ```bash
 cd server
 npm run seed
 ```
 
-Option B: load the full demo dataset (10 employees, attendance, leaves, payslips, holidays):
+Or, from the repository root, load the complete demo dataset:
+
 ```bash
-node demo-database/seed.js            # dates anchored to today
-node demo-database/seed.js --static   # exact dates from the JSON files
-node demo-database/seed.js --force    # clear demo data, then re-seed
-node demo-database/clear.js           # remove demo data only
+node demo-database/seed.js           # dates adjusted relative to today
+node demo-database/seed.js --static   # use dates as stored in the JSON files
+node demo-database/seed.js --force    # replace existing demo records, then seed
 ```
 
-### 4. Run
+The demo seed script uses `server/.env`'s `MONGODB_URI` by default. To clear seeded demo records, run `node demo-database/clear.js` from the root. See [demo-database/README.md](demo-database/README.md) for the included accounts and seed data details.
+
+### 5. Start the app
+
+Open two terminals from the repository root:
+
 ```bash
-# terminal 1
-cd server && npm run server
-
-# terminal 2
-cd client && npm run dev
+cd server
+npm run server
 ```
-The client runs at http://localhost:5173 and the API at http://localhost:4000.
 
-### 5. (Optional) Run Inngest locally
+```bash
+cd client
+npm run dev
+```
+
+Open [http://localhost:5173](http://localhost:5173). The API listens at [http://localhost:4000](http://localhost:4000).
+
+To run the Inngest development server as well, use a third terminal:
+
 ```bash
 npx inngest-cli@latest dev -u http://localhost:4000/api/inngest
 ```
 
-### Maintenance scripts (`server/`)
-```bash
-npm run close:unclosed-attendance   # auto-close past open shifts
-npm run reject:expired-leaves       # auto-reject expired pending leaves
-npm run backfill:leave-days         # recompute workingDays on leaves
-npm run lowercase:emails            # normalize stored emails
-```
+## Application rules and automation
 
----
+- Business-day calculations use `Asia/Kolkata` (IST). Weekends, configured holidays, and approved leave days are excluded from applicable attendance and leave calculations.
+- Clock-ins after 9:00 AM IST are marked late. Attendance day types are based on hours worked: Full Day at 8+ hours, Three Quarter Day at 6+, Half Day at 4+, otherwise Short Day.
+- Open shifts receive a reminder after 9 hours and are automatically checked out after 10 hours. Past unrecorded working days can be marked absent.
+- Leave quotas are Sick 12 days, Casual 12 days, and Annual 18 days. Working-day calculations exclude weekends and configured holidays; quota is checked again on approval.
+- Inngest handles shift reminders and auto-checkout, pending-leave reminders and expiry, weekday attendance reminders, and absence processing. Scheduled automation requires Inngest to be configured and connected to `/api/inngest`.
+
+## API map
+
+All API routes use the `/api` prefix. Protected routes require `Authorization: Bearer <token>`.
+
+| Area | Example endpoints |
+|---|---|
+| Authentication | `POST /auth/login`, `POST /auth/forgot-password`, `POST /auth/reset-password`, `GET /auth/session`, `POST /auth/change-password` |
+| Employees and profile | `GET/POST /employees`, `PUT/DELETE /employees/:id`, `GET/POST /profile` |
+| Attendance | `POST /attendance`, `GET /attendance`, `GET /attendance/admin/today`, `GET/POST /attendance/corrections`, `PATCH /attendance/corrections/:id` |
+| Leave | `POST /leave`, `GET /leave`, `GET /leave/balance`, `PATCH/DELETE /leave/:id` |
+| Payslips | `POST /payslips`, `GET /payslips`, `GET /payslips/:id` |
+| Holidays | `GET /holidays`, `POST /holidays`, `DELETE /holidays/:id` |
+| Documents | `GET/POST /documents`, `GET /documents/:id/content`, `DELETE /documents/:id` |
+| Announcements | `GET/POST /announcements`, `DELETE /announcements/:id` |
+| Dashboard and assistant | `GET /dashboard`, `POST /hr-assistant/chat`, `POST /hr-assistant/leave-draft` |
+
+Admin-only operations are identified by server-side role middleware. Document uploads accept PDF files up to 5 MB.
 
 ## Deployment
 
-Both apps are deployed on Vercel as separate projects.
+The repository is structured for two Vercel projects:
 
-- **Client:** `client/vercel.json` rewrites all paths to `/` so React Router deep links work. Set `VITE_BASE_URL` to the server's URL.
-- **Server:** `server/vercel.json` routes everything to `server.js` via `@vercel/node`. Set all variables from `.env.example`, with `CLIENT_URL` set to the client's URL (comma-separated if more than one).
-- **Inngest:** register `https://<server-domain>/api/inngest` in the Inngest dashboard so crons and delayed jobs run in production.
-- **Atlas:** allow Vercel's IPs in Network Access.
+1. Deploy `client/` as the frontend and set `VITE_BASE_URL` to the deployed API URL.
+2. Deploy `server/` as the API and configure the variables in `server/.env.example`. Set `CLIENT_URL` to the frontend origin (comma-separated when allowing multiple origins).
+3. Connect the Inngest app to `https://<api-domain>/api/inngest` to run production events and schedules.
+4. Configure MongoDB Atlas network access for the deployment environment.
 
----
+## Useful maintenance commands
 
-## Author
+Run these from `server/`:
 
-**Alok**, B.Tech in Electronics and Communication Engineering, NIT Patna
+```bash
+npm run close:unclosed-attendance
+npm run reject:expired-leaves
+npm run backfill:leave-days
+npm run lowercase:emails
+```
+
+## Project layout
+
+```text
+client/              React application, pages, components, and API client
+server/              Express API, controllers, models, jobs, and utilities
+demo-database/       JSON fixtures and demo seed/clear scripts
+docs/screenshots/    README product screenshots
+```
+
+## Maintainer
+
+**Alok** · B.Tech, Electronics and Communication Engineering, NIT Patna
