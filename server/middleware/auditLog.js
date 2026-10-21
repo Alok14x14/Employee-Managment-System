@@ -121,11 +121,6 @@ const responseResourceId = (chunk) => {
 
 const resolveSecurityActor = async (req, pathname) => {
     const normalizeEmail = (value) => typeof value === "string" ? value.trim().toLowerCase().slice(0, 160) : "";
-    if (pathname === "/api/auth/login" && req.body?.role_type === "admin") {
-        const attemptedEmail = normalizeEmail(req.body.email);
-        const user = attemptedEmail ? await User.findOne({ email: attemptedEmail }).select("_id role").lean() : null;
-        return { type: "login", actorId: user?.role === "ADMIN" ? user._id : null, attemptedEmail: user?.role === "ADMIN" ? null : attemptedEmail };
-    }
     if (pathname === "/api/auth/forgot-password") {
         const email = normalizeEmail(req.body?.email);
         const user = email ? await User.findOne({ email, role: "ADMIN" }).select("_id").lean() : null;
@@ -165,7 +160,7 @@ export const auditAdminActions = (req, res, next) => {
     if (!MUTATING_METHODS.has(req.method) || req.originalUrl.startsWith("/api/audit-logs")) return next();
 
     const pathname = req.originalUrl.split("?")[0];
-    const isSecurityPath = ["/api/auth/login", "/api/auth/forgot-password", "/api/auth/reset-password"].includes(pathname);
+    const isSecurityPath = ["/api/auth/forgot-password", "/api/auth/reset-password"].includes(pathname);
     const securityActorPromise = isSecurityPath
         ? resolveSecurityActor(req, pathname).catch((error) => {
             console.error("Failed to resolve authentication audit actor:", error.message);
@@ -246,7 +241,6 @@ export const auditAdminActions = (req, res, next) => {
 
             if (securityActor) {
                 const securityActions = {
-                    login: outcome === "SUCCESS" ? "Admin login succeeded" : "Failed admin login",
                     forgot: outcome === "SUCCESS" ? "Requested admin password reset" : "Failed admin password reset request",
                     reset: outcome === "SUCCESS" ? "Reset admin password" : "Failed admin password reset",
                 };

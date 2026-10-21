@@ -350,6 +350,11 @@ export const deleteEmployee = async (req, res)=>{
         const employee = await Employee.findById(id)
         if(!employee) return res.status(404).json({ error: "Employee not found" });
 
+        const targetUser = await User.findById(employee.userId).select("role").lean();
+        if (targetUser?.role === "ADMIN") {
+            return res.status(403).json({ error: "Administrator accounts cannot be archived or deleted" });
+        }
+
         employee.isDeleted = true;
         employee.employmentStatus = "INACTIVE"
         await employee.save()

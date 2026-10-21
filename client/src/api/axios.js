@@ -23,6 +23,13 @@ api.interceptors.response.use(
             }
             return Promise.reject(error);
         }
+        if (error.response?.status === 403 && error.response?.data?.code === "ACCOUNT_DEACTIVATED") {
+            localStorage.removeItem("token");
+            if (window.location.pathname !== "/login") {
+                window.location.href = "/login";
+            }
+            return Promise.reject(error);
+        }
         if (error.response?.status === 401) {
             const url = error.config?.url || "";
             const isLogin = url.includes("/auth/login");

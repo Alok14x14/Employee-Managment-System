@@ -56,8 +56,10 @@
 
 - Review workforce, attendance, pending leave, and department summaries on the dashboard.
 - Create, edit, search, filter, and archive employee accounts while retaining historical records.
+- Open an employee profile with employment and compensation details plus recent attendance, leave, payslip, and document records.
 - Browse employee rosters by department and manage organization holidays.
 - Review today's attendance, including late arrivals and open shifts; review employee attendance correction requests.
+- Search the admin activity log to review changes and outcomes across HR operations.
 - Approve or reject leave requests, with a reason required for rejection.
 - Publish company announcements and upload or remove employee documents and policy PDFs.
 - Generate monthly payslips with salary components, allowances, and deductions.
@@ -103,6 +105,7 @@ Newly seeded admin accounts require a password change at first sign-in. The publ
 | Database | MongoDB (Atlas recommended) |
 | Authentication | JWT, bcrypt, role-based middleware, token versioning |
 | Jobs | Inngest events and scheduled functions |
+| Cache | Optional Upstash Redis dashboard cache |
 | Email | Nodemailer with SMTP (Brevo compatible) |
 | Hosting | Vercel-ready client and server projects |
 
@@ -137,6 +140,10 @@ JWT_SECRET=<use-a-long-random-secret>
 CLIENT_URL=http://localhost:5173
 ADMIN_EMAIL=admin@example.com
 
+# Optional: dashboard response cache
+UPSTASH_REDIS_REST_URL=
+UPSTASH_REDIS_REST_TOKEN=
+
 # Optional: Inngest background jobs
 INNGEST_EVENT_KEY=
 INNGEST_SIGNING_KEY=
@@ -152,7 +159,7 @@ OPENROUTER_MODEL=openai/gpt-4o-mini
 OPENROUTER_SITE_URL=
 ```
 
-Keep `.env` files and API keys private. SMTP, Inngest, and OpenRouter settings can remain unset if you do not need those features locally.
+Keep `.env` files and API keys private. SMTP, Inngest, Upstash Redis, and OpenRouter settings can remain unset if you do not need those features locally.
 
 ### 3. Configure the client
 
@@ -209,6 +216,8 @@ npx inngest-cli@latest dev -u http://localhost:4000/api/inngest
 - Clock-ins after 9:00 AM IST are marked late. Attendance day types are based on hours worked: Full Day at 8+ hours, Three Quarter Day at 6+, Half Day at 4+, otherwise Short Day.
 - Open shifts receive a reminder after 9 hours and are automatically checked out after 10 hours. Past unrecorded working days can be marked absent.
 - Leave quotas are Sick 12 days, Casual 12 days, and Annual 18 days. Working-day calculations exclude weekends and configured holidays; quota is checked again on approval.
+- Employees whose account is archived or whose employment status is not Active cannot sign in or continue using the API. Administrator accounts cannot be archived through employee management.
+- Admin actions are recorded in the activity log with their outcome and relevant change details. Logs expire after one year.
 - Inngest handles shift reminders and auto-checkout, pending-leave reminders and expiry, weekday attendance reminders, and absence processing. Scheduled automation requires Inngest to be configured and connected to `/api/inngest`.
 
 ## API map
@@ -218,16 +227,17 @@ All API routes use the `/api` prefix. Protected routes require `Authorization: B
 | Area | Example endpoints |
 |---|---|
 | Authentication | `POST /auth/login`, `POST /auth/forgot-password`, `POST /auth/reset-password`, `GET /auth/session`, `POST /auth/change-password` |
-| Employees and profile | `GET/POST /employees`, `PUT/DELETE /employees/:id`, `GET/POST /profile` |
+| Employees and profile | `GET/POST /employees`, `GET /employees/:id/details`, `PUT/DELETE /employees/:id`, `GET/POST /profile` |
 | Attendance | `POST /attendance`, `GET /attendance`, `GET /attendance/admin/today`, `GET/POST /attendance/corrections`, `PATCH /attendance/corrections/:id` |
 | Leave | `POST /leave`, `GET /leave`, `GET /leave/balance`, `PATCH/DELETE /leave/:id` |
 | Payslips | `POST /payslips`, `GET /payslips`, `GET /payslips/:id` |
 | Holidays | `GET /holidays`, `POST /holidays`, `DELETE /holidays/:id` |
 | Documents | `GET/POST /documents`, `GET /documents/:id/content`, `DELETE /documents/:id` |
 | Announcements | `GET/POST /announcements`, `DELETE /announcements/:id` |
+| Admin activity | `GET /audit-logs?page=&limit=&search=` |
 | Dashboard and assistant | `GET /dashboard`, `POST /hr-assistant/chat`, `POST /hr-assistant/leave-draft` |
 
-Admin-only operations are identified by server-side role middleware. Document uploads accept PDF files up to 5 MB.
+Admin-only operations are identified by server-side role middleware. Employee and audit-log lists support pagination; employee and audit-log endpoints support search. Document uploads accept PDF files up to 5 MB.
 
 ## Deployment
 
@@ -246,6 +256,7 @@ Run these from `server/`:
 npm run close:unclosed-attendance
 npm run reject:expired-leaves
 npm run backfill:leave-days
+npm run backfill:audit-retention
 npm run lowercase:emails
 ```
 

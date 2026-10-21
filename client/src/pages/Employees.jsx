@@ -95,7 +95,14 @@ const Employees = () => {
         </select></label>
       </div>
 
-      {loading ? <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{Array.from({ length: 12 }).map((_, index) => <div key={index} className="card h-28 skeleton" />)}</div> : employees.length === 0 ? (
+      {loading ? <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" role="status" aria-label="Loading employees" aria-busy="true">{Array.from({ length: 12 }).map((_, index) => <div key={index} aria-hidden="true" className="card flex min-h-20 items-center gap-3 p-4">
+        <div className="size-10 shrink-0 rounded-full skeleton" />
+        <div className="min-w-0 flex-1 space-y-2">
+          <div className="h-3.5 w-32 max-w-full rounded skeleton" />
+          <div className="h-2.5 w-24 max-w-full rounded skeleton" />
+        </div>
+        {statusFilter === 'deleted' && <div className="h-5 w-16 shrink-0 rounded skeleton" />}
+      </div>)}</div> : employees.length === 0 ? (
         <div className="card flex flex-col items-center p-12 text-center"><UsersRound className="size-8 text-zinc-300 dark:text-zinc-600" /><p className="mt-3 text-sm font-medium text-zinc-700 dark:text-zinc-200">No employees found</p><p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Try a different name, department, or status.</p></div>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{employees.map((emp) => <article key={emp.id || emp._id} className="card relative flex min-h-20 items-center gap-3 p-4 transition-colors hover:border-blue-300 dark:hover:border-blue-800">

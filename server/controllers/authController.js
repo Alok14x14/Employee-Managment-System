@@ -38,8 +38,10 @@ export const login = async (req, res) => {
             return res.status(401).json({ error: "Not authorized as employee" });
         }
 
-        const emp = await Employee.findOne({ userId: user._id }).select("isDeleted").lean();
-        if (emp?.isDeleted) return res.status(403).json({ error: "Account deactivated" });
+        const emp = await Employee.findOne({ userId: user._id }).select("isDeleted employmentStatus").lean();
+        if (emp?.isDeleted || (user.role === "EMPLOYEE" && (!emp || emp.employmentStatus !== "ACTIVE"))) {
+            return res.status(403).json({ error: "Account deactivated", code: "ACCOUNT_DEACTIVATED" });
+        }
 
         const payload = {
             userId: user._id.toString(),

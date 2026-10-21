@@ -17,7 +17,7 @@ export const protect = async (req, res, next) => {
 
         const [user, emp] = await Promise.all([
             User.findById(session.userId).select("role email passwordChangedAt mustChangePassword tokenVersion").lean(),
-            Employee.findOne({ userId: session.userId }).select("isDeleted").lean()
+            Employee.findOne({ userId: session.userId }).select("isDeleted employmentStatus").lean()
         ]);
 
         if (!user) {
@@ -34,8 +34,8 @@ export const protect = async (req, res, next) => {
             return res.status(401).json({ error: "Unauthorized" });
         }
 
-        if (user.role === "EMPLOYEE" && emp?.isDeleted) {
-            return res.status(403).json({ error: "Account deactivated" });
+        if (emp?.isDeleted || (user.role === "EMPLOYEE" && (!emp || emp.employmentStatus !== "ACTIVE"))) {
+            return res.status(403).json({ error: "Account deactivated", code: "ACCOUNT_DEACTIVATED" });
         }
 
         req.session = {

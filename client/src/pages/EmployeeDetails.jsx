@@ -67,7 +67,7 @@ const EmployeeDetails = () => {
           <span className={`badge ${employee.isDeleted ? 'badge-danger' : 'badge-success'}`}>{employee.isDeleted ? 'Archived' : formatStatus(employee.employmentStatus || 'ACTIVE')}</span>
           {!employee.isDeleted && <>
             <button type="button" onClick={() => setShowEdit(true)} className="btn-secondary"><Pencil className="size-3.5" />Edit employee</button>
-            <button type="button" onClick={() => setShowArchiveConfirm(true)} className="btn-secondary text-rose-600 dark:text-rose-400"><Archive className="size-3.5" />Archive</button>
+            {employee.user?.role !== 'ADMIN' && <button type="button" onClick={() => setShowArchiveConfirm(true)} className="btn-secondary text-rose-600 dark:text-rose-400"><Archive className="size-3.5" />Archive</button>}
           </>}
         </div>
       </div>
