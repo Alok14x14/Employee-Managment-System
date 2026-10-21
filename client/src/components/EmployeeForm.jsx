@@ -174,13 +174,20 @@ const EmployeeForm = ({ initialData, onSuccess, onCancel }) => {
               <input type="password" name="password" placeholder="Leave blank to keep" minLength={8} />
             </div>
           )}
-          <div>
-            <label className="block font-medium text-[#18181B] dark:text-[#FAFAFA] mb-1">Role</label>
-            <select name="role" defaultValue={initialData?.user?.role || 'EMPLOYEE'}>
-              <option value="EMPLOYEE">Employee</option>
-              <option value="ADMIN">Administrator</option>
-            </select>
-          </div>
+          {isEditMode ? (
+            <div>
+              <label className="block font-medium text-[#18181B] dark:text-[#FAFAFA] mb-1">Role</label>
+              <select name="role" defaultValue={initialData?.user?.role || 'EMPLOYEE'}>
+                <option value="EMPLOYEE">Employee</option>
+                <option value="ADMIN">Administrator</option>
+              </select>
+            </div>
+          ) : (
+            <div>
+              <span className="block font-medium text-[#18181B] dark:text-[#FAFAFA] mb-1">Account type</span>
+              <p className="rounded-md border border-[#E4E4E7] px-3 py-2 text-[#52525B] dark:border-[#27272A] dark:text-[#A1A1AA]">Employee</p>
+            </div>
+          )}
         </div>
       </div>
 

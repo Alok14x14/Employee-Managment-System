@@ -97,7 +97,7 @@ const AdminActivityLog = () => {
             {loading ? Array.from({ length: PAGE_SIZE }).map((_, index) => <tr key={index} aria-hidden="true"><td><div className="h-3.5 w-36 skeleton" /></td><td><div className="h-3.5 w-28 skeleton" /></td><td><div className="h-3.5 w-24 skeleton" /></td><td><div className="h-3.5 w-32 skeleton" /></td></tr>)
               : logs.length ? logs.map((log) => <tr key={log._id} role="button" tabIndex={0} onClick={() => setSelectedLog(log)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setSelectedLog(log) } }} aria-label={`Show details for ${log.action}`} className="cursor-pointer hover:bg-zinc-50/60 focus-visible:outline-2 focus-visible:outline-blue-500 dark:hover:bg-zinc-800/40">
                 <td className="font-medium text-zinc-900 dark:text-zinc-100">{log.actorEmail}</td>
-                <td>{getOutcome(log) && <span className={`mr-1.5 badge ${getOutcome(log) === 'Failed' || getOutcome(log) === 'Rejected' ? 'badge-danger' : 'badge-success'}`}>{getOutcome(log)}</span>}{log.action}</td>
+                <td>{log.action}</td>
                 <td>{getResourceSummary(log)}</td>
                 <td>{formatDate(log.createdAt)} · {formatTime(log.createdAt)}</td>
               </tr>)

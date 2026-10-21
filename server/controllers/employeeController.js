@@ -157,6 +157,10 @@ export const createEmployee = async (req, res)=>{
     try {
         const {firstName, lastName, email, phone, position, department, basicSalary, allowances, deductions, joinDate, password, role, bio} = req.body;
 
+        if (role && role !== "EMPLOYEE") {
+            return res.status(403).json({ error: "Administrators can only create employee accounts" });
+        }
+
         if(!email || !password || !firstName || !lastName || typeof email !== "string" || typeof password !== "string"){
             return res.status(400).json({ error: "Missing required fields" });
         }
@@ -179,7 +183,7 @@ export const createEmployee = async (req, res)=>{
         const user = await User.create({
             email: normalizedEmail,
             password: hashed,
-            role: role || "EMPLOYEE",
+            role: "EMPLOYEE",
             mustChangePassword: true,
             tokenVersion: 0,
         })

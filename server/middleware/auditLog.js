@@ -26,18 +26,32 @@ const employeeSummary = (employee) => employee ? {
     name: `${cleanText(employee.firstName, 80)} ${cleanText(employee.lastName, 80)}`.trim(),
     email: cleanText(employee.email, 160),
 } : null;
+const EMPLOYEE_FIELD_LABELS = {
+    firstName: "First name", lastName: "Last name", email: "Email", phone: "Phone", position: "Position",
+    department: "Department", basicSalary: "Basic salary", allowances: "Allowances", deductions: "Deductions",
+    joinDate: "Join date", employmentStatus: "Employment status", bio: "Bio", role: "Role",
+};
+const normalizeEmployeeValue = (field, value) => {
+    if (value == null) return null;
+    if (["basicSalary", "allowances", "deductions"].includes(field)) return Number(value);
+    if (field === "joinDate") {
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? String(value) : date.toISOString().slice(0, 10);
+    }
+    if (field === "email") return String(value).trim().toLowerCase();
+    return String(value).trim();
+};
 
 const captureMeta = async ({ resource, resourceId, resourceKey, method, body }) => {
     if (resource === "employee") {
-        const employee = resourceId ? await Employee.findById(resourceId).select("firstName lastName email basicSalary allowances deductions employmentStatus isDeleted userId").populate("userId", "role").lean() : null;
+        const employee = resourceId ? await Employee.findById(resourceId).select("firstName lastName email phone position department basicSalary allowances deductions employmentStatus isDeleted joinDate bio userId").populate("userId", "role").lean() : null;
         const person = employeeSummary(employee) || (method === "POST" ? employeeSummary(body) : null);
-        const fields = Object.keys(body || {}).filter((key) => key !== "password" && key !== "currentPassword" && key !== "newPassword" && key !== "confirmPassword");
-        const changes = fields.map((field) => ({
-            firstName: "First name", lastName: "Last name", email: "Email", phone: "Phone", position: "Position",
-            department: "Department", basicSalary: "Basic salary", allowances: "Allowances", deductions: "Deductions",
-            joinDate: "Join date", employmentStatus: "Employment status", bio: "Bio", role: "Role",
-        }[field] || field)).slice(0, 20);
-        if (body?.password) changes.push("Password");
+        const fieldSnapshot = employee ? {
+            firstName: employee.firstName, lastName: employee.lastName, email: employee.email, phone: employee.phone,
+            position: employee.position, department: employee.department, basicSalary: employee.basicSalary,
+            allowances: employee.allowances, deductions: employee.deductions, joinDate: employee.joinDate,
+            employmentStatus: employee.employmentStatus, bio: employee.bio, role: employee.userId?.role,
+        } : null;
         const sensitiveSnapshot = employee ? {
             basicSalary: employee.basicSalary ?? null,
             allowances: employee.allowances ?? null,
@@ -53,7 +67,7 @@ const captureMeta = async ({ resource, resourceId, resourceKey, method, body }) 
             role: body?.role || "EMPLOYEE",
             isDeleted: false,
         } : null;
-        return { employee: person, changes, sensitiveSnapshot };
+        return { employee: person, fieldSnapshot, sensitiveSnapshot };
     }
 
     if (resource === "payslip") {
@@ -183,18 +197,6 @@ export const auditAdminActions = (req, res, next) => {
         const createdId = req.method === "POST" ? responseResourceId(chunk) : null;
         const finalResourceId = resourceId || createdId;
         const { action } = describeAction(req.method, req.originalUrl);
-        const changes = resource === "employee" ? Object.keys(req.body || {}).filter((key) => key !== "password" && key !== "currentPassword" && key !== "newPassword" && key !== "confirmPassword") : [];
-        const changeLabels = changes.map((field) => ({
-            firstName: "First name", lastName: "Last name", email: "Email", phone: "Phone", position: "Position",
-            department: "Department", basicSalary: "Basic salary", allowances: "Allowances", deductions: "Deductions",
-            joinDate: "Join date", employmentStatus: "Employment status", bio: "Bio", role: "Role",
-        }[field] || field)).slice(0, 20);
-        const includesPasswordChange = resource === "employee" && typeof req.body?.password === "string" && req.body.password.length >= 8;
-        if (includesPasswordChange) changeLabels.push("Password");
-        const standardAction = includesPasswordChange
-            ? (changes.length ? "Updated employee and changed password" : "Changed employee password")
-            : action;
-
         const metaPromise = preMutationMeta || captureMeta({ resource, resourceId: finalResourceId, resourceKey, method: req.method, body: req.body || {} });
         const outcome = res.statusCode >= 200 && res.statusCode < 300 ? "SUCCESS" : "FAILED";
         const statusLabel = req.body?.status === "APPROVED" ? "Accepted" : req.body?.status === "REJECTED" ? "Rejected" : null;
@@ -204,11 +206,27 @@ export const auditAdminActions = (req, res, next) => {
             if (!sessionIsAdmin && !securityActor) return;
             const actorId = sessionIsAdmin ? session.userId : securityActor.actorId;
             const finalMeta = { ...(beforeMeta || {}), ...(statusLabel ? { requestedOutcome: statusLabel } : {}) };
+            let changeLabels = [];
+            let finalAction = action;
 
             if (resource === "employee") {
                 const afterMeta = outcome === "SUCCESS"
                     ? await captureMeta({ resource, resourceId: finalResourceId, resourceKey, method: "PUT", body: {} })
                     : beforeMeta;
+                if (req.method === "PUT" && outcome === "SUCCESS") {
+                    changeLabels = Object.keys(req.body || {})
+                        .filter((field) => Object.hasOwn(EMPLOYEE_FIELD_LABELS, field))
+                        .filter((field) => normalizeEmployeeValue(field, beforeMeta?.fieldSnapshot?.[field]) !== normalizeEmployeeValue(field, afterMeta?.fieldSnapshot?.[field]))
+                        .map((field) => EMPLOYEE_FIELD_LABELS[field])
+                        .slice(0, 20);
+                }
+                const includesPasswordChange = req.method === "PUT" && outcome === "SUCCESS" && typeof req.body?.password === "string" && req.body.password.length >= 8;
+                if (includesPasswordChange) changeLabels.push("Password");
+                if (includesPasswordChange) {
+                    finalAction = changeLabels.some((label) => label !== "Password")
+                        ? "Updated employee and changed password"
+                        : "Changed employee password";
+                }
                 const before = beforeMeta?.sensitiveSnapshot || null;
                 const after = afterMeta?.sensitiveSnapshot || null;
                 const sensitiveFields = [
@@ -221,11 +239,11 @@ export const auditAdminActions = (req, res, next) => {
                     .filter(([field]) => JSON.stringify(before?.[field] ?? null) !== JSON.stringify(after?.[field] ?? null))
                     .map(([field, label]) => ({ field: label, before: before?.[field] ?? null, after: after?.[field] ?? null }));
                 delete finalMeta.sensitiveSnapshot;
+                delete finalMeta.fieldSnapshot;
                 if (finalMeta.after) delete finalMeta.after.isDeleted;
                 if (finalMeta.before) delete finalMeta.before.isDeleted;
             }
 
-            let finalAction = standardAction;
             if (securityActor) {
                 const securityActions = {
                     login: outcome === "SUCCESS" ? "Admin login succeeded" : "Failed admin login",
