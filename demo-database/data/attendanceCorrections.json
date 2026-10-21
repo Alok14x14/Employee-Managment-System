@@ -125,7 +125,7 @@
     "reason": "Requested overtime departure time after remote data sync monitoring.",
     "status": "REJECTED",
     "reviewedBy": "66f000000000000000000001",
-    "reviewedAt": "2026-10-17T04:30:00.000Z",
+    "reviewedAt": "2026-10-19T04:30:00.000Z",
     "reviewNote": "Overtime requires pre-authorization from department manager.",
     "createdAt": "2026-10-16T15:00:00.000Z"
   },

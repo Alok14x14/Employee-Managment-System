@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { BellIcon, CalendarDaysIcon, CircleCheckIcon, Clock3, FileTextIcon, Megaphone, WalletCardsIcon, XIcon } from 'lucide-react'
 import api from '../api/axios'
@@ -7,7 +7,14 @@ const DAY_MS = 24 * 60 * 60 * 1000
 const dateLabel = (value) => new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium', timeZone: 'Asia/Kolkata' }).format(new Date(value))
 const istDateKey = (date = new Date()) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(date)
 
-const NotificationCenter = ({ userId }) => {
+const PAGE_NOTIFICATION_TYPES = {
+  '/leave': ['leave'],
+  '/payslips': ['payslip'],
+  '/documents': ['document'],
+  '/announcements': ['announcement'],
+}
+
+const NotificationCenter = ({ userId, pathname, onUnreadChange }) => {
   const [open, setOpen] = useState(false)
   const [items, setItems] = useState([])
   const [readIds, setReadIds] = useState(() => {
@@ -99,6 +106,32 @@ const NotificationCenter = ({ userId }) => {
     }
     setItems(next.sort((a, b) => new Date(b.date) - new Date(a.date)))
   }, [])
+
+  useEffect(() => {
+    refresh()
+    const interval = window.setInterval(refresh, 60_000)
+    return () => window.clearInterval(interval)
+  }, [refresh])
+
+  useEffect(() => {
+    const unreadByType = { leave: 0, payslip: 0, document: 0, announcement: 0 }
+    for (const item of items) {
+      if (Object.hasOwn(unreadByType, item.type) && !readIds.includes(item.id)) unreadByType[item.type] += 1
+    }
+    onUnreadChange(unreadByType)
+  }, [items, readIds, onUnreadChange])
+
+  useEffect(() => {
+    const types = PAGE_NOTIFICATION_TYPES[pathname]
+    if (!types) return
+    const ids = items.filter((item) => types.includes(item.type) && !readIds.includes(item.id)).map((item) => item.id)
+    if (!ids.length) return
+    setReadIds((current) => {
+      const next = [...new Set([...current, ...ids])].slice(-200)
+      localStorage.setItem(`staffflow-notifications-read-${userId}`, JSON.stringify(next))
+      return next
+    })
+  }, [items, pathname, readIds, userId])
 
   const toggleOpen = () => {
     if (!open) refresh()

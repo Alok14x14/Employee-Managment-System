@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react'
-import { Loader2Icon, LogInIcon, LogOutIcon } from 'lucide-react'
+import { CheckCircle2Icon, Loader2Icon, LogInIcon, LogOutIcon, XIcon } from 'lucide-react'
 import api from '../../api/axios'
 import toast from 'react-hot-toast'
-import { formatTime } from '../../utils/formatters'
+import { formatDate, formatStatus, formatTime } from '../../utils/formatters'
 import { getWorkingHoursDisplay } from '../../utils/attendance'
 
 const CheckInButton = ({ todayRecord, onAction, restriction }) => {
   const [loading, setLoading] = useState(false)
   const [currentTime, setCurrentTime] = useState(new Date())
   const [elapsedTime, setElapsedTime] = useState('00:00:00')
+  const [completedShift, setCompletedShift] = useState(null)
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -41,7 +42,10 @@ const CheckInButton = ({ todayRecord, onAction, restriction }) => {
   const handleAttendance = async () => {
     setLoading(true)
     try {
-      await api.post('/attendance')
+      const { data } = await api.post('/attendance')
+      if (isCheckedIn && data.type === 'CHECK_OUT' && data.data?.checkOut) {
+        setCompletedShift(data.data)
+      }
       onAction()
     } catch (error) {
       toast.error(error?.response?.data?.error || error?.message || 'Attendance action failed')
@@ -66,30 +70,61 @@ const CheckInButton = ({ todayRecord, onAction, restriction }) => {
     hour12: false,
   })
 
+  const completionDialog = completedShift && (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4" onClick={() => setCompletedShift(null)}>
+      <section role="dialog" aria-modal="true" aria-labelledby="shift-complete-title" className="card w-full max-w-md overflow-hidden shadow-2xl" onClick={(event) => event.stopPropagation()}>
+        <div className="flex items-start gap-3 border-b border-zinc-200 p-5 dark:border-zinc-800">
+          <CheckCircle2Icon className="mt-0.5 size-6 shrink-0 text-emerald-600 dark:text-emerald-400" />
+          <div className="min-w-0 flex-1">
+            <h2 id="shift-complete-title" className="text-base font-semibold text-zinc-900 dark:text-zinc-100">Shift completed</h2>
+            <p className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-400">You have successfully clocked out. Here are your shift details.</p>
+          </div>
+          <button type="button" onClick={() => setCompletedShift(null)} className="rounded p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-800 dark:hover:text-zinc-200" aria-label="Close shift summary">
+            <XIcon className="size-4" />
+          </button>
+        </div>
+        <dl className="grid grid-cols-2 gap-4 p-5">
+          <div><dt className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400">Date</dt><dd className="mt-1 text-sm font-medium text-zinc-900 dark:text-zinc-100">{formatDate(completedShift.date || completedShift.checkOut)}</dd></div>
+          <div><dt className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400">Shift length</dt><dd className="mt-1 text-sm font-medium text-zinc-900 dark:text-zinc-100">{getWorkingHoursDisplay(completedShift)}</dd></div>
+          <div><dt className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400">Clock-in</dt><dd className="mt-1 text-sm font-medium text-zinc-900 dark:text-zinc-100">{formatTime(completedShift.checkIn)}</dd></div>
+          <div><dt className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400">Clock-out</dt><dd className="mt-1 text-sm font-medium text-zinc-900 dark:text-zinc-100">{formatTime(completedShift.checkOut)}</dd></div>
+          <div className="col-span-2"><dt className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400">Day status</dt><dd className="mt-1 text-sm font-medium text-zinc-900 dark:text-zinc-100">{formatStatus(completedShift.dayType || completedShift.status)}</dd></div>
+        </dl>
+        <div className="flex justify-end border-t border-zinc-200 p-4 dark:border-zinc-800">
+          <button type="button" onClick={() => setCompletedShift(null)} className="btn-primary">Done</button>
+        </div>
+      </section>
+    </div>
+  )
+
   if (isCompleted) {
     return (
-      <div className="card p-4 sm:p-5 mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <p className="text-xs font-medium text-[#71717A] dark:text-[#A1A1AA]">{formattedDate}</p>
-            <p className="text-sm font-semibold text-[#18181B] dark:text-[#FAFAFA] mt-0.5">
-              Shift completed. Total: {getWorkingHoursDisplay(todayRecord)}
-            </p>
-            <div className="flex items-center gap-3 text-xs text-[#71717A] dark:text-[#A1A1AA] mt-1 tabular-nums">
-              <span>Check in: <strong className="font-medium text-[#18181B] dark:text-[#FAFAFA]">{formatTime(todayRecord.checkIn)}</strong></span>
-              <span>•</span>
-              <span>Check out: <strong className="font-medium text-[#18181B] dark:text-[#FAFAFA]">{formatTime(todayRecord.checkOut)}</strong></span>
+      <>
+        <div className="card p-4 sm:p-5 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-medium text-[#71717A] dark:text-[#A1A1AA]">{formattedDate}</p>
+              <p className="text-sm font-semibold text-[#18181B] dark:text-[#FAFAFA] mt-0.5">
+                Shift completed. Total: {getWorkingHoursDisplay(todayRecord)}
+              </p>
+              <div className="flex items-center gap-3 text-xs text-[#71717A] dark:text-[#A1A1AA] mt-1 tabular-nums">
+                <span>Check in: <strong className="font-medium text-[#18181B] dark:text-[#FAFAFA]">{formatTime(todayRecord.checkIn)}</strong></span>
+                <span>•</span>
+                <span>Check out: <strong className="font-medium text-[#18181B] dark:text-[#FAFAFA]">{formatTime(todayRecord.checkOut)}</strong></span>
+              </div>
             </div>
+            <span className="badge badge-success self-start sm:self-auto">Completed</span>
           </div>
-          <span className="badge badge-success self-start sm:self-auto">Completed</span>
         </div>
-      </div>
+        {completionDialog}
+      </>
     )
   }
 
   const isClockInDisabled = !isCheckedIn && Boolean(restriction)
 
   return (
+    <>
     <div className="card p-4 sm:p-5 mb-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         {/* Date, Live clock (24px), Timestamps */}
@@ -159,6 +194,8 @@ const CheckInButton = ({ todayRecord, onAction, restriction }) => {
         </div>
       </div>
     </div>
+    {completionDialog}
+    </>
   )
 }
 

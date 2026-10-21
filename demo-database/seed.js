@@ -59,21 +59,69 @@ const announcementsData = loadJson("announcements.json");
 const attendanceCorrectionsData = loadJson("attendanceCorrections.json");
 const employeeDocsData = loadJson("employeeDocuments.json");
 
-// Helper to calculate IST day start
-const getISTDayStart = (date = new Date()) => {
-  const d = new Date(date);
-  const parts = Object.fromEntries(
+// Helper to extract IST time components
+const getISTParts = (d = new Date()) => {
+  const dateObj = d instanceof Date ? d : new Date(d);
+  return Object.fromEntries(
     new Intl.DateTimeFormat("en-GB", {
       timeZone: "Asia/Kolkata",
       hourCycle: "h23",
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
     })
-      .formatToParts(d)
+      .formatToParts(dateObj)
       .map((p) => [p.type, p.value])
   );
-  return new Date(`${parts.year}-${parts.month}-${parts.day}T00:00:00+05:30`);
+};
+
+// Helper to calculate IST day start (00:00:00+05:30)
+const getISTDayStart = (date = new Date()) => {
+  const { year, month, day } = getISTParts(date);
+  return new Date(`${year}-${month}-${day}T00:00:00+05:30`);
+};
+
+// Check if a date is Saturday or Sunday in IST
+const isWeekend = (date = new Date()) => {
+  const dateObj = date instanceof Date ? date : new Date(date);
+  const weekday = new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Kolkata", weekday: "short" }).format(dateObj);
+  return weekday === "Sat" || weekday === "Sun";
+};
+
+// Generates an array of count business days (strictly Mon-Fri in IST).
+// If refDate is a weekend (Sat/Sun), it steps back to the most recent Friday,
+// ensuring weekends are 100% OFF with zero records.
+const getPastBusinessDays = (refDate = new Date(), count = 11) => {
+  const days = [];
+  let curr = getISTDayStart(refDate);
+
+  // If currently a weekend, move back to Friday
+  while (isWeekend(curr)) {
+    curr = new Date(curr.getTime() - 24 * 60 * 60 * 1000);
+    curr = getISTDayStart(curr);
+  }
+
+  while (days.length < count) {
+    if (!isWeekend(curr)) {
+      days.push(curr);
+    }
+    curr = new Date(curr.getTime() - 24 * 60 * 60 * 1000);
+    curr = getISTDayStart(curr);
+  }
+  return days;
+};
+
+// Applies the exact IST time (hours, minutes, seconds) of sourceDate to targetDayStart
+const applyISTTimeToDate = (targetDayStart, sourceTimeDate) => {
+  if (!sourceTimeDate) return null;
+  const dayParts = getISTParts(targetDayStart);
+  const timeParts = getISTParts(sourceTimeDate);
+  return new Date(
+    `${dayParts.year}-${dayParts.month}-${dayParts.day}T${timeParts.hour}:${timeParts.minute}:${timeParts.second}+05:30`
+  );
 };
 
 async function seed() {
@@ -321,24 +369,35 @@ async function seed() {
     console.log(`⏱️ Upserting ${attendanceData.length} Attendance Records...`);
     const seededAttendanceMap = new Map();
 
+    // Map distinct static business dates (sorted descending) to dynamic business days
+    const distinctStaticTimestamps = [
+      ...new Set(attendanceData.map((a) => getISTDayStart(new Date(a.date)).getTime())),
+    ].sort((a, b) => b - a);
+
+    const dynamicBusinessDays = getPastBusinessDays(today, distinctStaticTimestamps.length);
+    const dateMapping = new Map();
+    distinctStaticTimestamps.forEach((ts, idx) => {
+      dateMapping.set(ts, dynamicBusinessDays[idx]);
+    });
+
+    // Delete existing demo attendances to ensure fresh clean records without weekend or shifted leftovers
+    await attendanceCol.deleteMany({ employeeId: { $in: demoEmployeeIds } });
+
     const attendanceOps = attendanceData.map((a) => {
-      let recDate = new Date(a.date);
+      let recDate = getISTDayStart(new Date(a.date));
       let checkIn = a.checkIn ? new Date(a.checkIn) : null;
       let checkOut = a.checkOut ? new Date(a.checkOut) : null;
 
       if (!isStatic) {
-        const daysDiff = Math.round((baseAnchorDate.getTime() - new Date(a.date).getTime()) / (24 * 3600 * 1000));
-        recDate = new Date(today.getTime() - daysDiff * 24 * 60 * 60 * 1000);
+        const origDateStart = getISTDayStart(new Date(a.date));
+        const targetDay = dateMapping.get(origDateStart.getTime()) || dynamicBusinessDays[0];
+        recDate = targetDay;
 
         if (checkIn) {
-          const inHours = checkIn.getUTCHours();
-          const inMins = checkIn.getUTCMinutes();
-          checkIn = new Date(recDate.getTime() + (inHours * 3600 + inMins * 60) * 1000);
+          checkIn = applyISTTimeToDate(targetDay, a.checkIn);
         }
         if (checkOut) {
-          const outHours = checkOut.getUTCHours();
-          const outMins = checkOut.getUTCMinutes();
-          checkOut = new Date(recDate.getTime() + (outHours * 3600 + outMins * 60) * 1000);
+          checkOut = applyISTTimeToDate(targetDay, a.checkOut);
         }
       }
 
@@ -455,13 +514,14 @@ async function seed() {
 
       let requestedTime = new Date(c.requestedTime);
       let createdAt = new Date(c.createdAt);
+      let reviewedAt = c.reviewedAt ? new Date(c.reviewedAt) : null;
 
       if (!isStatic && mappedAtt) {
-        const origReq = new Date(c.requestedTime);
-        const hours = origReq.getUTCHours();
-        const mins = origReq.getUTCMinutes();
-        requestedTime = new Date(mappedAtt.date.getTime() + (hours * 3600 + mins * 60) * 1000);
+        requestedTime = applyISTTimeToDate(mappedAtt.date, c.requestedTime);
         createdAt = new Date(requestedTime.getTime() + 30 * 60 * 1000);
+        if (reviewedAt) {
+          reviewedAt = new Date(createdAt.getTime() + 60 * 60 * 1000);
+        }
       }
 
       return {
@@ -476,10 +536,10 @@ async function seed() {
               reason: c.reason,
               status: c.status,
               reviewedBy: c.reviewedBy ? new mongoose.Types.ObjectId(c.reviewedBy) : null,
-              reviewedAt: c.reviewedAt ? new Date(c.reviewedAt) : null,
+              reviewedAt,
               reviewNote: c.reviewNote || "",
               createdAt,
-              updatedAt: c.reviewedAt ? new Date(c.reviewedAt) : createdAt,
+              updatedAt: reviewedAt || createdAt,
             },
             $setOnInsert: {
               _id: corrId,

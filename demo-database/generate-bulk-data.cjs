@@ -121,54 +121,67 @@ employeesRaw.forEach((e, idx) => {
 
 console.log(`Generated ${users.length} Users and ${employees.length} Employees.`);
 
-// Generate rich Attendance records: Today (Day 0) + 14 past business days
+// Helper for creating ISO string for an IST datetime (+05:30)
+const toISTIso = (dateStr, timeStr = "00:00:00") => {
+  return new Date(`${dateStr}T${timeStr}+05:30`).toISOString();
+};
+
+// Generate rich Attendance records: Today (Day 0: 2026-10-20) + 10 past business days (strictly Mon-Fri)
 const attendance = [];
 let attIdCounter = 1;
 
-// Day 0 (Today: 2026-10-20)
+// Day 0 (Anchor business day: 2026-10-20 Tuesday)
+const day0DateStr = "2026-10-20";
 employees.forEach((emp, idx) => {
-  let checkIn = "2026-10-20T03:30:00.000Z"; // 09:00 IST
-  let checkOut = "2026-10-20T12:00:00.000Z"; // 17:30 IST
+  // Standard on-time: 08:50 AM IST check-in, 17:30 IST (05:30 PM) check-out
+  let checkIn = toISTIso(day0DateStr, "08:50:00");
+  let checkOut = toISTIso(day0DateStr, "17:30:00");
   let status = "PRESENT";
-  let workingHours = 8.5;
+  let workingHours = 8.67;
   let dayType = "Full Day";
 
-  if (idx === 0) { // Sarah Jenkins: open checkout
+  if (idx === 0) { // Sarah Jenkins: on-time (08:45 IST), currently clocked in (open checkout)
+    checkIn = toISTIso(day0DateStr, "08:45:00");
     checkOut = null;
     workingHours = null;
     dayType = null;
-  } else if (idx === 1) { // John Doe: late, open checkout
-    checkIn = "2026-10-20T04:15:00.000Z"; // 09:45 IST
-    checkOut = null;
-    status = "LATE";
-    workingHours = null;
-    dayType = null;
-  } else if (idx === 3) { // Michael Chang: open checkout
-    checkOut = null;
-    workingHours = null;
-    dayType = null;
-  } else if (idx === 6) { // Jessica Taylor: late, open checkout
-    checkIn = "2026-10-20T04:20:00.000Z";
+  } else if (idx === 1) { // John Doe: late arrival (09:35 IST), currently clocked in
+    checkIn = toISTIso(day0DateStr, "09:35:00");
     checkOut = null;
     status = "LATE";
     workingHours = null;
     dayType = null;
-  } else if (idx === 8) { // Liam Wilson: half day
-    checkIn = "2026-10-20T03:20:00.000Z";
-    checkOut = "2026-10-20T08:20:00.000Z";
+  } else if (idx === 3) { // Michael Chang: on-time (08:55 IST), currently clocked in
+    checkIn = toISTIso(day0DateStr, "08:55:00");
+    checkOut = null;
+    workingHours = null;
+    dayType = null;
+  } else if (idx === 6) { // Jessica Taylor: late arrival (09:40 IST), currently clocked in
+    checkIn = toISTIso(day0DateStr, "09:40:00");
+    checkOut = null;
+    status = "LATE";
+    workingHours = null;
+    dayType = null;
+  } else if (idx === 8) { // Liam Wilson: half day completed (08:50 to 13:50 IST)
+    checkIn = toISTIso(day0DateStr, "08:50:00");
+    checkOut = toISTIso(day0DateStr, "13:50:00");
     workingHours = 5.0;
     dayType = "Half Day";
-  } else if (idx === 10) { // Marcus Vance: late turnstile
-    checkIn = "2026-10-20T04:10:00.000Z";
+  } else if (idx === 10) { // Marcus Vance: late turnstile (09:20 IST), full day completed
+    checkIn = toISTIso(day0DateStr, "09:20:00");
+    checkOut = toISTIso(day0DateStr, "17:35:00");
     status = "LATE";
-    workingHours = 7.8;
-  } else if (idx === 14) { // Tyler Reed: late subway
-    checkIn = "2026-10-20T04:25:00.000Z";
+    workingHours = 8.25;
+    dayType = "Full Day";
+  } else if (idx === 14) { // Tyler Reed: late subway (09:30 IST), full day completed
+    checkIn = toISTIso(day0DateStr, "09:30:00");
+    checkOut = toISTIso(day0DateStr, "17:45:00");
     status = "LATE";
-    workingHours = 7.6;
-  } else if (idx === 24) { // Aaron Brooks: half day
-    checkIn = "2026-10-20T03:15:00.000Z";
-    checkOut = "2026-10-20T07:45:00.000Z";
+    workingHours = 8.25;
+    dayType = "Full Day";
+  } else if (idx === 24) { // Aaron Brooks: half day completed (08:45 to 13:15 IST)
+    checkIn = toISTIso(day0DateStr, "08:45:00");
+    checkOut = toISTIso(day0DateStr, "13:15:00");
     workingHours = 4.5;
     dayType = "Half Day";
   }
@@ -176,7 +189,7 @@ employees.forEach((emp, idx) => {
   attendance.push({
     _id: hexId("66a00000000000000000", attIdCounter++),
     employeeId: emp._id,
-    date: "2026-10-20T00:00:00.000Z",
+    date: toISTIso(day0DateStr, "00:00:00"),
     checkIn,
     checkOut,
     status,
@@ -186,7 +199,9 @@ employees.forEach((emp, idx) => {
   });
 });
 
-// Past 14 days (excluding weekends: Oct 19 Mon, Oct 16 Fri, Oct 15 Thu, Oct 14 Wed, Oct 13 Tue, Oct 12 Mon, Oct 9 Fri, Oct 8 Thu, Oct 7 Wed, Oct 6 Tue)
+// Past 10 business days (strictly Mon-Fri, weekends 100% off):
+// Oct 19 (Mon), Oct 16 (Fri), Oct 15 (Thu), Oct 14 (Wed), Oct 13 (Tue),
+// Oct 12 (Mon), Oct 09 (Fri), Oct 08 (Thu), Oct 07 (Wed), Oct 06 (Tue)
 const pastDates = [
   "2026-10-19", "2026-10-16", "2026-10-15", "2026-10-14", "2026-10-13",
   "2026-10-12", "2026-10-09", "2026-10-08", "2026-10-07", "2026-10-06"
@@ -199,18 +214,18 @@ pastDates.forEach((dateStr, dayIdx) => {
     const isHalfDay = (empIdx + dayIdx) % 11 === 4;
     const isAbsent = (empIdx + dayIdx) % 17 === 8;
 
-    let inHour = isLate ? "04:15:00.000Z" : "03:30:00.000Z";
-    let outHour = isHalfDay ? "08:30:00.000Z" : "12:00:00.000Z";
+    let inTime = isLate ? "09:25:00" : "08:50:00";
+    let outTime = isHalfDay ? "13:50:00" : (isLate ? "17:45:00" : "17:30:00");
     let status = isAbsent ? "ABSENT" : (isLate ? "LATE" : "PRESENT");
-    let workingHours = isAbsent ? null : (isHalfDay ? 5.0 : (isLate ? 7.75 : 8.5));
+    let workingHours = isAbsent ? null : (isHalfDay ? 5.0 : (isLate ? 8.33 : 8.67));
     let dayType = isAbsent ? null : (isHalfDay ? "Half Day" : "Full Day");
 
     attendance.push({
       _id: hexId("66a00000000000000000", attIdCounter++),
       employeeId: emp._id,
-      date: `${dateStr}T00:00:00.000Z`,
-      checkIn: isAbsent ? null : `${dateStr}T${inHour}`,
-      checkOut: isAbsent ? null : `${dateStr}T${outHour}`,
+      date: toISTIso(dateStr, "00:00:00"),
+      checkIn: isAbsent ? null : toISTIso(dateStr, inTime),
+      checkOut: isAbsent ? null : toISTIso(dateStr, outTime),
       status,
       workingHours,
       dayType,
@@ -219,7 +234,7 @@ pastDates.forEach((dateStr, dayIdx) => {
   });
 });
 
-console.log(`Generated ${attendance.length} Attendance records across ${pastDates.length + 1} working days.`);
+console.log(`Generated ${attendance.length} Attendance records across ${pastDates.length + 1} working days (weekends off).`);
 
 // Generate Leave Applications (28 applications)
 const leaves = [
@@ -268,52 +283,52 @@ const attendanceCorrections = [
     employeeId: employees[1]._id, // John Doe
     attendanceId: attendance[1]._id,
     field: "checkOut",
-    requestedTime: "2026-10-20T12:30:00.000Z",
+    requestedTime: toISTIso("2026-10-20", "18:00:00"),
     reason: "Forgot to tap badge at departure kiosk before leaving for offsite client dinner.",
     status: "PENDING",
     reviewedBy: null,
     reviewedAt: null,
     reviewNote: "",
-    createdAt: "2026-10-20T13:00:00.000Z"
+    createdAt: toISTIso("2026-10-20", "18:30:00")
   },
   {
     _id: hexId("66700000000000000000", 2),
     employeeId: employees[6]._id, // Jessica Taylor
     attendanceId: attendance[6]._id,
     field: "checkOut",
-    requestedTime: "2026-10-20T13:00:00.000Z",
+    requestedTime: toISTIso("2026-10-20", "18:30:00"),
     reason: "Late client onboarding call extended beyond office hours; forgot manual checkout.",
     status: "PENDING",
     reviewedBy: null,
     reviewedAt: null,
     reviewNote: "",
-    createdAt: "2026-10-20T13:30:00.000Z"
+    createdAt: toISTIso("2026-10-20", "19:00:00")
   },
   {
     _id: hexId("66700000000000000000", 3),
     employeeId: employees[10]._id, // Marcus Vance
     attendanceId: attendance[10]._id,
     field: "checkIn",
-    requestedTime: "2026-10-20T03:30:00.000Z",
+    requestedTime: toISTIso("2026-10-20", "09:00:00"),
     reason: "Front turnstile RFID scanner failed to register card; logged in manually at desk.",
     status: "PENDING",
     reviewedBy: null,
     reviewedAt: null,
     reviewNote: "",
-    createdAt: "2026-10-20T05:00:00.000Z"
+    createdAt: toISTIso("2026-10-20", "10:30:00")
   },
   {
     _id: hexId("66700000000000000000", 4),
     employeeId: employees[14]._id, // Tyler Reed
     attendanceId: attendance[14]._id,
     field: "checkIn",
-    requestedTime: "2026-10-20T03:35:00.000Z",
+    requestedTime: toISTIso("2026-10-20", "09:05:00"),
     reason: "Subway signal delay caused slight arrival delay; badge kiosk queue was backed up.",
     status: "PENDING",
     reviewedBy: null,
     reviewedAt: null,
     reviewNote: "",
-    createdAt: "2026-10-20T05:15:00.000Z"
+    createdAt: toISTIso("2026-10-20", "10:45:00")
   },
 
   // 5 Approved requests
@@ -322,65 +337,65 @@ const attendanceCorrections = [
     employeeId: employees[0]._id, // Sarah Jenkins
     attendanceId: attendance[25]._id, // Oct 19
     field: "checkIn",
-    requestedTime: "2026-10-19T03:30:00.000Z",
+    requestedTime: toISTIso("2026-10-19", "09:00:00"),
     reason: "Badge scanner at North entrance failed to read RFID card; entered via visitor gate.",
     status: "APPROVED",
     reviewedBy: users[0]._id,
-    reviewedAt: "2026-10-19T05:00:00.000Z",
+    reviewedAt: toISTIso("2026-10-19", "10:30:00"),
     reviewNote: "Verified with security desk check-in log.",
-    createdAt: "2026-10-19T04:00:00.000Z"
+    createdAt: toISTIso("2026-10-19", "09:30:00")
   },
   {
     _id: hexId("66700000000000000000", 6),
     employeeId: employees[11]._id, // Chloe Bennett
     attendanceId: attendance[50]._id, // Oct 16
     field: "checkOut",
-    requestedTime: "2026-10-16T12:00:00.000Z",
+    requestedTime: toISTIso("2026-10-16", "17:30:00"),
     reason: "System rebooted before browser checkout button clicked.",
     status: "APPROVED",
     reviewedBy: users[0]._id,
-    reviewedAt: "2026-10-16T13:30:00.000Z",
+    reviewedAt: toISTIso("2026-10-16", "19:00:00"),
     reviewNote: "Confirmed with sprint planning sign-off time.",
-    createdAt: "2026-10-16T12:45:00.000Z"
+    createdAt: toISTIso("2026-10-16", "18:15:00")
   },
   {
     _id: hexId("66700000000000000000", 7),
     employeeId: employees[5]._id, // David Miller
     attendanceId: attendance[75]._id, // Oct 15
     field: "checkIn",
-    requestedTime: "2026-10-15T03:20:00.000Z",
+    requestedTime: toISTIso("2026-10-15", "08:50:00"),
     reason: "Badge reader glitch at underground parking elevator.",
     status: "APPROVED",
     reviewedBy: users[0]._id,
-    reviewedAt: "2026-10-15T04:15:00.000Z",
+    reviewedAt: toISTIso("2026-10-15", "09:45:00"),
     reviewNote: "Parking gate timestamp matches entry.",
-    createdAt: "2026-10-15T03:50:00.000Z"
+    createdAt: toISTIso("2026-10-15", "09:20:00")
   },
   {
     _id: hexId("66700000000000000000", 8),
     employeeId: employees[2]._id, // Emily Watson
     attendanceId: attendance[100]._id, // Oct 14
     field: "checkOut",
-    requestedTime: "2026-10-14T11:45:00.000Z",
+    requestedTime: toISTIso("2026-10-14", "17:15:00"),
     reason: "Interview panel ran overtime till evening; forgot manual checkout.",
     status: "APPROVED",
     reviewedBy: users[0]._id,
-    reviewedAt: "2026-10-14T12:30:00.000Z",
+    reviewedAt: toISTIso("2026-10-14", "18:00:00"),
     reviewNote: "Interview room booking confirms schedule.",
-    createdAt: "2026-10-14T12:00:00.000Z"
+    createdAt: toISTIso("2026-10-14", "17:30:00")
   },
   {
     _id: hexId("66700000000000000000", 9),
     employeeId: employees[23]._id, // Kevin Park
     attendanceId: attendance[125]._id, // Oct 13
     field: "checkIn",
-    requestedTime: "2026-10-13T03:15:00.000Z",
+    requestedTime: toISTIso("2026-10-13", "08:45:00"),
     reason: "Server rack emergency maintenance before normal office opening hours.",
     status: "APPROVED",
     reviewedBy: users[0]._id,
-    reviewedAt: "2026-10-13T06:00:00.000Z",
+    reviewedAt: toISTIso("2026-10-13", "11:30:00"),
     reviewNote: "Datacenter badge log verified.",
-    createdAt: "2026-10-13T04:30:00.000Z"
+    createdAt: toISTIso("2026-10-13", "10:00:00")
   },
 
   // 3 Rejected requests
@@ -389,39 +404,39 @@ const attendanceCorrections = [
     employeeId: employees[7]._id, // Alex Rivera
     attendanceId: attendance[32]._id,
     field: "checkOut",
-    requestedTime: "2026-10-16T14:30:00.000Z",
+    requestedTime: toISTIso("2026-10-16", "20:00:00"),
     reason: "Requested overtime departure time after remote data sync monitoring.",
     status: "REJECTED",
     reviewedBy: users[0]._id,
-    reviewedAt: "2026-10-17T04:30:00.000Z",
+    reviewedAt: toISTIso("2026-10-19", "10:00:00"), // Monday morning review (weekend off)
     reviewNote: "Overtime requires pre-authorization from department manager.",
-    createdAt: "2026-10-16T15:00:00.000Z"
+    createdAt: toISTIso("2026-10-16", "20:30:00")
   },
   {
     _id: hexId("66700000000000000000", 11),
     employeeId: employees[8]._id, // Liam Wilson
     attendanceId: attendance[58]._id,
     field: "checkOut",
-    requestedTime: "2026-10-15T15:00:00.000Z",
+    requestedTime: toISTIso("2026-10-15", "20:30:00"),
     reason: "Late client entertainment dinner checkout time correction.",
     status: "REJECTED",
     reviewedBy: users[0]._id,
-    reviewedAt: "2026-10-16T04:00:00.000Z",
+    reviewedAt: toISTIso("2026-10-16", "09:30:00"),
     reviewNote: "Client dinner hours should be filed as expense report rather than office shift.",
-    createdAt: "2026-10-15T15:30:00.000Z"
+    createdAt: toISTIso("2026-10-15", "21:00:00")
   },
   {
     _id: hexId("66700000000000000000", 12),
     employeeId: employees[24]._id, // Aaron Brooks
     attendanceId: attendance[74]._id,
     field: "checkIn",
-    requestedTime: "2026-10-14T03:00:00.000Z",
+    requestedTime: toISTIso("2026-10-14", "08:30:00"),
     reason: "Early morning shipment receipt.",
     status: "REJECTED",
     reviewedBy: users[0]._id,
-    reviewedAt: "2026-10-14T05:00:00.000Z",
+    reviewedAt: toISTIso("2026-10-14", "10:30:00"),
     reviewNote: "Delivery invoice shows vendor arrived at 09:30 AM IST.",
-    createdAt: "2026-10-14T04:00:00.000Z"
+    createdAt: toISTIso("2026-10-14", "09:30:00")
   }
 ];
 

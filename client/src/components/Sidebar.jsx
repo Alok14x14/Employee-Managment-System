@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
     CalendarIcon,
@@ -31,6 +31,7 @@ const Sidebar = () => {
     const { pathname } = useLocation();
     const [userName, setUserName] = useState('');
     const [mobileOpen, setMobileOpen] = useState(false);
+    const [unreadByType, setUnreadByType] = useState({ leave: 0, payslip: 0, document: 0, announcement: 0 });
 
     const { user, loading, logout } = useAuth();
     const { theme, toggleTheme } = useTheme();
@@ -42,6 +43,7 @@ const Sidebar = () => {
     }, []);
 
     const role = user?.role;
+    const updateUnreadByType = useCallback((counts) => setUnreadByType(counts), []);
     const navItems = [
         { name: 'Dashboard', href: '/dashboard', icon: LayoutGridIcon },
         ...(role === 'ADMIN' ? [
@@ -53,7 +55,7 @@ const Sidebar = () => {
             { name: 'Holidays', href: '/holidays', icon: CalendarDaysIcon }
         ] : [
             { name: 'Attendance', href: '/attendance', icon: CalendarIcon },
-            { name: 'Directory', href: '/directory', icon: UsersRound }
+            { name: 'Colleagues', href: '/directory', icon: UsersRound }
         ]),
         { name: role === 'ADMIN' ? 'Leave requests' : 'Leave', href: '/leave', icon: FileTextIcon },
         { name: 'Payslips', href: '/payslips', icon: DollarSignIcon },
@@ -73,7 +75,7 @@ const Sidebar = () => {
             <div className="relative h-14 px-5 flex items-center justify-between border-b border-zinc-200 dark:border-zinc-800">
                 <span className="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">StaffFlow</span>
                 <div className="flex items-center gap-1">
-                    {role === 'EMPLOYEE' && <NotificationCenter userId={user?.userId || user?.id || 'employee'} />}
+                    {role === 'EMPLOYEE' && <NotificationCenter userId={user?.userId || user?.id || 'employee'} pathname={pathname} onUnreadChange={updateUnreadByType} />}
                     {role === 'ADMIN' && <AdminNotificationCenter userId={user?.userId || user?.id || 'admin'} />}
                     <button
                         onClick={() => setMobileOpen(false)}
@@ -95,6 +97,9 @@ const Sidebar = () => {
                     navItems.map((item) => {
                         const isActive = pathname === item.href || (item.href === '/employees' && pathname.startsWith('/employees/'));
                         const Icon = item.icon;
+                        const unreadTypeByPath = { '/leave': 'leave', '/payslips': 'payslip', '/documents': 'document', '/announcements': 'announcement' };
+                        const unreadType = unreadTypeByPath[item.href];
+                        const hasUnreadUpdate = role === 'EMPLOYEE' && unreadType && unreadByType[unreadType] > 0;
                         return (
                             <Link
                                 key={item.name}
@@ -108,6 +113,7 @@ const Sidebar = () => {
                             >
                                 <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-400 dark:text-zinc-500'}`} />
                                 <span className="truncate">{item.name}</span>
+                                {hasUnreadUpdate && <span className="ml-auto size-1.5 shrink-0 rounded-full bg-blue-600" aria-label="New update" title="New update" />}
                             </Link>
                         );
                     })
